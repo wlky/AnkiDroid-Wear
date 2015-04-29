@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="PullButton">
+        <attr name="icon" format="reference"/>
+        <attr name="upsideDown" format="boolean"/>
+        <attr name="text" format="string"/>
+        <attr name="ease_text" format="string"/>
+    </declare-styleable>
+</resources>

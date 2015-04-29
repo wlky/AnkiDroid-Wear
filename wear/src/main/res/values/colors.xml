@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="startColor">#ffffffff</color>
+    <color name="centerColor">#ffffffff</color>
+    <color name="endColor">#ffffffff</color>
+    <color name="textColor">#ff000000</color>
+</resources>
