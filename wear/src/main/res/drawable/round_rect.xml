@@ -7,6 +7,7 @@
         android:angle="270" />
     <corners
         android:radius="10dp" />
+    <stroke android:color="@color/light_grey" android:width="1dp"/>
     <padding
         android:left="10dp"
         android:top="10dp"

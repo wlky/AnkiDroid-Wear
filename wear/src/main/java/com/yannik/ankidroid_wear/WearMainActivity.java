@@ -4,20 +4,26 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.view.WindowManager;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.wearable.Asset;
+import com.google.android.gms.wearable.DataItem;
+import com.google.android.gms.wearable.DataItemBuffer;
+import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
@@ -27,7 +33,9 @@ import com.yannik.sharedvalues.CommonIdentifiers;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -39,6 +47,8 @@ public class WearMainActivity extends FragmentActivity {
     private MessageReceiver messageReceiver;
 
 
+    public static HashMap<String, Asset> availableAssets = new HashMap<String, Asset>();
+
     Preferences preferences;
 
     @Override
@@ -46,7 +56,7 @@ public class WearMainActivity extends FragmentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.wear_main);
 
-        preferences= new Preferences(this);
+        preferences = new Preferences(this);
         preferences.load();
         final ViewPager viewPager = (ViewPager) findViewById(R.id.pager);
         final PagerAdapter adapter = new PagerAdapter(getSupportFragmentManager());
@@ -57,26 +67,30 @@ public class WearMainActivity extends FragmentActivity {
         decksFragment.setChooseDeckListener(new CollectionFragment.OnFragmentInteractionListener() {
             @Override
             public void onFragmentInteraction(long id) {
-                fireMessage(CommonIdentifiers.W2P_CHOOSE_COLLECTION,""+id);
+                fireMessage(CommonIdentifiers.W2P_REQUEST_CARD, "" + id);
                 viewPager.setCurrentItem(0);
+                reviewFragment.indicateLoading();
+                preferences.setSelectedDeck(id);
             }
         });
 
         jsonReceivers.add(new JsonReceiver() {
             @Override
             public void onJsonReceive(String path, JSONObject json) {
-                if(path.equals(CommonIdentifiers.P2W_CHANGE_SETTINGS)){
-                    for(Iterator<String> it = json.keys(); it.hasNext();){
+                if (path.equals(CommonIdentifiers.P2W_CHANGE_SETTINGS)) {
+                    for (Iterator<String> it = json.keys(); it.hasNext(); ) {
                         try {
                             String name = it.next();
-                            if(name.equals(Preferences.CARD_FONT_SIZE)){
-                                preferences.setCardFontSize((float)json.getInt(name));
-                            }else if(name.equals(Preferences.DOUBLE_TAP)){
+                            if (name.equals(Preferences.CARD_FONT_SIZE)) {
+                                preferences.setCardFontSize((float) json.getInt(name));
+                            } else if (name.equals(Preferences.DOUBLE_TAP)) {
                                 preferences.setDoubleTapReview(json.getBoolean(name));
-                            }else if(name.equals(Preferences.FLIP_ANIMATION)){
+                            } else if (name.equals(Preferences.FLIP_ANIMATION)) {
                                 preferences.setFlipCards(json.getBoolean(name));
-                            }else if(name.equals(Preferences.SOUND_OPTIONS)){
-                                preferences.setSoundOptions(json.getInt(name));
+                            } else if (name.equals(Preferences.SCREEN_TIMEOUT)) {
+                                preferences.setScreenTimeout(json.getInt(name));
+                            }else if (name.equals(Preferences.PLAY_SOUNDS)) {
+                                preferences.setPlaySound(json.getInt(name));
                             }
 
                         } catch (JSONException e) {
@@ -107,8 +121,31 @@ public class WearMainActivity extends FragmentActivity {
             @Override
             public void onConnected(Bundle bundle) {
                 Log.d(TAG, "Wear connected to Google Api");
+
+                PendingResult<DataItemBuffer> results = Wearable.DataApi.getDataItems(googleApiClient);
+                results.setResultCallback(new ResultCallback<DataItemBuffer>() {
+                    @Override
+                    public void onResult(DataItemBuffer dataItems) {
+                        if (dataItems.getCount() != 0) {
+                            for(int i = 0; i< dataItems.getCount(); i++) {
+                                DataItem dataItem = dataItems.get(i);
+                                try{
+                                    DataMapItem dataMapItem = DataMapItem.fromDataItem(dataItem);
+                                    for (String name : dataMapItem.getDataMap().keySet()) {
+                                        WearMainActivity.availableAssets.put(name, dataMapItem.getDataMap().getAsset(name));
+                                        Log.v("myTag", "Immage received on watch is: " + name);
+                                    }
+                                }catch (IllegalStateException ise){}
+                            }
+                        }
+
+                        dataItems.release();
+                    }
+                });
+
+
                 fireMessage(CommonIdentifiers.W2P_REQUEST_SETTINGS, null);
-                fireMessage(CommonIdentifiers.W2P_REQUEST_CARD, null);
+                fireMessage(CommonIdentifiers.W2P_REQUEST_CARD, "" + preferences.getSelectedDeck());
                 fireMessage(CommonIdentifiers.W2P_REQUEST_DECKS, null);
             }
 
@@ -117,6 +154,7 @@ public class WearMainActivity extends FragmentActivity {
                 Log.d(TAG, "Wear connection to Google Api suspended");
             }
         });
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     @Override
@@ -126,7 +164,7 @@ public class WearMainActivity extends FragmentActivity {
     }
 
     @Override
-    public void onStop(){
+    public void onStop() {
         if (null != googleApiClient && googleApiClient.isConnected()) {
             googleApiClient.disconnect();
         }
@@ -135,7 +173,7 @@ public class WearMainActivity extends FragmentActivity {
     }
 
     @Override
-    public void onPause(){
+    public void onPause() {
         super.onPause();
         finish();
     }
@@ -171,6 +209,25 @@ public class WearMainActivity extends FragmentActivity {
         });
     }
 
+
+
+    public static Bitmap  loadBitmapFromAsset(Asset asset) {
+        if (asset == null) {
+            throw new IllegalArgumentException("Asset must be non-null");
+        }
+        InputStream assetInputStream = Wearable.DataApi.getFdForAsset(
+                googleApiClient, asset).await().getInputStream();
+
+        if (assetInputStream == null) {
+            Log.w(TAG, "Requested an unknown Asset.");
+            return null;
+        }
+        // decode the stream into a bitmap
+        return BitmapFactory.decodeStream(assetInputStream);
+    }
+
+
+
     ArrayList<JsonReceiver> jsonReceivers = new ArrayList<JsonReceiver>();
 
     public class MessageReceiver extends BroadcastReceiver {
@@ -179,19 +236,20 @@ public class WearMainActivity extends FragmentActivity {
             JSONObject js = null;
             String message = intent.getStringExtra("message");
             String path = intent.getStringExtra("path");
-
-            try {
+            if (message != null) {
+                try {
                     js = new JSONObject(message);
-            } catch (JSONException e) {}
-
-            for(JsonReceiver jsr : jsonReceivers){
+                } catch (JSONException e) {
+                }
+            }
+            for (JsonReceiver jsr : jsonReceivers) {
                 jsr.onJsonReceive(path, js);
             }
 
         }
     }
 
-    interface JsonReceiver{
+    interface JsonReceiver {
         public void onJsonReceive(String path, JSONObject json);
     }
 

@@ -3,17 +3,31 @@ package com.yannik.ankidroid_wear;
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.wearable.view.WatchViewStub;
 import android.text.Html;
+import android.text.Spanned;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
+import android.view.WindowManager;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -26,6 +40,9 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Timer;
+import java.util.TimerTask;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -34,7 +51,9 @@ import java.util.Timer;
  */
 public class ReviewFragment extends Fragment implements WearMainActivity.JsonReceiver {
 
-    public static TextView mTextView;
+    private static final String W2W_REMOVE_SCREEN_LOCK = "remove_screen_lock";
+    public static final String W2W_RELOAD_HTML_FOR_MEDIA = "reload_text";
+    private TextView mTextView;
 
     private long noteID;
     private int cardOrd;
@@ -44,7 +63,10 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     private Timer easeButtonShowTimer = new Timer();
 
     private ScrollView qaScrollView;
+    private ProgressBar spinner;
     private boolean scrollViewMoved;
+    private String qHtml;
+    private String aHtml;
 
 
     /**
@@ -126,17 +148,84 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
 
     private void showAnswer() {
         qaScrollView.scrollTo(0, 0);
-        mTextView.setText(a);
         showingAnswer = true;
+        updateFromHtmlText();
         if (!showingEaseButtons) {
             showButtons();
+            sendReviewStateToPhone();
         }
     }
 
     private void showQuestion() {
         qaScrollView.scrollTo(0, 0);
-        mTextView.setText(q);
         showingAnswer = false;
+        updateFromHtmlText();
+        if (!showingEaseButtons) {
+            sendReviewStateToPhone();
+        }
+    }
+
+    byte playSounds = -1;
+
+    private void sendReviewStateToPhone(){
+        if(settings.getPlaySound() != 1 || playSounds == 0) return;
+
+        String text;
+        if(showingAnswer){
+            text = aHtml;
+        }else{
+            text = qHtml;
+        }
+
+        JSONArray sounds = findSounds(text);
+        if(sounds.length() >= 1) {
+            if (playSounds == -1) {
+                showSoundAlertDialog();
+                return;
+            }
+
+            WearMainActivity.fireMessage(CommonIdentifiers.W2P_PLAY_SOUNDS, sounds.toString());
+        }
+    }
+
+    private void showSoundAlertDialog(){
+        new AlertDialog.Builder(getActivity())
+                .setTitle("Sounds")
+                .setMessage("Should sound files automatically start playing?")
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        playSounds = 1;
+                        sendReviewStateToPhone();
+                    }
+                })
+                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        playSounds = 0;
+                        sendReviewStateToPhone();
+                    }
+                })
+                .setIcon(android.R.drawable.ic_media_play)
+                .show();
+    }
+
+
+    private static final Pattern fSoundRegexps = Pattern.compile("(?i)(\\[sound:([^]]+)\\])");
+
+    private JSONArray findSounds(String text){
+        JSONArray jsonArray = new JSONArray();
+        Matcher m = fSoundRegexps.matcher(text);
+        while (m.find()) {
+            jsonArray.put(m.group(2));
+        }
+        return jsonArray;
+    }
+
+    private void updateFromHtmlText(){
+        if(showingAnswer){
+            mTextView.setText(a);
+        }else{
+            mTextView.setText(q);
+        }
     }
 
 
@@ -145,7 +234,7 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
 
     private void flipCard(final boolean isShowingAnswer) {
         rotationTarget.setRotationY(0);
-        if(settings.isFlipCardsAnimationActive()) {
+        if (settings.isFlipCardsAnimationActive()) {
             final int rightOrLeftFlip = isShowingAnswer ? 1 : -1;
 
             rotationTarget.animate().setDuration(duration).rotationY(rightOrLeftFlip * 90).setListener(new android.animation.AnimatorListenerAdapter() {
@@ -156,22 +245,23 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                     rotationTarget.animate().rotationY(rightOrLeftFlip * 360).setListener(null);
                 }
             });
-        }else {
+        } else {
             updateText(isShowingAnswer);
         }
 
     }
 
-    private void updateText(boolean isShowingAnswer){
-        if (isShowingAnswer) showQuestion(); else showAnswer();
+    private void updateText(boolean isShowingAnswer) {
+        if (isShowingAnswer) showQuestion();
+        else showAnswer();
     }
 
-    private int getRealEase(int ease){
-        if(ease == 1 || numButtons == 4)return ease;
+    private int getRealEase(int ease) {
+        if (ease == 1 || numButtons == 4) return ease;
 
-        if(numButtons == 2 && ease != 1)return 2;
+        if (numButtons == 2 && ease != 1) return 2;
 
-        if(numButtons == 3 && ease != 1)return ease-1;
+        if (numButtons == 3 && ease != 1) return ease - 1;
 
         throw new Error("Illegal ease mode");
     }
@@ -195,17 +285,13 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         }
     };
 
-    ObjectAnimator animator;
+    private ObjectAnimator animator;
 
     private static Preferences settings;
 
-    public void setSettings(Preferences settings) {
-        ReviewFragment.settings = settings;
-    }
-
     public void applySettings() {
-        if (settings == null || mTextView == null) return;
-
+        if (settings == null || mTextView == null || !isAdded()) return;
+        resetScreenTimeout(true);
         mTextView.setTextSize(settings.getCardFontSize());
     }
 
@@ -228,12 +314,13 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                 qaOverlay = (RelativeLayout) stub.findViewById(R.id.questionAnswerOverlay);
                 qaScrollView = (ScrollView) stub.findViewById(R.id.questionAnswerScrollView);
                 qaContainer = (RelativeLayout) stub.findViewById(R.id.qaContainer);
+                spinner = (ProgressBar )stub.findViewById(R.id.loadingSpinner);
                 rotationTarget = qaContainer;
                 final GestureDetector gestureDetector = new GestureDetector(getActivity().getBaseContext(), new GestureDetector.SimpleOnGestureListener() {
                     @Override
                     public boolean onDoubleTap(MotionEvent e) {
                         if (showingEaseButtons) {
-                            if(settings.isDoubleTapReview()) {
+                            if (settings.isDoubleTapReview()) {
                                 flipCard(showingAnswer);
                             }
                         }
@@ -246,11 +333,25 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
 
 
                 qaOverlay.setOnTouchListener(new View.OnTouchListener() {
+
+                    private float mDownX;
+                    private float mDownY;
+                    private final float SCROLL_THRESHOLD = ViewConfiguration.get(getActivity().getBaseContext()).getScaledTouchSlop();
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
 //                        Log.v("test", "ontouchevent " + event.getAction());
+
+
+                        resetScreenTimeout(false);
                         if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                            mDownX = event.getX();
+                            mDownY = event.getY();
                             scrollViewMoved = false;
+                        }else if (event.getActionMasked() == MotionEvent.ACTION_MOVE) {
+
+                            if ((Math.abs(mDownX - event.getX()) > SCROLL_THRESHOLD || Math.abs(mDownY - event.getY()) > SCROLL_THRESHOLD)) {
+                                scrollViewMoved = true;
+                            }
                         }
                         gestureDetector.onTouchEvent(event);
                         qaScrollView.onTouchEvent(event);
@@ -258,14 +359,6 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
 
                     }
                 });
-
-                qaScrollView.getViewTreeObserver().addOnScrollChangedListener(new ViewTreeObserver.OnScrollChangedListener() {
-                    @Override
-                    public void onScrollChanged() {
-                        scrollViewMoved = true;
-                    }
-                });
-
 
                 easy = (PullButton) stub.findViewById(R.id.easyButton);
                 mid = (PullButton) stub.findViewById(R.id.midButton);
@@ -276,7 +369,8 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                 View.OnClickListener easeButtonListener = new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        int ease=0;
+                        resetScreenTimeout(false);
+                        int ease = 0;
                         switch (v.getId()) {
                             case R.id.failedButton:
                                 ease = getRealEase(1);
@@ -297,8 +391,11 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                             json.put("ease", ease);
                             json.put("note_id", noteID);
                             json.put("card_ord", cardOrd);
+                            json.put("deck_id", settings.getSelectedDeck());
                             WearMainActivity.fireMessage(CommonIdentifiers.W2P_RESPOND_CARD_EASE, json.toString());
-                            hideButtons();
+                            indicateLoading();
+
+
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -313,15 +410,27 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                 hard.setOnSwipeListener(easeButtonListener);
                 mid.setOnSwipeListener(easeButtonListener);
 
-                for (int i = 0; i < jsonQueueNames.size(); i++) {
-                    onJsonReceive(jsonQueueNames.get(i), jsonQueueObjects.get(i));
-                }
 
-                applySettings();
             }
         });
 
         return view;
+    }
+
+    public void indicateLoading(){
+        mTextView.setText("");
+        showLoadingSpinner();
+        hideButtons();
+    }
+
+    public void showLoadingSpinner() {
+        if(spinner == null) return;
+        spinner.setVisibility(View.VISIBLE);
+    }
+
+    public void hideLoadingSpinner() {
+        if(spinner == null) return;
+        spinner.setVisibility(View.GONE);
     }
 
 
@@ -331,16 +440,35 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        resetScreenTimeout(true);
+        for (int i = 0; i < jsonQueueNames.size(); i++) {
+            onJsonReceive(jsonQueueNames.get(i), jsonQueueObjects.get(i));
+        }
+        jsonQueueNames.clear();
+        jsonQueueObjects.clear();
+
+        showLoadingSpinner();
+        applySettings();
+    }
+
+    @Override
     public void onDetach() {
         super.onDetach();
     }
 
-    ArrayList<String> jsonQueueNames = new ArrayList<String>();
-    ArrayList<JSONObject> jsonQueueObjects = new ArrayList<JSONObject>();
+    private ArrayList<String> jsonQueueNames = new ArrayList<String>();
+    private ArrayList<JSONObject> jsonQueueObjects = new ArrayList<JSONObject>();
+
+
+    private static final String SOUND_TAG_REPLACEMENT_REGEX = "\\[(sound:[^\\]]+)\\]";
+    private static final String SOUND_TAG_REPLACEMENT_STRING = "&#128266;";
+    MyImageGetter imageGetter = new MyImageGetter();
 
     @Override
     public void onJsonReceive(String path, JSONObject js) {
-        if (qaOverlay == null) {
+        if (qaOverlay == null || !isAdded()) {
             jsonQueueNames.add(path);
             jsonQueueObjects.add(js);
             return;
@@ -351,25 +479,122 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
 
                 hideButtons();
                 unblockControls();
+                qHtml = js.getString("q");
+                aHtml = js.getString("a");
 
-                q = Html.fromHtml(js.getString("q")).toString();
-                a = Html.fromHtml(js.getString("a")).toString();
+                setQA(false);
+
                 noteID = js.getLong("note_id");
                 cardOrd = js.getInt("card_ord");
                 nextReviewTimes = js.getJSONArray("b");
                 numButtons = nextReviewTimes.length();
+                hideLoadingSpinner();
                 showQuestion();
+
+                setQA(true);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         } else if (path.equals(CommonIdentifiers.P2W_NO_MORE_CARDS)) {
             blockControls();
+            hideLoadingSpinner();
             mTextView.setText("No more Cards");
+        } else if (path.equals(W2W_REMOVE_SCREEN_LOCK)) {
+            getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            Log.d("ReviewFragment", "removing screen lock");
+        }else if (path.equals(W2W_RELOAD_HTML_FOR_MEDIA)) {
+            setQA(true);
+            Log.d("ReviewFragment", "reloading Html for media");
+        }
+    }
+
+    public void setQA(boolean loadImages){
+        if(qHtml == null || aHtml == null)return;
+        if(loadImages) {
+            new ImageLoaderTask().execute();
+        }else{
+            setSpansFromQAHtml(false);
         }
     }
 
 
-    int numButtons = 4;
-    JSONArray nextReviewTimes;
-    String q, a;
+    private class MyImageGetter implements Html.ImageGetter {
+
+        public Drawable getDrawable(String source) {
+            Bitmap bitmap = null;
+
+            if(WearMainActivity.availableAssets.containsKey(source)) {
+                bitmap = WearMainActivity.loadBitmapFromAsset(WearMainActivity.availableAssets.get(source));
+                BitmapDrawable bit =  new BitmapDrawable(getResources(),bitmap);
+                bit.setBounds(0, 0, bit.getIntrinsicWidth(), bit.getIntrinsicHeight());
+                return bit;
+            }
+            else {
+//                int id;
+//                id = R.drawable.placeholder;
+//                Drawable d = getResources().getDrawable(id);
+                Drawable d = new ColorDrawable(Color.TRANSPARENT);
+                d.setBounds(0, 0, ReviewFragment.this.getView().getWidth()/2, ReviewFragment.this.getView().getHeight()/2);
+                return d;
+            }
+
+
+        }
+    }
+
+    class ImageLoaderTask extends AsyncTask<String, Void, Void> {
+        @Override
+        protected Void doInBackground(String... nodes) {
+            setSpansFromQAHtml(true);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            updateFromHtmlText();
+        }
+
+
+    }
+    public void setSpansFromQAHtml(boolean withImages){
+        q = Html.fromHtml(qHtml.replaceAll(SOUND_TAG_REPLACEMENT_REGEX, SOUND_TAG_REPLACEMENT_STRING).replaceAll("</?a.*?>", ""), withImages?imageGetter:null, null);
+        a = Html.fromHtml(aHtml.replaceAll(SOUND_TAG_REPLACEMENT_REGEX, SOUND_TAG_REPLACEMENT_STRING).replaceAll("</?a.*?>", ""), withImages?imageGetter:null, null);
+    }
+
+    private Timer screenTimeoutTimer;
+    private long lastResetTimeMillis = 0;
+
+    synchronized void resetScreenTimeout(boolean forceReset) {
+
+        if(System.currentTimeMillis() - lastResetTimeMillis > 2000 || forceReset) {
+
+            long timeout = settings.getScreenTimeout() * 1000;
+
+            getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            Log.d("ReviewFragment", "setting screen lock " + timeout);
+            if (screenTimeoutTimer != null) {
+                screenTimeoutTimer.cancel();
+                screenTimeoutTimer = null;
+            }
+            if (screenTimeoutTimer == null) {
+                screenTimeoutTimer = new Timer();
+                screenTimeoutTimer.schedule(new TimerTask() {
+                    public void run() {
+                        screenTimeoutTimer.cancel();
+                        screenTimeoutTimer = null;
+                        Intent messageIntent = new Intent();
+                        messageIntent.setAction(Intent.ACTION_SEND);
+                        messageIntent.putExtra("path", W2W_REMOVE_SCREEN_LOCK);
+                        LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(messageIntent);
+                    }
+                }, timeout);
+            }
+        }
+        lastResetTimeMillis = System.currentTimeMillis();
+    }
+
+
+    private int numButtons = 4;
+    private JSONArray nextReviewTimes;
+    private Spanned q, a;
 }

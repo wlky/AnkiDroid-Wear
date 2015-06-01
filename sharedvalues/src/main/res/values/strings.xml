@@ -3,4 +3,6 @@
     <string name="double_tap_key">double_tap_for_question</string>
     <string name="sound_preference_key">sound_preference</string>
     <string name="card_flip_animation_key">card_flip_animation</string>
+    <string name="screen_timeout">screen_timeout</string>
+    <string name="play_sounds">play_sounds</string>
 </resources>

@@ -3,11 +3,11 @@
     <string-array name="SoundOptionsAlias">
         <item>0</item>
         <item>1</item>
-        <item>2</item>
+        <!--<item>2</item>-->
     </string-array>
     <string-array name="SoundOptions">
         <item>Do not play sounds</item>
         <item>Play sounds on phone</item>
-        <item>Play sounds on watch (if possible)</item>
+        <!--<item>Play sounds on watch (if possible)</item>-->
     </string-array>
 </resources>

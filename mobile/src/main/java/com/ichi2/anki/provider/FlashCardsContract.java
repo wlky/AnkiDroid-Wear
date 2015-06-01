@@ -131,7 +131,6 @@ public class FlashCardsContract {
     private FlashCardsContract() {
     }
 
-    ;
 
     /**
      * The Notes can be accessed by
@@ -839,7 +838,138 @@ public class FlashCardsContract {
         public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.ichi2.anki.card";
     }
 
+
+    /**
+     * A ReviewInfo contains information about a card that is scheduled for review.
+     * <p/>
+     * To access the next scheduled card(s), a simple query with the {@link #CONTENT_URI} can be used.<br/>
+     * Arguments:
+     * <table class="jd-sumtable">
+     * <tr>
+     * <th>Type</th><th>Name</th><th>default value</th><th>description</th>
+     * </tr>
+     * <tr>
+     * <td>long</td>
+     * <td>deckID</td>
+     * <td>The deck, that was last selected for reviewing by the user in the Deckchooser dialog of the App</td>
+     * <td>The deckID of the deck from which the scheduled cards should be pulled.
+     * </td>
+     * </tr>
+     * <tr>
+     * <td>int</td>
+     * <td>limit</td>
+     * <td>1</td>
+     * <td>The maximum number of cards (rows) that will be returned. In case the deck has fewer scheduled cards, the returned number of cards will be lower than the limit.
+     * </td>
+     * </tr>
+     * </table>
+     *
+     *
+     * <p>
+     * <pre>
+     *         Uri scheduled_cards_uri = FlashCardsContract.ReviewInfo.CONTENT_URI;
+     *         String deckArguments[] = new String[]{"5", "123456789"};
+     *         String deckSelector = "limit=?, deckID=?";
+     *         final Cursor cur = cr.query(scheduled_cards_uri,
+     *                                     null,  // projection
+     *                                     deckSelector,  // if null, default values will be used
+     *                                     deckArguments,  // if null, the deckSelector must not contain any placeholders ("?")
+     *                                     null   // sortOrder is ignored for this URI
+     *                                     );
+     *     </pre>
+     * </p>
+     *
+     * A ReviewInfo consists of the following columns:
+     * <table class="jd-sumtable">
+     * <tr>
+     * <th>Type</th><th>Name</th><th>access</th><th>description</th>
+     * </tr>
+     * <tr>
+     * <td>long</td>
+     * <td>{@link #NOTE_ID}</td>
+     * <td>read-only</td>
+     * <td>This is the ID of the note that this row belongs to (i.e. {@link FlashCardsContract.Note#_ID}).
+     * </td>
+     * </tr>
+     * <tr>
+     * <td>int</td>
+     * <td>{@link #CARD_ORD}</td>
+     * <td>read-only</td>
+     * <td>This is the ordinal of the card. A note has 1..n cards. The ordinal can also be used
+     * to directly access a card as describe in the class description.
+     * </tr>
+     * <tr>
+     * <td>int</td>
+     * <td>{@link #BUTTON_COUNT}</td>
+     * <td>read-only</td>
+     * <td>The number of buttons/ease identifiers that can be used to answer the card.
+     * </td>
+     * </tr>
+     * <tr>
+     * <td>JSONArray</td>
+     * <td>{@link #NEXT_REVIEW_TIMES}</td>
+     * <td>read-only</td>
+     * <td>A JSONArray containing when the card will be scheduled for review for all ease identifiers available.<br/>
+     * The number of entries in this array must equal the number of buttons in {@link #BUTTON_COUNT}.
+     * </td>
+     * </tr>
+     * <tr>
+     * <td>String</td>
+     * <td>{@link #QUESTION_SIMPLE}</td>
+     * <td>read-only</td>
+     * <td>The question for this card in the simplified form.
+     * </td>
+     * </tr>
+     * <tr>
+     * <td>String</td>
+     * <td>{@link #ANSWER_SIMPLE}</td>
+     * <td>read-only</td>
+     * <td>The answer for this card in the simplified form. It does not include
+     * a duplicate of the question.
+     * </td>
+     * </tr>
+     * <tr>
+     * <td>JSONArray</td>
+     * <td>{@link #MEDIA_FILES}</td>
+     * <td>read-only</td>
+     * <td>The media files, like images and sound files, contained in the cards.
+     * </td>
+     * </tr>
+     * <tr>
+     * <td>String</td>
+     * <td>{@link #EASE}</td>
+     * <td>write-only</td>
+     * <td>The ease of the card (used when answering the card).
+     * One of {@link com.ichi2.anki.AbstractFlashcardViewer#EASE_EASY},
+     * {@link com.ichi2.anki.AbstractFlashcardViewer#EASE_MID},
+     * {@link com.ichi2.anki.AbstractFlashcardViewer#EASE_HARD},
+     * {@link com.ichi2.anki.AbstractFlashcardViewer#EASE_FAILED}
+     * </td>
+     * </tr>
+     * </table>
+     *
+     * The only writable column is the {@link #EASE}, which is used for answering a card.<br/>
+     * Answering a card can be done as shown in this example
+     * <pre>
+     *     <code>
+     *            ContentResolver cr = getContentResolver();
+     *            Uri reviewInfoUri = FlashCardsContract.ReviewInfo.CONTENT_URI;
+     *            ContentValues values = new ContentValues();
+     *            long noteId = 123456789; //<- insert real note id here
+     *            int cardOrd = 0;   //<- insert real card ord here
+     *            int ease = AbstractFlashcardViewer.EASE_MID; //<- insert real ease here
+     *
+     *            values.put(FlashCardsContract.ReviewInfo.NOTE_ID, noteId);
+     *            values.put(FlashCardsContract.ReviewInfo.CARD_ORD, cardOrd);
+     *            values.put(FlashCardsContract.ReviewInfo.EASE, ease);
+     *            cr.update(reviewInfoUri, values, null, null);
+     *     </code>
+     * </pre>
+     */
     public static class ReviewInfo {
+
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "schedule");
+
         /**
          * This is the ID of the note that this card belongs to (i.e. {@link FlashCardsContract.Note#_ID}).
          */
@@ -864,14 +994,23 @@ public class FlashCardsContract {
         public static final String NEXT_REVIEW_TIMES = "next_review_times";
 
         /**
-         * This is a JSONArray containing the next review times for all buttons.
+         * Simplified version of the question.
          */
         public static final String QUESTION_SIMPLE = "question_simple";
 
         /**
-         * This is a JSONArray containing the next review times for all buttons.
+         * Simplified version of the answer.
          */
         public static final String ANSWER_SIMPLE = "answer_simple";
+
+        /**
+         * Simplified version of the answer.
+         */
+        public static final String MEDIA_FILES = "media_files";
+
+        /*
+         * Ease of an answer. Is not set when requesting the scheduled cards. Can take values of AbstractFlashcardViewer e.g. EASE_FAILED
+         */
 
         public static final String EASE = "answer_ease";
 
@@ -882,7 +1021,7 @@ public class FlashCardsContract {
                 NEXT_REVIEW_TIMES,
                 QUESTION_SIMPLE,
                 ANSWER_SIMPLE,
-                EASE
+                MEDIA_FILES
         };
 
         /**
@@ -897,12 +1036,61 @@ public class FlashCardsContract {
 
     }
 
+    /**
+     * A Deck contains information about a deck contained in the users deck list.
+     * <p/>
+     * To request a list of all decks the URI {@link #CONTENT_ALL_URI} can be used.
+     * To request the currently selected deck the URI {@link #CONTENT_SELECTED_URI} can be used.<br/>
+     *
+     * A Deck consists of the following columns:
+     * <table class="jd-sumtable">
+     * <tr>
+     * <th>Type</th><th>Name</th><th>access</th><th>description</th>
+     * </tr>
+     * <tr>
+     * <td>long</td>
+     * <td>{@link #DECK_ID}</td>
+     * <td>read-only</td>
+     * <td>This is the unique ID of the Deck.
+     * </td>
+     * </tr>
+     * <tr>
+     * <td>String</td>
+     * <td>{@link #DECK_NAME}</td>
+     * <td>read-only</td>
+     * <td>This is the name of the Deck as the user usually sees it.
+     * </tr>
+
+     * </table>
+     *
+     * Requesting a list of all decks can be done as shown in this example
+     * <pre>
+     *     <code>
+     *     Cursor decksCursor = getContentResolver().query(FlashCardsContract.Deck.CONTENT_ALL_URI, null, null, null, null);
+     *     if (decksCursor.moveToFirst()) {
+     *      HashMap<Long,String> decks = new HashMap<Long,String>();
+     *      do {
+     *          long deckID = decksCursor.getLong(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_ID));
+     *          String deckName = decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_NAME));
+     *          decks.put(deckID, deckName);
+     *     } while (decksCursor.moveToNext());
+     *     </code>
+     * </pre>
+     *
+     */
+
     public static class Deck {
+
+        public static final Uri CONTENT_ALL_URI = Uri.withAppendedPath(AUTHORITY_URI, "decks");
+        public static final Uri CONTENT_SELECTED_URI = Uri.withAppendedPath(AUTHORITY_URI, "select_deck");
         /**
          * The name of the Deck
          */
         public static final String DECK_NAME = "deck_name";
 
+        /**
+         * The unique identifier of the Deck
+         */
         public static final String DECK_ID = "deck_id";
 
         public static final String[] DEFAULT_PROJECTION = {
@@ -911,12 +1099,12 @@ public class FlashCardsContract {
         };
 
         /**
-         * MIME type used for a ReviewInfo.
+         * MIME type used for a Deck.
          */
         public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.com.ichi2.anki.review_info";
 
         /**
-         * MIME type used for ReviewInfo.
+         * MIME type used for Deck.
          */
         public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.com.ichi2.anki.deck";
 

@@ -9,6 +9,5 @@
         android:layout_width="match_parent" android:layout_height="match_parent"
         app:rectLayout="@layout/rect_activity_wear_main"
         app:roundLayout="@layout/round_activity_wear_main" tools:context=".WearMainActivity"
-        tools:deviceIds="wear"></android.support.wearable.view.WatchViewStub>
-
+        tools:deviceIds="wear"/>
 </FrameLayout>

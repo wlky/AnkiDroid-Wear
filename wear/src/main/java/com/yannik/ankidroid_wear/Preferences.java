@@ -10,19 +10,25 @@ class Preferences {
     private float cardFontSize = 40;
     private boolean doubleTapReview = true;
     private boolean flipCards = true;
-    private int soundOptions = 0;
+    private int screenTimeout = 60;
+    private long selectedDeck = -1;
+    private int playSound = 0;
 
     public static String CARD_FONT_SIZE;
-    public static String SOUND_OPTIONS;
     public static String DOUBLE_TAP;
     public static String FLIP_ANIMATION;
+    public static String SELECTED_DECK;
+    public static String SCREEN_TIMEOUT;
+    public static String PLAY_SOUNDS;
 
     public Preferences(WearMainActivity wearMainActivity){
         this.wearMainActivity = wearMainActivity;
         CARD_FONT_SIZE = wearMainActivity.getResources().getString(R.string.font_size_key);
-        SOUND_OPTIONS = wearMainActivity.getResources().getString(R.string.sound_preference_key);
         DOUBLE_TAP = wearMainActivity.getResources().getString(R.string.double_tap_key);
         FLIP_ANIMATION = wearMainActivity.getResources().getString(R.string.card_flip_animation_key);
+        SELECTED_DECK = wearMainActivity.getResources().getString(R.string.selected_deck);
+        SCREEN_TIMEOUT = wearMainActivity.getResources().getString(R.string.screen_timeout);
+        PLAY_SOUNDS = wearMainActivity.getResources().getString(R.string.play_sounds);
     }
 
     public float getCardFontSize() {
@@ -52,22 +58,34 @@ class Preferences {
         save();
     }
 
-    public int getSoundOptions() {
-        return soundOptions;
+
+    public long getSelectedDeck() {
+        return selectedDeck;
     }
 
-    public void setSoundOptions(int soundOptions) {
-        this.soundOptions = soundOptions;
+    public void setSelectedDeck(long selectedDeck) {
+        this.selectedDeck = selectedDeck;
         save();
     }
 
+
+    public int getScreenTimeout() {
+        return screenTimeout;
+    }
+
+    public void setScreenTimeout(int screenTimeout) {
+        this.screenTimeout = screenTimeout;
+        save();
+    }
     private void save(){
         SharedPreferences settings = wearMainActivity.getSharedPreferences(WearMainActivity.PREFS_NAME, 0);
         SharedPreferences.Editor editor = settings.edit();
         editor.putFloat(CARD_FONT_SIZE, getCardFontSize());
-        editor.putInt(SOUND_OPTIONS, getSoundOptions());
         editor.putBoolean(DOUBLE_TAP, isDoubleTapReview());
         editor.putBoolean(FLIP_ANIMATION, isFlipCardsAnimationActive());
+        editor.putLong(SELECTED_DECK, selectedDeck);
+        editor.putInt(SCREEN_TIMEOUT, screenTimeout);
+        editor.putInt(PLAY_SOUNDS, playSound);
         editor.commit();
     }
 
@@ -76,8 +94,18 @@ class Preferences {
         cardFontSize = settings.getFloat(CARD_FONT_SIZE, cardFontSize);
         doubleTapReview = settings.getBoolean(DOUBLE_TAP, doubleTapReview);
         flipCards = settings.getBoolean(FLIP_ANIMATION, flipCards);
-        soundOptions = settings.getInt(SOUND_OPTIONS, soundOptions);
+        screenTimeout = settings.getInt(SCREEN_TIMEOUT, screenTimeout);
+        selectedDeck = settings.getLong(SELECTED_DECK, selectedDeck);
+        playSound = settings.getInt(PLAY_SOUNDS, playSound);
     }
 
 
+    public int getPlaySound() {
+        return playSound;
+    }
+
+    public void setPlaySound(int playSound) {
+        this.playSound = playSound;
+        save();
+    }
 }

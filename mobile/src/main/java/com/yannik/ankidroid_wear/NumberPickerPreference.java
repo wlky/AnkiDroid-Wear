@@ -7,8 +7,6 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.NumberPicker;
 
-import com.yannik.ankidroid_wear.R;
-
 public class NumberPickerPreference extends DialogPreference {
 
     private static String TAG = NumberPickerPreference.class.getSimpleName();
@@ -32,8 +30,34 @@ public class NumberPickerPreference extends DialogPreference {
         setDialogLayoutResource(R.layout.numberpicker_dialog);
         setPositiveButtonText("OK");
         setNegativeButtonText("Cancel");
+
+
+        TypedArray a = context.obtainStyledAttributes(attrs,
+                R.styleable.NumberPickerPreference);
+        final int N = a.getIndexCount();
+        for (int i = 0; i < N; ++i)
+        {
+            int attr = a.getIndex(i);
+            switch (attr)
+            {
+                case R.styleable.NumberPickerPreference_minValue:
+                    min = a.getInt(attr,0);
+                    break;
+                case R.styleable.NumberPickerPreference_maxValue:
+                    max = a.getInt(attr,100);
+                    break;
+                case R.styleable.NumberPickerPreference_summaryPostFix:
+                    summaryPostFix = a.getString(attr);
+                    break;
+            }
+        }
+        a.recycle();
+
+
     }
 
+    private int min=0,max=100;
+    String summaryPostFix = "";
     /*
     * Bind data to our content views
     * */
@@ -43,8 +67,8 @@ public class NumberPickerPreference extends DialogPreference {
 
         // Set min and max values to our NumberPicker
         mNumberPicker = (NumberPicker) view.findViewById(R.id.numberPicker);
-        mNumberPicker.setMinValue(0);
-        mNumberPicker.setMaxValue(100);
+        mNumberPicker.setMinValue(min);
+        mNumberPicker.setMaxValue(max);
 
         // Set default/current/selected value if set
         if (mValue != null) mNumberPicker.setValue(mValue);
@@ -60,8 +84,9 @@ public class NumberPickerPreference extends DialogPreference {
         if (positiveResult) {
             mValue = mNumberPicker.getValue();
             persistInt(mValue);
-            setSummary(mValue+"");
-            getOnPreferenceChangeListener().onPreferenceChange(this, mValue);
+            setSummary(mValue + summaryPostFix);
+            if (getOnPreferenceChangeListener() != null)
+                getOnPreferenceChangeListener().onPreferenceChange(this, mValue);
         }
     }
 
@@ -85,12 +110,11 @@ public class NumberPickerPreference extends DialogPreference {
         // Log.d(TAG, "boolean: " + restorePersistedValue + " object: " + defaultValue);
         if (restorePersistedValue) {
             mValue = getPersistedInt(DEFAULT_VALUE);
-        }
-        else {
+        } else {
             mValue = (int) defaultValue;
             persistInt(mValue);
         }
-        setSummary(mValue+"");
+        setSummary(mValue + summaryPostFix);
     }
 
     /*

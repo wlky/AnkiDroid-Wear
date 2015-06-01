@@ -10,6 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_box="all"
+        android:background="@drawable/round_rect"
         tools:context="com.yannik.ankidroid_wear.CollectionFragment">
 
 

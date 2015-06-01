@@ -1,23 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceCategory
         android:title="Review">
 
         <ListPreference
-            android:key="@string/sound_preference_key"
+            android:key="@string/play_sounds"
             android:title="Sounds"
             android:entries="@array/SoundOptions"
-            android:defaultValue="0"
+            android:defaultValue="1"
             android:summary="%s"
-            android:entryValues="@array/SoundOptionsAlias"
-            android:enabled="false"/>
+            android:entryValues="@array/SoundOptionsAlias"/>
+
+        <CheckBoxPreference
+            android:title="Ask once before playing sounds"
+            android:defaultValue="true"
+            android:key="@string/card_flip_animation_key"
+            />
 
         <com.yannik.ankidroid_wear.NumberPickerPreference
             android:title="Font size"
-            android:summary="%s"
+            app:summaryPostFix=" points"
             android:key="@string/font_size_key"
             android:defaultValue="40" />
+
+        <com.yannik.ankidroid_wear.NumberPickerPreference
+            android:title="Screen Timeout Delay"
+            app:summaryPostFix=" seconds"
+            app:minValue="0"
+            app:maxValue="400"
+            android:key="@string/screen_timeout"
+            android:defaultValue="30" />
 
         <CheckBoxPreference
             android:title="Double tap answer to show question"
@@ -28,6 +42,11 @@
             android:title="Card flip animation"
             android:defaultValue="true"
             android:key="@string/card_flip_animation_key"
+            />
+
+        <EditTextPreference
+            android:title="AnkiDroid Media Folder Location"
+            android:key="@string/media_folder_location"
             />
 
 

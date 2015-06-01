@@ -13,7 +13,7 @@
         android:src="@drawable/pb_hard"
         android:background="@android:color/transparent"
         android:adjustViewBounds="true"
-        android:scaleType="fitEnd"
+        android:scaleType="fitCenter"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true" />
 
@@ -23,11 +23,10 @@
         android:gravity="center"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:text="Small Text"
-        android:background="@color/white"
+        android:background="@drawable/small_round_rect"
         android:textColor="@color/black"
         android:id="@+id/textView"
         android:layout_below="@+id/icon"
-
         android:layout_centerHorizontal="true" />
 
     <TextView
