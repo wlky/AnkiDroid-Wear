@@ -26,18 +26,18 @@ import android.net.Uri;
  * flashcard that is used for learning. Typical fields are "Japanese" and "English" (for a native
  * English speaker to learn Japanese), or just "front" and "back" (for a generic front side and back
  * side of a card, without saying anything about the purpose). Fields can be accessed through the
- * {@link FlashCardsContract.Data} content provider using the special
- * {@link FlashCardsContract.Data.Field#MIMETYPE} for fields.
+ * {@link Data} content provider using the special
+ * {@link Data.Field#MIMETYPE} for fields.
  * </p>
  * <p/>
  * Note and card information is accessed in the following way:
  * </p>
  * <ul>
  * <li>
- * Each row from the {@link FlashCardsContract.Note} provider represents a note that is stored in AnkiDroid.
+ * Each row from the {@link Note} provider represents a note that is stored in AnkiDroid.
  * This provider must be used in order to find flashcards. Some of the data that is returned by
- * this provider can also be obtained through the {@link FlashCardsContract.Data} in a more compact way. The notes
- * can be accessed by the {@link FlashCardsContract.Note#CONTENT_URI}, like this to search for note:
+ * this provider can also be obtained through the {@link Data} in a more compact way. The notes
+ * can be accessed by the {@link Note#CONTENT_URI}, like this to search for note:
  * <pre>
  *     <code>
  *         // Query all available notes
@@ -54,16 +54,16 @@ import android.net.Uri;
  * </pre>
  * </li>
  * <li>
- * A row from the {@link FlashCardsContract.Data} provider gives access to notes data, such as fields and tags. The
- * data is accessed as described in the {@link FlashCardsContract.DataColumns} description.
+ * A row from the {@link Data} provider gives access to notes data, such as fields and tags. The
+ * data is accessed as described in the {@link DataColumns} description.
  * </li>
  * <li>
- * A row from the {@link FlashCardsContract.Card} provider gives access to notes cards. The
- * cards are accessed as described in the {@link FlashCardsContract.Card} description.
+ * A row from the {@link Card} provider gives access to notes cards. The
+ * cards are accessed as described in the {@link Card} description.
  * </li>
  * <li>
  * The format of notes and cards is described in models. The models are accessed as described
- * in the {@link FlashCardsContract.Model} description.
+ * in the {@link Model} description.
  * </li>
  * </ul>
  * <p/>
@@ -78,43 +78,43 @@ import android.net.Uri;
  * <tr class="altColor">
  * <td class="colFirst"><code>notes</code></td>
  * <td class="colLast">Note with id <code>note_id</code> as raw data
- * <div class="block">Supports insert(mid), query(). For code examples see class description of {@link FlashCardsContract.Note}.</div>
+ * <div class="block">Supports insert(mid), query(). For code examples see class description of {@link Note}.</div>
  * </td>
  * </tr>
  * <tr class="rowColor">
  * <td class="colFirst"><code>notes/&lt;note_id&gt;</code></td>
  * <td class="colLast">Note with id <code>note_id</code> as raw data
- * <div class="block">Supports query(). For code examples see class description of {@link FlashCardsContract.Note}.</div>
+ * <div class="block">Supports query(). For code examples see class description of {@link Note}.</div>
  * </td>
  * </tr>
  * <tr class="altColor">
  * <td class="colFirst"><code>notes/&lt;note_id&gt;/data</code></td>
  * <td class="colLast">Note with id <code>note_id</code> as high level data (i.e. split fields, tags).
- * <div class="block">Supports update(), query(). For code examples see class description of {@link FlashCardsContract.DataColumns}.</div>
+ * <div class="block">Supports update(), query(). For code examples see class description of {@link DataColumns}.</div>
  * </td>
  * </tr>
  * <tr class="rowColor">
  * <td class="colFirst"><code>notes/&lt;note_id&gt;/cards</code></td>
  * <td class="colLast">All cards belonging to note <code>note_id</code> as high level data (Deck name, question, answer).
- * <div class="block">Supports query(). For code examples see class description of {@link FlashCardsContract.Card}.</div>
+ * <div class="block">Supports query(). For code examples see class description of {@link Card}.</div>
  * </td>
  * </tr>
  * <tr class="altColor">
  * <td class="colFirst"><code>notes/&lt;note_id&gt;/cards/&lt;ord&gt;</code></td>
  * <td class="colLast">NoteCard <code>ord</code> (with ord = 0... num_cards-1) belonging to note <code>note_id</code> as high level data (Deck name, question, answer).
- * <div class="block">Supports update(), query(). For code examples see class description of {@link FlashCardsContract.Card}.</div>
+ * <div class="block">Supports update(), query(). For code examples see class description of {@link Card}.</div>
  * </td>
  * </tr>
  * <tr class="rowColor">
  * <td class="colFirst"><code>models</code></td>
  * <td class="colLast">All models as JSONObjects.
- * <div class="block">Supports query(). For code examples see class description of {@link FlashCardsContract.Model}.</div>
+ * <div class="block">Supports query(). For code examples see class description of {@link Model}.</div>
  * </td>
  * </tr>
  * <tr class="altColor">
  * <td class="colFirst"><code>model/&lt;model_id&gt;</code></td>
  * <td class="colLast">Direct access to model <code>model_id</code> as JSONObject.
- * <div class="block">Supports query(). For code examples see class description of {@link FlashCardsContract.Model}.</div>
+ * <div class="block">Supports query(). For code examples see class description of {@link Model}.</div>
  * </td>
  * </tr>
  * </table>
@@ -169,7 +169,7 @@ public class FlashCardsContract {
      * </pre>
      * <p/>
      * In order to insert a new note (the cards for this note will be added to the default deck)
-     * the {@link #CONTENT_URI} must be used together with a model (see {@link FlashCardsContract.Model})
+     * the {@link #CONTENT_URI} must be used together with a model (see {@link Model})
      * ID, e.g.
      * <pre>
      *     <code>
@@ -180,7 +180,7 @@ public class FlashCardsContract {
      *     </code>
      * </pre>
      * <p/>
-     * It's not possible to update notes through this interface. Instead the {@link FlashCardsContract.DataColumns}
+     * It's not possible to update notes through this interface. Instead the {@link DataColumns}
      * interface and it's implementations should be used.
      * <p/>
      * A note consists of the following columns:
@@ -346,7 +346,7 @@ public class FlashCardsContract {
      * <td>long</td>
      * <td>{@link #NOTE_ID}</td>
      * <td>read-only</td>
-     * <td>This is the ID of the note that this row belongs to (i.e. {@link FlashCardsContract.Note#_ID}).
+     * <td>This is the ID of the note that this row belongs to (i.e. {@link Note#_ID}).
      * </td>
      * </tr>
      * <tr>
@@ -375,8 +375,8 @@ public class FlashCardsContract {
      * </tr>
      * </table>
      * <p/>
-     * Example for querying data and using the aliases from {@link FlashCardsContract.Data.Field} and
-     * {@link FlashCardsContract.Data.Tags}:
+     * Example for querying data and using the aliases from {@link Data.Field} and
+     * {@link Data.Tags}:
      * <pre>
      *     <code>
      *         Uri noteUri = Uri.withAppendedPath(FlashCardsContract.Note.CONTENT_URI, Long.toString(noteId));
@@ -402,7 +402,7 @@ public class FlashCardsContract {
      *     </code>
      * </pre>
      * <p/>
-     * Example for updating fields using the aliases from {@link FlashCardsContract.Data.Field}:
+     * Example for updating fields using the aliases from {@link Data.Field}:
      * <pre>
      *     <code>
      *         Uri noteUri = Uri.withAppendedPath(FlashCardsContract.Note.CONTENT_URI, Long.toString(noteId));
@@ -436,7 +436,7 @@ public class FlashCardsContract {
         public static final String _ID = "_id";
 
         /**
-         * This is the ID of the note that this row belongs to (i.e. {@link FlashCardsContract.Note#_ID}).
+         * This is the ID of the note that this row belongs to (i.e. {@link Note#_ID}).
          */
         public static final String NOTE_ID = "note_id";
 
@@ -444,14 +444,14 @@ public class FlashCardsContract {
          * This describes the MIME type of the row, which describes how to interpret the columns
          * {@link #DATA1} and {@link #DATA2}. Allowed values are:
          * <ul>
-         * <li>{@link FlashCardsContract.Data.Field#CONTENT_ITEM_TYPE}:
+         * <li>{@link Data.Field#CONTENT_ITEM_TYPE}:
          * You can use the aliases described in
-         * {@link FlashCardsContract.Data.Field} to access the
+         * {@link Data.Field} to access the
          * columns instead of the generic "DATA1" or "DATA2".
          * </li>
-         * <li>{@link FlashCardsContract.Data.Tags#CONTENT_ITEM_TYPE}:
+         * <li>{@link Data.Tags#CONTENT_ITEM_TYPE}:
          * You can use the aliases described in
-         * {@link FlashCardsContract.Data.Tags} to access the
+         * {@link Data.Tags} to access the
          * columns instead of the generic "DATA1" or "DATA2".
          * </li>
          * </ul>
@@ -495,7 +495,7 @@ public class FlashCardsContract {
          * A data kind representing a field in a note.
          * <p/>
          * You can use the columns defined for
-         * {@link FlashCardsContract.DataColumns} as well as the following
+         * {@link DataColumns} as well as the following
          * aliases.
          * <table class="jd-sumtable">
          * <tr>
@@ -504,21 +504,21 @@ public class FlashCardsContract {
          * <tr>
          * <td>String</td>
          * <td>{@link #FIELD_NAME}</td>
-         * <td>{@link FlashCardsContract.DataColumns#DATA1}</td>
+         * <td>{@link DataColumns#DATA1}</td>
          * <td>read-only</td>
          * <td>Field name</td>
          * </tr>
          * <tr>
          * <td>String</td>
          * <td>{@link #FIELD_CONTENT}</td>
-         * <td>{@link FlashCardsContract.DataColumns#DATA2}</td>
+         * <td>{@link DataColumns#DATA2}</td>
          * <td>read-write</td>
          * <td>Field content</td>
          * </tr>
          * </table>
          * <p/>
          * Since the fields are defined by the model type, it is not possible to insert or delete
-         * fields. To update a field see the class description of {@link FlashCardsContract.DataColumns}.
+         * fields. To update a field see the class description of {@link DataColumns}.
          */
         public class Field implements DataColumns {
             /**
@@ -541,7 +541,7 @@ public class FlashCardsContract {
          * A data kind representing tags in a note.
          * <p/>
          * You can use the columns defined for
-         * {@link FlashCardsContract.DataColumns} as well as the following
+         * {@link DataColumns} as well as the following
          * aliases.
          * <table class="jd-sumtable">
          * <tr>
@@ -550,7 +550,7 @@ public class FlashCardsContract {
          * <tr>
          * <td>String</td>
          * <td>{@link #TAG_CONTENT}</td>
-         * <td>{@link FlashCardsContract.DataColumns#DATA1}</td>
+         * <td>{@link DataColumns#DATA1}</td>
          * <td>read-write</td>
          * <td>Tags, seperated by spaces</td>
          * </tr>
@@ -601,6 +601,7 @@ public class FlashCardsContract {
      * It's possible to query all models at once like this
      * <p>
      * <pre>
+     *     <code>
      *         Uri noteUri = Uri.withAppendedPath(FlashCardsContract.Note.CONTENT_URI, Long.toString(noteId));
      *         final Cursor cursor = cr.query(FlashCardsContract.Model.CONTENT_URI,
      *                                     null,  // projection
@@ -608,12 +609,14 @@ public class FlashCardsContract {
      *                                     null,  // selectionArgs is ignored for this URI
      *                                     null   // sortOrder is ignored for this URI
      *                                     );
+     *     </code>
      *     </pre>
      * </p>
      *
      * It's also possible to access a specific model like this:
      * <p>
      * <pre>
+     *     <code>
      *         long modelId = ...// Use the correct model ID
      *         Uri modelUri = Uri.withAppendedPath(FlashCardsContract.Model.CONTENT_URI, Long.toString(modelId));
      *         final Cursor cur = cr.query(modelUri,
@@ -622,6 +625,7 @@ public class FlashCardsContract {
      *                                     null,  // selectionArgs is ignored for this URI
      *                                     null   // sortOrder is ignored for this URI
      *                                     );
+     *     </code>
      *     </pre>
      * </p>
      */
@@ -688,6 +692,7 @@ public class FlashCardsContract {
      * access all the cards that are associated with this note:
      * <p>
      * <pre>
+     *     <code>
      *         Uri noteUri = Uri.withAppendedPath(FlashCardsContract.Note.CONTENT_URI, Long.toString(noteId));
      *         Uri cardsUri = Uri.withAppendedPath(noteUri, "cards");
      *         final Cursor cur = cr.query(cardsUri,
@@ -696,12 +701,14 @@ public class FlashCardsContract {
      *                                     null,  // selectionArgs is ignored for this URI
      *                                     null   // sortOrder is ignored for this URI
      *                                     );
+     *     </code>
      *     </pre>
      * </p>
      * If it is furthermore appended by the cards ordinal (see {@link #CARD_ORD}) it's possible to
      * directly access a specific card.
      * <p>
      * <pre>
+     *     <code>
      *         Uri noteUri = Uri.withAppendedPath(FlashCardsContract.Note.CONTENT_URI, Long.toString(noteId));
      *         Uri cardsUri = Uri.withAppendedPath(noteUri, "cards");
      *         Uri specificCardUri = Uri.withAppendedPath(noteUri, Integer.toString(cardOrd));
@@ -711,6 +718,7 @@ public class FlashCardsContract {
      *                                     null,  // selectionArgs is ignored for this URI
      *                                     null   // sortOrder is ignored for this URI
      *                                     );
+     *     </code>
      *     </pre>
      * </p>
      *
@@ -723,7 +731,7 @@ public class FlashCardsContract {
      * <td>long</td>
      * <td>{@link #NOTE_ID}</td>
      * <td>read-only</td>
-     * <td>This is the ID of the note that this row belongs to (i.e. {@link FlashCardsContract.Note#_ID}).
+     * <td>This is the ID of the note that this row belongs to (i.e. {@link Note#_ID}).
      * </td>
      * </tr>
      * <tr>
@@ -761,6 +769,30 @@ public class FlashCardsContract {
      * <td>The answer for this card.
      * </td>
      * </tr>
+     * <tr>
+     * <td>String</td>
+     * <td>{@link #QUESTION_SIMPLE}</td>
+     * <td>read-only</td>
+     * <td>The question for this card in the simplified form, without card styling information (CSS).
+     * </td>
+     * </tr>
+     * <tr>
+     * <td>String</td>
+     * <td>{@link #ANSWER_SIMPLE}</td>
+     * <td>read-only</td>
+     * <td>The answer for this card in the simplified form, without card styling information (CSS).
+     * </td>
+     * </tr>
+     * <tr>
+     * <td>String</td>
+     * <td>{@link #ANSWER_PURE}</td>
+     * <td>read-only</td>
+     * <td>
+     * Purified version of the answer. In case the {@link #ANSWER} contains any additional elements
+     * (like a duplicate of the question) this is removed for {@link #ANSWER_PURE}.
+     * Like {@link #ANSWER_SIMPLE} it does not contain styling information (CSS).
+     * </td>
+     * </tr>
      * </table>
      *
      * The only writable column is the {@link #DECK_NAME}. Moving a card to another deck, can be
@@ -789,7 +821,7 @@ public class FlashCardsContract {
      */
     public static class Card {
         /**
-         * This is the ID of the note that this card belongs to (i.e. {@link FlashCardsContract.Note#_ID}).
+         * This is the ID of the note that this card belongs to (i.e. {@link Note#_ID}).
          */
         public static final String NOTE_ID = "note_id";
 
@@ -818,6 +850,22 @@ public class FlashCardsContract {
          * The answer for this card.
          */
         public static final String ANSWER = "answer";
+
+        /**
+         * Simplified version of the question, without card styling (CSS).
+         */
+        public static final String QUESTION_SIMPLE = "question_simple";
+
+        /**
+         * Simplified version of the answer, without card styling (CSS).
+         */
+        public static final String ANSWER_SIMPLE = "answer_simple";
+
+        /**
+         * Purified version of the answer. In case the ANSWER contains any additional elements
+         * (like a duplicate of the question) this is removed for ANSWER_PURE
+         */
+        public static final String ANSWER_PURE = "answer_pure";
 
         public static final String[] DEFAULT_PROJECTION = {
                 NOTE_ID,
@@ -859,7 +907,8 @@ public class FlashCardsContract {
      * <td>int</td>
      * <td>limit</td>
      * <td>1</td>
-     * <td>The maximum number of cards (rows) that will be returned. In case the deck has fewer scheduled cards, the returned number of cards will be lower than the limit.
+     * <td>The maximum number of cards (rows) that will be returned.
+     *     In case the deck has fewer scheduled cards, the returned number of cards will be lower than the limit.
      * </td>
      * </tr>
      * </table>
@@ -867,6 +916,7 @@ public class FlashCardsContract {
      *
      * <p>
      * <pre>
+     *     <code>
      *         Uri scheduled_cards_uri = FlashCardsContract.ReviewInfo.CONTENT_URI;
      *         String deckArguments[] = new String[]{"5", "123456789"};
      *         String deckSelector = "limit=?, deckID=?";
@@ -876,6 +926,7 @@ public class FlashCardsContract {
      *                                     deckArguments,  // if null, the deckSelector must not contain any placeholders ("?")
      *                                     null   // sortOrder is ignored for this URI
      *                                     );
+     *     </code>
      *     </pre>
      * </p>
      *
@@ -888,7 +939,7 @@ public class FlashCardsContract {
      * <td>long</td>
      * <td>{@link #NOTE_ID}</td>
      * <td>read-only</td>
-     * <td>This is the ID of the note that this row belongs to (i.e. {@link FlashCardsContract.Note#_ID}).
+     * <td>This is the ID of the note that this row belongs to (i.e. {@link Note#_ID}).
      * </td>
      * </tr>
      * <tr>
@@ -911,21 +962,6 @@ public class FlashCardsContract {
      * <td>read-only</td>
      * <td>A JSONArray containing when the card will be scheduled for review for all ease identifiers available.<br/>
      * The number of entries in this array must equal the number of buttons in {@link #BUTTON_COUNT}.
-     * </td>
-     * </tr>
-     * <tr>
-     * <td>String</td>
-     * <td>{@link #QUESTION_SIMPLE}</td>
-     * <td>read-only</td>
-     * <td>The question for this card in the simplified form.
-     * </td>
-     * </tr>
-     * <tr>
-     * <td>String</td>
-     * <td>{@link #ANSWER_SIMPLE}</td>
-     * <td>read-only</td>
-     * <td>The answer for this card in the simplified form. It does not include
-     * a duplicate of the question.
      * </td>
      * </tr>
      * <tr>
@@ -971,7 +1007,7 @@ public class FlashCardsContract {
         public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "schedule");
 
         /**
-         * This is the ID of the note that this card belongs to (i.e. {@link FlashCardsContract.Note#_ID}).
+         * This is the ID of the note that this card belongs to (i.e. {@link Note#_ID}).
          */
         public static final String NOTE_ID = "note_id";
 
@@ -993,23 +1029,15 @@ public class FlashCardsContract {
          */
         public static final String NEXT_REVIEW_TIMES = "next_review_times";
 
-        /**
-         * Simplified version of the question.
-         */
-        public static final String QUESTION_SIMPLE = "question_simple";
 
         /**
-         * Simplified version of the answer.
-         */
-        public static final String ANSWER_SIMPLE = "answer_simple";
-
-        /**
-         * Simplified version of the answer.
+         * The names of the media files in the question and answer
          */
         public static final String MEDIA_FILES = "media_files";
 
         /*
-         * Ease of an answer. Is not set when requesting the scheduled cards. Can take values of AbstractFlashcardViewer e.g. EASE_FAILED
+         * Ease of an answer. Is not set when requesting the scheduled cards.
+         * Can take values of AbstractFlashcardViewer e.g. EASE_FAILED
          */
 
         public static final String EASE = "answer_ease";
@@ -1019,8 +1047,6 @@ public class FlashCardsContract {
                 CARD_ORD,
                 BUTTON_COUNT,
                 NEXT_REVIEW_TIMES,
-                QUESTION_SIMPLE,
-                ANSWER_SIMPLE,
                 MEDIA_FILES
         };
 
@@ -1060,7 +1086,18 @@ public class FlashCardsContract {
      * <td>read-only</td>
      * <td>This is the name of the Deck as the user usually sees it.
      * </tr>
-
+     * <tr>
+     * <td>JSONArray</td>
+     * <td>{@link #DECK_COUNTS}</td>
+     * <td>read-only</td>
+     * <td>These are the deck counts of the Deck. [learn, review, new]
+     * </tr>
+     * <tr>
+     * <td>JSONObject</td>
+     * <td>{@link #OPTIONS}</td>
+     * <td>read-only</td>
+     * <td>These are the options of the deck.
+     * </tr>
      * </table>
      *
      * Requesting a list of all decks can be done as shown in this example
@@ -1072,8 +1109,61 @@ public class FlashCardsContract {
      *      do {
      *          long deckID = decksCursor.getLong(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_ID));
      *          String deckName = decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_NAME));
+     *          try {
+     *              JSONObject deckOptions = new JSONObject(decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.OPTIONS)));
+     *              JSONArray deckCounts = new JSONArray(decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_COUNTS)));
+     *          } catch (JSONException e) {
+     *              e.printStackTrace();
+     *          }
      *          decks.put(deckID, deckName);
      *     } while (decksCursor.moveToNext());
+     *     </code>
+     * </pre>
+     *
+     *
+     * Requesting a single deck can be done the following way:
+     *
+     * <pre>
+     *     <code>
+     *     long deckId = 123456 //<-- insert real deck ID here
+     *     Uri deckUri = Uri.withAppendedPath(FlashCardsContract.Deck.CONTENT_ALL_URI, Long.toString(deckId));
+     *              Cursor decksCursor = getContentResolver().query(deckUri, null, null, null, null);
+     *
+     *      if (decksCursor == null || !decksCursor.moveToFirst()) {
+     *          Log.d(TAG, "query for deck returned no result");
+     *          if (decksCursor != null) {
+     *              decksCursor.close();
+     *          }
+     *      } else {
+     *          JSONObject decks = new JSONObject();
+     *          long deckID = decksCursor.getLong(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_ID));
+     *          String deckName = decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_NAME));
+     *
+     *          try {
+     *              JSONObject deckOptions = new JSONObject(decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.OPTIONS)));
+     *              JSONArray deckCounts = new JSONArray(decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_COUNTS)));
+     *              Log.d(TAG, "deckCounts " + deckCounts);
+     *              Log.d(TAG, "deck Options " + deckOptions);
+     *              decks.put(deckName, deckID);
+     *          } catch (JSONException e) {
+     *              e.printStackTrace();
+     *          }
+     *          decksCursor.close();
+     *     }
+     *    </code>
+     * </pre>
+     *
+     *
+     * Updating the selected deck can be done as shown in this example
+     * <pre>
+     *     <code>
+     *       long deckId = 123456; //<- insert real deck id here
+     *
+     *       ContentResolver cr = getContentResolver();
+     *       Uri selectDeckUri = FlashCardsContract.Deck.CONTENT_SELECTED_URI;
+     *       ContentValues values = new ContentValues();
+     *       values.put(FlashCardsContract.Deck.DECK_ID, deckId);
+     *       cr.update(selectDeckUri, values, null, null);
      *     </code>
      * </pre>
      *
@@ -1093,9 +1183,21 @@ public class FlashCardsContract {
          */
         public static final String DECK_ID = "deck_id";
 
+        /**
+         * The number of cards in the Deck
+         */
+        public static final String DECK_COUNTS = "deck_count";
+
+        /**
+         * The options of the Deck
+         */
+        public static final String OPTIONS = "options";
+
         public static final String[] DEFAULT_PROJECTION = {
                 DECK_NAME,
-                DECK_ID
+                DECK_ID,
+                DECK_COUNTS,
+                OPTIONS
         };
 
         /**

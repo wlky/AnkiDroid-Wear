@@ -12,6 +12,7 @@ public class CommonIdentifiers {
     public static final String W2P_PLAY_SOUNDS = "/com.ichi2.wear/playSounds";
     public static final String P2W_NO_MORE_CARDS = "/com.ichi2.wear/noMoreCards";
     public static final String W2P_REQUEST_DECKS = "/com.ichi2.wear/requestDecks";
+    public static final String W2P_CHOOSE_COLLECTION = "/com.ichi2.wear/chooseCollection";
 
     public static final String P2W_RESPOND_CARD = "/com.ichi2.wear/respondWithCard";
 

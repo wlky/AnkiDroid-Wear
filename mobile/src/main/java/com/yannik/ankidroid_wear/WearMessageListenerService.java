@@ -56,8 +56,6 @@ public class WearMessageListenerService extends WearableListenerService {
     private static ArrayList<String> deckNames = new ArrayList<String>();
 
 
-
-
     @Override
     public void onCreate() {
         super.onCreate();
@@ -117,20 +115,47 @@ public class WearMessageListenerService extends WearableListenerService {
                 deckID = -1;
             }
             queryForCurrentCard(deckID);
+            setSoundQueue(null);
+        } else if (messageEvent.getPath().equals(CommonIdentifiers.W2P_CHOOSE_COLLECTION)) {
+            long deckId = Long.valueOf(new String(messageEvent.getData()));
+            Log.v(TAG, "Message received on phone is: " + deckId);
 
-//        } else if (messageEvent.getPath().equals(CommonIdentifiers.W2P_CHOOSE_COLLECTION)) {
-//            long deckId = Long.valueOf(new String(messageEvent.getData()));
-//            Log.v(TAG, "Message received on phone is: " + deckId);
-//
-//            ContentResolver cr = getContentResolver();
-//
-//            Uri selectDeckUri = FlashCardsContract.Deck.CONTENT_SELECTED_URI;
-//            ContentValues values = new ContentValues();
-//            values.put(FlashCardsContract.Deck.DECK_ID, deckId);
-//            cr.update(selectDeckUri, values, null, null);
-//
-//
-//            queryForCurrentCard();
+            ContentResolver cr = getContentResolver();
+
+            Uri selectDeckUri = FlashCardsContract.Deck.CONTENT_SELECTED_URI;
+            ContentValues values = new ContentValues();
+            values.put(FlashCardsContract.Deck.DECK_ID, deckId);
+            cr.update(selectDeckUri, values, null, null);
+
+
+            //----------------------------------------------------------------------------
+
+            Uri deckUri = Uri.withAppendedPath(FlashCardsContract.Deck.CONTENT_ALL_URI, Long.toString(deckId));
+            Cursor decksCursor = getContentResolver().query(deckUri, null, null, null, null);
+
+            if (decksCursor == null || !decksCursor.moveToFirst()) {
+                Log.d(TAG, "query for deck returned no result");
+                if (decksCursor != null) {
+                    decksCursor.close();
+                }
+            } else {
+                JSONObject decks = new JSONObject();
+                long deckID = decksCursor.getLong(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_ID));
+                String deckName = decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_NAME));
+
+                try {
+                    JSONObject deckOptions = new JSONObject(decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.OPTIONS)));
+                    JSONArray deckCounts = new JSONArray(decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_COUNTS)));
+                    Log.d(TAG, "deckCounts " + deckCounts);
+                    Log.d(TAG, "deck Options " + deckOptions);
+                    decks.put(deckName, deckID);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                decksCursor.close();
+            }
+
 
         } else if (messageEvent.getPath().equals(CommonIdentifiers.W2P_REQUEST_DECKS)) {
             queryForDeckNames();
@@ -159,11 +184,11 @@ public class WearMessageListenerService extends WearableListenerService {
             }
         } else if (messageEvent.getPath().equals(CommonIdentifiers.W2P_REQUEST_SETTINGS)) {
             sendSettings();
-        }else if (messageEvent.getPath().equals(CommonIdentifiers.W2P_PLAY_SOUNDS)) {
+        } else if (messageEvent.getPath().equals(CommonIdentifiers.W2P_PLAY_SOUNDS)) {
             JSONArray soundNames;
             try {
                 soundNames = new JSONArray(new String(messageEvent.getData()));
-                addToSoundQueue(soundNames);
+                setSoundQueue(soundNames);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -174,37 +199,51 @@ public class WearMessageListenerService extends WearableListenerService {
 
     ArrayList<Uri> soundsToPlay;
 
-    private void addToSoundQueue(JSONArray soundFileNames){
-        if(soundsToPlay == null) soundsToPlay = new ArrayList<Uri>();
+    private synchronized void setSoundQueue(JSONArray soundFileNames) {
+        Log.d("TAG", "Setting sound to queue: " + (soundsToPlay == null ? "null" : soundsToPlay.size()));
+        if (soundsToPlay == null) {
+            soundsToPlay = new ArrayList<Uri>();
+        } else {
+            soundsToPlay.clear();
+        }
 
-        for(int i = 0; i < soundFileNames.length(); i++){
-            try {
-                File soundFile = new File(CardMedia.getMediaPath(soundFileNames.getString(i)));
-                if(soundFile.exists()){
-                    Uri soundUri = Uri.fromFile(soundFile);
-                    soundsToPlay.add(soundUri);
+        if (soundMediaPlayer != null && soundMediaPlayer.isPlaying()) {
+            soundMediaPlayer.stop();
+            soundMediaPlayer.reset();
+        }
+
+        if (soundFileNames != null) {
+            for (int i = 0; i < soundFileNames.length(); i++) {
+                try {
+                    File soundFile = new File(CardMedia.getMediaPath(soundFileNames.getString(i)));
+                    if (soundFile.exists()) {
+                        Uri soundUri = Uri.fromFile(soundFile);
+                        soundsToPlay.add(soundUri);
+                        Log.d("TAG", "adding sound to queue: " + soundUri + " ns: " + soundsToPlay.size());
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
-            } catch (JSONException e) {
-                e.printStackTrace();
             }
         }
-        if(soundMediaPlayer == null || !soundMediaPlayer.isPlaying()) {
 
-            soundThreadHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    startPlayingSounds();
-                }
-            });
+        soundThreadHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                startPlayingSounds();
+            }
+        });
 
-        }
     }
-    Handler soundThreadHandler = new Handler();
-    MediaPlayer soundMediaPlayer;
 
-    private void startPlayingSounds(){
-        if(soundsToPlay.size() >= 1) {
-            if(soundMediaPlayer == null){
+    static Handler soundThreadHandler = new Handler();
+    static MediaPlayer soundMediaPlayer;
+
+    private synchronized void startPlayingSounds() {
+
+        if (soundsToPlay.size() >= 1) {
+            Log.d("TAG", "starting to play sound");
+            if (soundMediaPlayer == null) {
                 soundMediaPlayer = new MediaPlayer();
                 soundMediaPlayer.setOnCompletionListener(soundEndedListener);
             }
@@ -215,12 +254,15 @@ public class WearMessageListenerService extends WearableListenerService {
                 soundMediaPlayer.setOnCompletionListener(soundEndedListener);
                 soundMediaPlayer.prepare();
                 soundMediaPlayer.start();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 
-        }else{
-            if (soundMediaPlayer != null){
+        } else {
+            if (soundMediaPlayer != null) {
+                if (soundMediaPlayer.isPlaying()) {
+                    soundMediaPlayer.stop();
+                }
                 soundMediaPlayer.release();
                 soundMediaPlayer = null;
             }
@@ -229,7 +271,7 @@ public class WearMessageListenerService extends WearableListenerService {
 
     SoundPlayerOnCompletionListener soundEndedListener = new SoundPlayerOnCompletionListener();
 
-    class SoundPlayerOnCompletionListener implements MediaPlayer.OnCompletionListener{
+    class SoundPlayerOnCompletionListener implements MediaPlayer.OnCompletionListener {
 
         @Override
         public void onCompletion(MediaPlayer mp) {
@@ -263,7 +305,7 @@ public class WearMessageListenerService extends WearableListenerService {
 //                                alertButton.setProgress(-1);
 //                                label.setText("Tap to retry. Alert not sent :(");
                             }
-                            if(path.equals(CommonIdentifiers.P2W_CHANGE_SETTINGS)) {
+                            if (path.equals(CommonIdentifiers.P2W_CHANGE_SETTINGS)) {
                                 Intent messageIntent = new Intent();
                                 messageIntent.setAction(Intent.ACTION_SEND);
                                 messageIntent.putExtra("status", status.getStatusCode());
@@ -297,6 +339,9 @@ public class WearMessageListenerService extends WearableListenerService {
         if (reviewInfoCursor == null || !reviewInfoCursor.moveToFirst()) {
             Log.d(TAG, "query for due card info returned no result");
             sendNoMoreCardsToWear();
+            if (reviewInfoCursor != null) {
+                reviewInfoCursor.close();
+            }
         } else {
             cardQueue.clear();
             do {
@@ -305,8 +350,6 @@ public class WearMessageListenerService extends WearableListenerService {
                 card.cardOrd = reviewInfoCursor.getInt(reviewInfoCursor.getColumnIndex(FlashCardsContract.ReviewInfo.CARD_ORD));
                 card.noteID = reviewInfoCursor.getLong(reviewInfoCursor.getColumnIndex(FlashCardsContract.ReviewInfo.NOTE_ID));
                 card.buttonCount = reviewInfoCursor.getInt(reviewInfoCursor.getColumnIndex(FlashCardsContract.ReviewInfo.BUTTON_COUNT));
-                card.q = reviewInfoCursor.getString(reviewInfoCursor.getColumnIndex(FlashCardsContract.ReviewInfo.QUESTION_SIMPLE));
-                card.a = reviewInfoCursor.getString(reviewInfoCursor.getColumnIndex(FlashCardsContract.ReviewInfo.ANSWER_SIMPLE));
 
                 try {
                     card.fileNames = new JSONArray(reviewInfoCursor.getString(reviewInfoCursor.getColumnIndex(FlashCardsContract.ReviewInfo.MEDIA_FILES)));
@@ -316,12 +359,40 @@ public class WearMessageListenerService extends WearableListenerService {
                 }
                 Log.v(TAG, "card added to queue: " + card.fileNames);
 
-                new GrabAndProcessImagesTask().execute(card);
+                new GrabAndProcessFilesTask().execute(card);
 
                 cardQueue.add(card);
             } while (reviewInfoCursor.moveToNext());
+
             reviewInfoCursor.close();
+
             if (cardQueue.size() >= 1) {
+
+                for (CardInfo card : cardQueue) {
+                    Uri noteUri = Uri.withAppendedPath(FlashCardsContract.Note.CONTENT_URI, Long.toString(card.noteID));
+                    Uri cardsUri = Uri.withAppendedPath(noteUri, "cards");
+                    Uri specificCardUri = Uri.withAppendedPath(cardsUri, Integer.toString(card.cardOrd));
+                    final Cursor specificCardCursor = getContentResolver().query(specificCardUri,
+                            SIMPLE_CARD_PROJECTION,  // projection
+                            null,  // selection is ignored for this URI
+                            null,  // selectionArgs is ignored for this URI
+                            null   // sortOrder is ignored for this URI
+                    );
+
+                    if (specificCardCursor == null || !specificCardCursor.moveToFirst()) {
+                        Log.d(TAG, "query for due card info returned no result");
+                        sendNoMoreCardsToWear();
+                        if (specificCardCursor != null) {
+                            specificCardCursor.close();
+                        }
+                        return;
+                    } else {
+                        card.a = specificCardCursor.getString(specificCardCursor.getColumnIndex(FlashCardsContract.Card.ANSWER_PURE));
+                        card.q = specificCardCursor.getString(specificCardCursor.getColumnIndex(FlashCardsContract.Card.QUESTION_SIMPLE));
+                        specificCardCursor.close();
+                    }
+                }
+
                 CardInfo nextCard = cardQueue.get(0);
                 sendCardToWear(nextCard.q, nextCard.a, nextCard.nextReviewTexts, nextCard.noteID, nextCard.cardOrd);
             }
@@ -329,7 +400,11 @@ public class WearMessageListenerService extends WearableListenerService {
 
     }
 
-    private class GrabAndProcessImagesTask extends AsyncTask<CardInfo, Void, Void> {
+    public static final String[] SIMPLE_CARD_PROJECTION = {
+            FlashCardsContract.Card.ANSWER_PURE,
+            FlashCardsContract.Card.QUESTION_SIMPLE};
+
+    private class GrabAndProcessFilesTask extends AsyncTask<CardInfo, Void, Void> {
         @Override
         protected Void doInBackground(CardInfo... cards) {
             boolean nothingChanged = true;
@@ -339,23 +414,26 @@ public class WearMessageListenerService extends WearableListenerService {
                     try {
                         String name = card.fileNames.getString(i);
                         String mediaPath = CardMedia.getMediaPath(name);
-                        if(isImage(name)) {
-                            Bitmap bitmap = CardMedia.pullScaledBitmap(mediaPath, 200,200, true);
+                        if (isImage(name)) {
+                            Bitmap bitmap = CardMedia.pullScaledBitmap(mediaPath, 200, 200, true);
                             Asset asset = CardMedia.createAssetFromBitmap(bitmap);
 
                             dataMap.getDataMap().putAsset(name, asset);
                             nothingChanged = false;
-                        }else if(isSound(name)){
+                        } else if (isSound(name)) {
                             card.addSoundUri(mediaPath);
                         }
-                    } catch (JSONException e) {e.printStackTrace();return null;}
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        return null;
+                    }
 
 
                     // Escape early if cancel() is called
                     if (isCancelled()) break;
                 }
             }
-            if(!nothingChanged) {
+            if (!nothingChanged) {
                 PutDataRequest request = dataMap.asPutDataRequest();
                 Wearable.DataApi.putDataItem(googleApiClient, request);
             }
@@ -364,22 +442,22 @@ public class WearMessageListenerService extends WearableListenerService {
     }
 
 
+    private final String[] okImageExtensions = new String[]{"jpg", "png", "gif", "jpeg"};
 
-    private final String[] okImageExtensions =  new String[] {"jpg", "png", "gif","jpeg"};
-    private boolean isImage(String name){
+    private boolean isImage(String name) {
         return hasCertainExtension(name, okImageExtensions);
     }
 
-    private final String[] okSoundExtensions =  new String[] {"3gp", "mp3", "wma"};
-    private boolean isSound(String name){
+    private final String[] okSoundExtensions = new String[]{"3gp", "mp3", "wma"};
+
+    private boolean isSound(String name) {
         return hasCertainExtension(name, okSoundExtensions);
     }
 
 
-    private boolean hasCertainExtension(String name, String[] extensions){
-        for(String extension : extensions){
-            if (name.trim().toLowerCase().endsWith(extension))
-            {
+    private boolean hasCertainExtension(String name, String[] extensions) {
+        for (String extension : extensions) {
+            if (name.trim().toLowerCase().endsWith(extension)) {
                 return true;
             }
         }
@@ -388,17 +466,23 @@ public class WearMessageListenerService extends WearableListenerService {
 
 
     private void queryForDeckNames() {
-        Cursor decksCursor = getContentResolver().query(FlashCardsContract.Deck.CONTENT_ALL_URI, null, null, null, null);
+        Cursor decksCursor = getContentResolver().query(FlashCardsContract.Deck.CONTENT_ALL_URI, FlashCardsContract.Deck.DEFAULT_PROJECTION, null, null, null);
 
         if (!decksCursor.moveToFirst()) {
             Log.d(TAG, "query for decks returned no result");
+            decksCursor.close();
         } else {
             JSONObject decks = new JSONObject();
             do {
                 long deckID = decksCursor.getLong(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_ID));
                 String deckName = decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_NAME));
 
+
                 try {
+                    JSONObject deckOptions = new JSONObject(decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.OPTIONS)));
+                    JSONArray deckCounts = new JSONArray(decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_COUNTS)));
+                    Log.d(TAG, "deckCounts " + deckCounts);
+                    Log.d(TAG, "deck Options " + deckOptions);
                     decks.put(deckName, deckID);
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -422,18 +506,16 @@ public class WearMessageListenerService extends WearableListenerService {
         JSONArray fileNames;
         ArrayList<Uri> soundUris = null;
 
-        public void addSoundUri(String path){
+        public synchronized void addSoundUri(String path) {
             Uri uri = Uri.fromFile(new File(path));
 
-            if(soundUris == null){
+            if (soundUris == null) {
                 soundUris = new ArrayList<Uri>();
             }
 
             soundUris.add(uri);
         }
     }
-
-
 
 
     @Override

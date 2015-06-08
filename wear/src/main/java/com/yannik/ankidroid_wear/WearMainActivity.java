@@ -67,6 +67,7 @@ public class WearMainActivity extends FragmentActivity {
         decksFragment.setChooseDeckListener(new CollectionFragment.OnFragmentInteractionListener() {
             @Override
             public void onFragmentInteraction(long id) {
+                fireMessage(CommonIdentifiers.W2P_CHOOSE_COLLECTION, "" + id);
                 fireMessage(CommonIdentifiers.W2P_REQUEST_CARD, "" + id);
                 viewPager.setCurrentItem(0);
                 reviewFragment.indicateLoading();
