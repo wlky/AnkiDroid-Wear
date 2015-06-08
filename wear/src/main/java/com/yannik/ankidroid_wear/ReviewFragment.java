@@ -328,10 +328,6 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                     }
                 });
 
-
-                qaOverlay.setOnClickListener(textClickListener);
-
-
                 qaOverlay.setOnTouchListener(new View.OnTouchListener() {
 
                     private float mDownX;
