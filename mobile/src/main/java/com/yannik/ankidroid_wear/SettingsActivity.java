@@ -71,6 +71,7 @@ public class SettingsActivity extends ActionBarActivity {
             this.findPreference(getResources().getString(R.string.card_flip_animation_key)).setOnPreferenceChangeListener(listener);
             this.findPreference(getResources().getString(R.string.double_tap_key)).setOnPreferenceChangeListener(listener);
             this.findPreference(getResources().getString(R.string.play_sounds)).setOnPreferenceChangeListener(listener);
+            this.findPreference(getResources().getString(R.string.ask_before_first_sound)).setOnPreferenceChangeListener(listener);
             mediaLocationDir.setOnPreferenceChangeListener(listener);
 
         }

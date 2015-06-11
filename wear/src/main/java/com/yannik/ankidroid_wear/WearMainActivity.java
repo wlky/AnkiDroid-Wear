@@ -45,6 +45,7 @@ public class WearMainActivity extends FragmentActivity {
 
     private static GoogleApiClient googleApiClient;
     private MessageReceiver messageReceiver;
+    private IntentFilter messageFilter;
 
 
     public static HashMap<String, Asset> availableAssets = new HashMap<String, Asset>();
@@ -90,8 +91,10 @@ public class WearMainActivity extends FragmentActivity {
                                 preferences.setFlipCards(json.getBoolean(name));
                             } else if (name.equals(Preferences.SCREEN_TIMEOUT)) {
                                 preferences.setScreenTimeout(json.getInt(name));
-                            }else if (name.equals(Preferences.PLAY_SOUNDS)) {
+                            } else if (name.equals(Preferences.PLAY_SOUNDS)) {
                                 preferences.setPlaySound(json.getInt(name));
+                            } else if (name.equals(Preferences.ASK_BEFORE_FIRST_SOUND)) {
+                                preferences.setAskBeforeFirstSound(json.getBoolean(name));
                             }
 
                         } catch (JSONException e) {
@@ -109,9 +112,9 @@ public class WearMainActivity extends FragmentActivity {
         adapter.addFragment(decksFragment);
         viewPager.setAdapter(adapter);
 
-        IntentFilter messageFilter = new IntentFilter(Intent.ACTION_SEND);
+        messageFilter = new IntentFilter(Intent.ACTION_SEND);
         messageReceiver = new MessageReceiver();
-        LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, messageFilter);
+
 
 
         googleApiClient = new GoogleApiClient.Builder(this)
@@ -144,10 +147,12 @@ public class WearMainActivity extends FragmentActivity {
                     }
                 });
 
-
-                fireMessage(CommonIdentifiers.W2P_REQUEST_SETTINGS, null);
-                fireMessage(CommonIdentifiers.W2P_REQUEST_CARD, "" + preferences.getSelectedDeck());
-                fireMessage(CommonIdentifiers.W2P_REQUEST_DECKS, null);
+                if (firstStart) {
+                    firstStart = false;
+                    fireMessage(CommonIdentifiers.W2P_REQUEST_SETTINGS, null);
+                    fireMessage(CommonIdentifiers.W2P_REQUEST_CARD, "" + preferences.getSelectedDeck());
+                    fireMessage(CommonIdentifiers.W2P_REQUEST_DECKS, null);
+                }
             }
 
             @Override
@@ -158,25 +163,42 @@ public class WearMainActivity extends FragmentActivity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
+    boolean firstStart = true;
+
     @Override
     protected void onStart() {
+        Log.d(getClass().getName(), "MainActivity.onStart");
         super.onStart();
+        LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, messageFilter);
         googleApiClient.connect();
+
     }
 
     @Override
     public void onStop() {
+        Log.d(getClass().getName(), "MainActivity.onStop");
         if (null != googleApiClient && googleApiClient.isConnected()) {
             googleApiClient.disconnect();
         }
-        //LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver);
         super.onStop();
     }
 
     @Override
     public void onPause() {
+        Log.d(getClass().getName(), "MainActivity.onPause");
         super.onPause();
-        finish();
+
+        fireMessage(CommonIdentifiers.W2P_EXITING, "");
+
+
+        //finish(); //TODO Real onPause - onResume implementation
+    }
+
+    @Override
+    public void onResume() {
+        Log.d(getClass().getName(), "MainActivity.onResume");
+        super.onResume();
     }
 
     public static void fireMessage(final String path, final String ease) {

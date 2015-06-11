@@ -180,8 +180,12 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         JSONArray sounds = findSounds(text);
         if(sounds.length() >= 1) {
             if (playSounds == -1) {
-                showSoundAlertDialog();
-                return;
+                if(settings.askBeforeFirstSound()) {
+                    showSoundAlertDialog();
+                    return;
+                }else{
+                    playSounds = 1;
+                }
             }
 
             WearMainActivity.fireMessage(CommonIdentifiers.W2P_PLAY_SOUNDS, sounds.toString());
@@ -406,7 +410,8 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                 hard.setOnSwipeListener(easeButtonListener);
                 mid.setOnSwipeListener(easeButtonListener);
 
-
+                applySettings();
+                showLoadingSpinner();
             }
         });
 
@@ -433,11 +438,13 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        Log.d(getClass().getName(), "ReviewFragment.onAttach");
     }
 
     @Override
     public void onStart() {
         super.onStart();
+        Log.d(getClass().getName(), "ReviewFragment.onStart");
         resetScreenTimeout(true);
         for (int i = 0; i < jsonQueueNames.size(); i++) {
             onJsonReceive(jsonQueueNames.get(i), jsonQueueObjects.get(i));
@@ -445,13 +452,14 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         jsonQueueNames.clear();
         jsonQueueObjects.clear();
 
-        showLoadingSpinner();
-        applySettings();
+
+
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
+        Log.d(getClass().getName(), "ReviewFragment.onDetach");
     }
 
     private ArrayList<String> jsonQueueNames = new ArrayList<String>();

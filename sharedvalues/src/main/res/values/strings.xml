@@ -5,4 +5,5 @@
     <string name="card_flip_animation_key">card_flip_animation</string>
     <string name="screen_timeout">screen_timeout</string>
     <string name="play_sounds">play_sounds</string>
+    <string name="ask_before_first_sound">ask_before_first_sound</string>
 </resources>

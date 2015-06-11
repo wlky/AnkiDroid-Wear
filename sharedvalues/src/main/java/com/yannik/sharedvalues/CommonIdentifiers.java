@@ -17,6 +17,7 @@ public class CommonIdentifiers {
     public static final String P2W_RESPOND_CARD = "/com.ichi2.wear/respondWithCard";
 
     public static final String P2W_COLLECTION_LIST = "/com.ichi2.wear/collections";
+    public static final String W2P_EXITING = "/com.ichi2.wear/exit";
 
 
     public static String getUniqueCardIdentifier(Long noteId, int cardOrd){

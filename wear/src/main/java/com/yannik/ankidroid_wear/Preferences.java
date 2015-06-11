@@ -13,6 +13,7 @@ class Preferences {
     private int screenTimeout = 60;
     private long selectedDeck = -1;
     private int playSound = 0;
+    private boolean askBeforeFirstSound;
 
     public static String CARD_FONT_SIZE;
     public static String DOUBLE_TAP;
@@ -20,6 +21,8 @@ class Preferences {
     public static String SELECTED_DECK;
     public static String SCREEN_TIMEOUT;
     public static String PLAY_SOUNDS;
+    public static String ASK_BEFORE_FIRST_SOUND;
+
 
     public Preferences(WearMainActivity wearMainActivity){
         this.wearMainActivity = wearMainActivity;
@@ -29,6 +32,7 @@ class Preferences {
         SELECTED_DECK = wearMainActivity.getResources().getString(R.string.selected_deck);
         SCREEN_TIMEOUT = wearMainActivity.getResources().getString(R.string.screen_timeout);
         PLAY_SOUNDS = wearMainActivity.getResources().getString(R.string.play_sounds);
+        ASK_BEFORE_FIRST_SOUND = wearMainActivity.getResources().getString(R.string.ask_before_first_sound);
     }
 
     public float getCardFontSize() {
@@ -74,7 +78,7 @@ class Preferences {
     }
 
     public void setScreenTimeout(int screenTimeout) {
-        this.screenTimeout = screenTimeout;
+        this.screenTimeout = screenTimeout - 30;
         save();
     }
     private void save(){
@@ -86,6 +90,7 @@ class Preferences {
         editor.putLong(SELECTED_DECK, selectedDeck);
         editor.putInt(SCREEN_TIMEOUT, screenTimeout);
         editor.putInt(PLAY_SOUNDS, playSound);
+        editor.putBoolean(ASK_BEFORE_FIRST_SOUND, askBeforeFirstSound);
         editor.commit();
     }
 
@@ -97,6 +102,7 @@ class Preferences {
         screenTimeout = settings.getInt(SCREEN_TIMEOUT, screenTimeout);
         selectedDeck = settings.getLong(SELECTED_DECK, selectedDeck);
         playSound = settings.getInt(PLAY_SOUNDS, playSound);
+        askBeforeFirstSound = settings.getBoolean(ASK_BEFORE_FIRST_SOUND, askBeforeFirstSound);
     }
 
 
@@ -107,5 +113,14 @@ class Preferences {
     public void setPlaySound(int playSound) {
         this.playSound = playSound;
         save();
+    }
+
+    public void setAskBeforeFirstSound(boolean askBeforeFirstSound) {
+        this.askBeforeFirstSound = askBeforeFirstSound;
+        save();
+    }
+
+    public boolean askBeforeFirstSound() {
+        return askBeforeFirstSound;
     }
 }

@@ -54,7 +54,7 @@ public class WearMessageListenerService extends WearableListenerService {
     private static final String TAG = "WearMessageListener";
     private GoogleApiClient googleApiClient;
     private static ArrayList<String> deckNames = new ArrayList<String>();
-
+    private static long cardStartTime;
 
     @Override
     public void onCreate() {
@@ -167,13 +167,15 @@ public class WearMessageListenerService extends WearableListenerService {
             try {
                 json = new JSONObject(new String(messageEvent.getData()));
                 ease = json.getInt("ease");
-
+                long timeTaken = System.currentTimeMillis() - cardStartTime;
                 ContentResolver cr = getContentResolver();
                 Uri reviewInfoUri = FlashCardsContract.ReviewInfo.CONTENT_URI;
                 ContentValues values = new ContentValues();
                 values.put(FlashCardsContract.ReviewInfo.NOTE_ID, json.getLong("note_id"));
                 values.put(FlashCardsContract.ReviewInfo.CARD_ORD, json.getInt("card_ord"));
                 values.put(FlashCardsContract.ReviewInfo.EASE, ease);
+                values.put(FlashCardsContract.ReviewInfo.TIME_TAKEN, timeTaken);
+                Log.d(TAG, timeTaken +" time taken " + values.getAsLong(FlashCardsContract.ReviewInfo.TIME_TAKEN));
                 cr.update(reviewInfoUri, values, null, null);
 
                 queryForCurrentCard(json.getLong("deck_id"));
@@ -192,7 +194,9 @@ public class WearMessageListenerService extends WearableListenerService {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-        } else {
+        } else if (messageEvent.getPath().equals(CommonIdentifiers.W2P_EXITING)) {
+            setSoundQueue(null);
+        }  else {
             super.onMessageReceived(messageEvent);
         }
     }
@@ -394,6 +398,7 @@ public class WearMessageListenerService extends WearableListenerService {
                 }
 
                 CardInfo nextCard = cardQueue.get(0);
+                cardStartTime = System.currentTimeMillis();
                 sendCardToWear(nextCard.q, nextCard.a, nextCard.nextReviewTexts, nextCard.noteID, nextCard.cardOrd);
             }
         }

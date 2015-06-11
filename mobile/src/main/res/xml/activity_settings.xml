@@ -16,7 +16,7 @@
         <CheckBoxPreference
             android:title="Ask once before playing sounds"
             android:defaultValue="true"
-            android:key="@string/card_flip_animation_key"
+            android:key="@string/ask_before_first_sound"
             />
 
         <com.yannik.ankidroid_wear.NumberPickerPreference
@@ -28,10 +28,10 @@
         <com.yannik.ankidroid_wear.NumberPickerPreference
             android:title="Screen Timeout Delay"
             app:summaryPostFix=" seconds"
-            app:minValue="0"
+            app:minValue="30"
             app:maxValue="400"
             android:key="@string/screen_timeout"
-            android:defaultValue="30" />
+            android:defaultValue="60" />
 
         <CheckBoxPreference
             android:title="Double tap answer to show question"

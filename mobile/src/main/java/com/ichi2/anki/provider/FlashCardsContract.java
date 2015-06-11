@@ -1042,6 +1042,12 @@ public class FlashCardsContract {
 
         public static final String EASE = "answer_ease";
 
+        /*
+         * Time it took to answer the card
+         */
+
+        public static final String TIME_TAKEN = "time_taken";
+
         public static final String[] DEFAULT_PROJECTION = {
                 NOTE_ID,
                 CARD_ORD,
