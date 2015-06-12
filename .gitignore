@@ -1,6 +1,7 @@
 # built application files
 *.apk
 *.ap_
+*.iml
 
 # files for the dex VM
 *.dex
@@ -52,3 +53,5 @@ tools/crowdin_key.txt
 .idea/misc.xml
 
 .idea/vcs.xml
+
+captures/

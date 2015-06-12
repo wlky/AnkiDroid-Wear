@@ -9,8 +9,8 @@ android {
         applicationId "com.yannik.ankidroid_wear"
         minSdkVersion 20
         targetSdkVersion 21
-        versionCode 2
-        versionName "1.2"
+        versionCode 10300103
+        versionName "1.3alpha3"
     }
     buildTypes {
         release {
