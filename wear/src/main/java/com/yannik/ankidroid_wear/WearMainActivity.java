@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
@@ -201,7 +202,13 @@ public class WearMainActivity extends FragmentActivity {
         super.onResume();
     }
 
-    public static void fireMessage(final String path, final String ease) {
+    private void fireMessage(final String path, final String data ) {
+        fireMessage(data, path, 0);
+    }
+
+    private Handler mHandler = new Handler();
+
+    private void fireMessage(final String data, final String path,final int retryCount) {
         Log.d(TAG, "Firing Request " + path);
         // Send the RPC
         PendingResult<NodeApi.GetConnectedNodesResult> nodes = Wearable.NodeApi.getConnectedNodes(googleApiClient);
@@ -215,16 +222,20 @@ public class WearMainActivity extends FragmentActivity {
                     Log.d(TAG, "firing Message with path: " + path);
 
                     PendingResult<MessageApi.SendMessageResult> messageResult = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(),
-                            path, (ease == null ? "nextCardPlease" : ease).getBytes());
+                            path, (data == null ? "" : data).getBytes());
                     messageResult.setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
                         @Override
                         public void onResult(MessageApi.SendMessageResult sendMessageResult) {
                             Status status = sendMessageResult.getStatus();
                             Log.d(TAG, "Status: " + status.toString());
-//                           if (status.getStatusCode() != WearableStatusCodes.SUCCESS) {
-//                                alertButton.setProgress(-1);
-//                                label.setText("Tap to retry. Alert not sent :(");
-//                           }
+                            if(retryCount > 5)return;
+                            mHandler.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    fireMessage(data, path, retryCount + 1);
+                                }
+                            }, 1000 * retryCount);
+
                         }
                     });
                 }

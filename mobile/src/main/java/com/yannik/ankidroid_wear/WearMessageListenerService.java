@@ -244,7 +244,7 @@ public class WearMessageListenerService extends WearableListenerService {
     static MediaPlayer soundMediaPlayer;
 
     private synchronized void startPlayingSounds() {
-
+        if (soundsToPlay == null) return;
         if (soundsToPlay.size() >= 1) {
             Log.d("TAG", "starting to play sound");
             if (soundMediaPlayer == null) {
@@ -287,6 +287,10 @@ public class WearMessageListenerService extends WearableListenerService {
 
 
     private void fireMessage(final byte[] data, final String path) {
+        fireMessage(data, path, 0);
+    }
+
+    private void fireMessage(final byte[] data, final String path,final int retryCount) {
 
         PendingResult<NodeApi.GetConnectedNodesResult> nodes = Wearable.NodeApi.getConnectedNodes(googleApiClient);
         nodes.setResultCallback(new ResultCallback<NodeApi.GetConnectedNodesResult>() {
@@ -294,8 +298,6 @@ public class WearMessageListenerService extends WearableListenerService {
             public void onResult(NodeApi.GetConnectedNodesResult result) {
                 for (int i = 0; i < result.getNodes().size(); i++) {
                     Node node = result.getNodes().get(i);
-                    String nName = node.getDisplayName();
-                    String nId = node.getId();
                     Log.v(TAG, "Phone firing message with path : " + path);
 
                     PendingResult<MessageApi.SendMessageResult> messageResult = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(),
@@ -306,8 +308,13 @@ public class WearMessageListenerService extends WearableListenerService {
                             Status status = sendMessageResult.getStatus();
                             Timber.d("Status: " + status.toString());
                             if (status.getStatusCode() != WearableStatusCodes.SUCCESS) {
-//                                alertButton.setProgress(-1);
-//                                label.setText("Tap to retry. Alert not sent :(");
+                                if(retryCount > 5)return;
+                                soundThreadHandler.postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        fireMessage(data, path, retryCount +1);
+                                    }
+                                }, 1000 * retryCount);
                             }
                             if (path.equals(CommonIdentifiers.P2W_CHANGE_SETTINGS)) {
                                 Intent messageIntent = new Intent();
