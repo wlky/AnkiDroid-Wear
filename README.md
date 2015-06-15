@@ -2,6 +2,7 @@
 
 This App brings Anki to your wrist!
 
+![](Screenshots/github_bild.png)
 
 
 There are two methods to get the AnkiDroid Wear app. The first method is to become a google play alpha tester. This way new updates will automatically be installed on your device, as you are used to by normal apps. <br/>
