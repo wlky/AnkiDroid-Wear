@@ -8,6 +8,17 @@ brings Anki to your wrist!
 <br/>
 <br/>
 
+## Features
+ - Learn cards
+ - Choose the deck to learn cards from
+ - Audio and image file support
+ - Day / Night mode
+ - Card flip animation (can be disabled in settings)
+ - Adjustable font size
+ - Re-show question from answer screen by single/double tapping (can be configured in settings)
+ - Additional delay for screen timeout (can be adjusted in settings)
+
+
 ## Installation
 
 There are two methods to get the AnkiDroid Wear app. The first method is to become a google play alpha tester. This way new updates will automatically be installed on your device, as you are used to by normal apps. <br/>
