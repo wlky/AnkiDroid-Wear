@@ -188,7 +188,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             TextView v = (TextView)super.getView(position, convertView, parent);
-            if(settings.isDayMode()){
+            if(settings == null || settings.isDayMode()){
                 v.setTextColor(getResources().getColor(R.color.dayTextColor));
                 v.setBackgroundResource(R.drawable.round_rect_day);
             }else{
