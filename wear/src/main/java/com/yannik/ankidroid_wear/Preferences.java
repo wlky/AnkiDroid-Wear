@@ -14,6 +14,7 @@ class Preferences {
     private long selectedDeck = -1;
     private int playSound = 0;
     private boolean askBeforeFirstSound;
+    private boolean dayMode = true;
 
     public static String CARD_FONT_SIZE;
     public static String DOUBLE_TAP;
@@ -22,6 +23,7 @@ class Preferences {
     public static String SCREEN_TIMEOUT;
     public static String PLAY_SOUNDS;
     public static String ASK_BEFORE_FIRST_SOUND;
+    public static String DAY_MODE;
 
 
     public Preferences(WearMainActivity wearMainActivity){
@@ -33,6 +35,7 @@ class Preferences {
         SCREEN_TIMEOUT = wearMainActivity.getResources().getString(R.string.screen_timeout);
         PLAY_SOUNDS = wearMainActivity.getResources().getString(R.string.play_sounds);
         ASK_BEFORE_FIRST_SOUND = wearMainActivity.getResources().getString(R.string.ask_before_first_sound);
+        DAY_MODE = wearMainActivity.getResources().getString(R.string.day_mode);
     }
 
     public float getCardFontSize() {
@@ -91,6 +94,7 @@ class Preferences {
         editor.putInt(SCREEN_TIMEOUT, screenTimeout);
         editor.putInt(PLAY_SOUNDS, playSound);
         editor.putBoolean(ASK_BEFORE_FIRST_SOUND, askBeforeFirstSound);
+        editor.putBoolean(DAY_MODE, dayMode);
         editor.commit();
     }
 
@@ -103,6 +107,7 @@ class Preferences {
         selectedDeck = settings.getLong(SELECTED_DECK, selectedDeck);
         playSound = settings.getInt(PLAY_SOUNDS, playSound);
         askBeforeFirstSound = settings.getBoolean(ASK_BEFORE_FIRST_SOUND, askBeforeFirstSound);
+        dayMode = settings.getBoolean(ASK_BEFORE_FIRST_SOUND, dayMode);
     }
 
 
@@ -122,5 +127,14 @@ class Preferences {
 
     public boolean askBeforeFirstSound() {
         return askBeforeFirstSound;
+    }
+
+    public boolean isDayMode() {
+        return dayMode;
+    }
+
+    public void setDayMode(boolean dayMode) {
+        this.dayMode = dayMode;
+        save();
     }
 }

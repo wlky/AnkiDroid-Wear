@@ -9,8 +9,9 @@
     <FrameLayout xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:id="@+id/collectionListContainer"
         app:layout_box="all"
-        android:background="@drawable/round_rect"
+        android:background="@drawable/round_rect_day"
         tools:context="com.yannik.ankidroid_wear.CollectionFragment">
 
 

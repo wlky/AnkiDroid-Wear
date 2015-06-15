@@ -6,4 +6,5 @@
     <string name="screen_timeout">screen_timeout</string>
     <string name="play_sounds">play_sounds</string>
     <string name="ask_before_first_sound">ask_before_first_sound</string>
+    <string name="day_mode">day_mode</string>
 </resources>

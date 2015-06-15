@@ -297,6 +297,13 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         if (settings == null || mTextView == null || !isAdded()) return;
         resetScreenTimeout(true);
         mTextView.setTextSize(settings.getCardFontSize());
+        if(settings.isDayMode()) {
+            mTextView.setTextColor(getResources().getColor(R.color.dayTextColor));
+            qaContainer.setBackgroundResource(R.drawable.round_rect_day);
+        }else{
+            mTextView.setTextColor(getResources().getColor(R.color.nightTextColor));
+            qaContainer.setBackgroundResource(R.drawable.round_rect_night);
+        }
     }
 
     private Context mContext;
@@ -394,8 +401,6 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                             json.put("deck_id", settings.getSelectedDeck());
                             WearMainActivity.fireMessage(CommonIdentifiers.W2P_RESPOND_CARD_EASE, json.toString());
                             indicateLoading();
-
-
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }

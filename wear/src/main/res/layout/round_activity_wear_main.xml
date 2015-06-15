@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/qaContainer"
-        android:background="@drawable/round_rect">
+        android:background="@drawable/round_rect_day">
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -34,7 +34,7 @@
                     android:layout_height="wrap_content"
                     android:layout_width="match_parent"
                     android:text="Hallo"
-                    android:textColor="@color/textColor" />
+                    android:textColor="@color/dayTextColor" />
 
                 <RelativeLayout
                     android:layout_width="match_parent"

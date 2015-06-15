@@ -19,6 +19,12 @@
             android:key="@string/ask_before_first_sound"
             />
 
+        <CheckBoxPreference
+            android:title="Day Mode"
+            android:defaultValue="true"
+            android:key="@string/day_mode"
+            />
+
         <com.yannik.ankidroid_wear.NumberPickerPreference
             android:title="Font size"
             app:summaryPostFix=" points"

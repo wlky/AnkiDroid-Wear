@@ -1,8 +1,10 @@
 package com.yannik.ankidroid_wear;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +21,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A fragment representing a list of Items.
@@ -37,6 +40,8 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
     ArrayList<String> deckNames = new ArrayList<String>();
     ArrayList<Long> deckIDs = new ArrayList<Long>();
     private OnFragmentInteractionListener mListener;
+    private Preferences settings;
+    View collectionListContainer;
 
     /**
      * The fragment's ListView/GridView.
@@ -58,6 +63,23 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         return fragment;
     }
 
+    public void setSettings(Preferences settings){
+        this.settings = settings;
+        applySettings();
+    }
+
+    public void applySettings(){
+        if (settings == null) return;
+
+        if(settings.isDayMode()) {
+            collectionListContainer.setBackgroundResource(R.drawable.round_rect_day);
+        }else{
+            collectionListContainer.setBackgroundResource(R.drawable.round_rect_night);
+        }
+        mAdapter.notifyDataSetChanged();
+    }
+
+
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
@@ -73,7 +95,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
             this.collectionList = getArguments().getStringArray(ARG_PARAM1);
         }
 
-        mAdapter = new ArrayAdapter<String>(getActivity(),
+        mAdapter = new DayNightArrayAdapter(getActivity(),
                 R.layout.collection_list_item, this.deckNames);
     }
 
@@ -81,7 +103,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_collection, container, false);
-
+        collectionListContainer = view.findViewById(R.id.collectionListContainer);
         // Set the adapter
         mListView = (AbsListView) view.findViewById(android.R.id.list);
         ((AdapterView<ListAdapter>) mListView).setAdapter(mAdapter);
@@ -89,6 +111,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         // Set OnItemClickListener so we can be notified on item clicks
         mListView.setOnItemClickListener(this);
 
+        applySettings();
         return view;
     }
 
@@ -154,6 +177,28 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
 
             mAdapter.notifyDataSetChanged();
         }
+    }
+
+
+    class DayNightArrayAdapter extends ArrayAdapter<String>{
+        public DayNightArrayAdapter(Context context, int resource, List<String> objects) {
+            super(context, resource, objects);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            TextView v = (TextView)super.getView(position, convertView, parent);
+            if(settings.isDayMode()){
+                v.setTextColor(getResources().getColor(R.color.dayTextColor));
+                v.setBackgroundResource(R.drawable.round_rect_day);
+            }else{
+                v.setTextColor(getResources().getColor(R.color.nightTextColor));
+                v.setBackgroundResource(R.drawable.round_rect_night);
+            }
+
+            return v;
+        }
+
     }
 
     /**

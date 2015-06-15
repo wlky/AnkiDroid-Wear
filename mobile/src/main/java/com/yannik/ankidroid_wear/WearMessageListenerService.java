@@ -308,13 +308,15 @@ public class WearMessageListenerService extends WearableListenerService {
                             Status status = sendMessageResult.getStatus();
                             Timber.d("Status: " + status.toString());
                             if (status.getStatusCode() != WearableStatusCodes.SUCCESS) {
-                                if(retryCount > 5)return;
-                                soundThreadHandler.postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        fireMessage(data, path, retryCount +1);
-                                    }
-                                }, 1000 * retryCount);
+                                if(!status.isSuccess()) {
+                                    if (retryCount > 5) return;
+                                    soundThreadHandler.postDelayed(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            fireMessage(data, path, retryCount + 1);
+                                        }
+                                    }, 1000 * retryCount);
+                                }
                             }
                             if (path.equals(CommonIdentifiers.P2W_CHANGE_SETTINGS)) {
                                 Intent messageIntent = new Intent();

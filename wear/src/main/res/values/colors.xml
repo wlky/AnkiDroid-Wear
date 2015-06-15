@@ -4,4 +4,8 @@
     <color name="centerColor">#ffffffff</color>
     <color name="endColor">#ffffffff</color>
     <color name="textColor">#ff000000</color>
+    <color name="dayTextColor">#ff000000</color>
+    <color name="dayBgColor">#ffffffff</color>
+    <color name="nightTextColor">#ffa7a7a7</color>
+    <color name="nightBgColor">#ff000000</color>
 </resources>

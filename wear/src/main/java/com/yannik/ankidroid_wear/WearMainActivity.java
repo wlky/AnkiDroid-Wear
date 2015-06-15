@@ -64,7 +64,7 @@ public class WearMainActivity extends FragmentActivity {
         final PagerAdapter adapter = new PagerAdapter(getSupportFragmentManager());
 
         final ReviewFragment reviewFragment = ReviewFragment.newInstance(preferences);
-        CollectionFragment decksFragment = CollectionFragment.newInstance(null);
+        final CollectionFragment decksFragment = CollectionFragment.newInstance(null);
 
         decksFragment.setChooseDeckListener(new CollectionFragment.OnFragmentInteractionListener() {
             @Override
@@ -96,6 +96,8 @@ public class WearMainActivity extends FragmentActivity {
                                 preferences.setPlaySound(json.getInt(name));
                             } else if (name.equals(Preferences.ASK_BEFORE_FIRST_SOUND)) {
                                 preferences.setAskBeforeFirstSound(json.getBoolean(name));
+                            }else if (name.equals(Preferences.DAY_MODE)) {
+                                preferences.setDayMode(json.getBoolean(name));
                             }
 
                         } catch (JSONException e) {
@@ -103,6 +105,7 @@ public class WearMainActivity extends FragmentActivity {
                         }
                     }
                     reviewFragment.applySettings();
+                    decksFragment.setSettings(preferences);
                 }
             }
         });
@@ -202,13 +205,13 @@ public class WearMainActivity extends FragmentActivity {
         super.onResume();
     }
 
-    private void fireMessage(final String path, final String data ) {
+    public static void fireMessage(final String path, final String data ) {
         fireMessage(data, path, 0);
     }
 
-    private Handler mHandler = new Handler();
+    private static Handler mHandler = new Handler();
 
-    private void fireMessage(final String data, final String path,final int retryCount) {
+    private static void fireMessage(final String data, final String path,final int retryCount) {
         Log.d(TAG, "Firing Request " + path);
         // Send the RPC
         PendingResult<NodeApi.GetConnectedNodesResult> nodes = Wearable.NodeApi.getConnectedNodes(googleApiClient);
@@ -227,14 +230,17 @@ public class WearMainActivity extends FragmentActivity {
                         @Override
                         public void onResult(MessageApi.SendMessageResult sendMessageResult) {
                             Status status = sendMessageResult.getStatus();
+
                             Log.d(TAG, "Status: " + status.toString());
-                            if(retryCount > 5)return;
-                            mHandler.postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    fireMessage(data, path, retryCount + 1);
-                                }
-                            }, 1000 * retryCount);
+                            if(!status.isSuccess()) {
+                                if (retryCount > 5) return;
+                                mHandler.postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        fireMessage(data, path, retryCount + 1);
+                                    }
+                                }, 1000 * retryCount);
+                            }
 
                         }
                     });
