@@ -33,7 +33,7 @@
                     android:gravity="center"
                     android:layout_height="wrap_content"
                     android:layout_width="match_parent"
-                    android:text="Hallo"
+                    android:text=""
                     android:textColor="@color/dayTextColor" />
 
                 <RelativeLayout

@@ -539,9 +539,6 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                 return bit;
             }
             else {
-//                int id;
-//                id = R.drawable.placeholder;
-//                Drawable d = getResources().getDrawable(id);
                 Drawable d = new ColorDrawable(Color.TRANSPARENT);
                 d.setBounds(0, 0, ReviewFragment.this.getView().getWidth()/2, ReviewFragment.this.getView().getHeight()/2);
                 return d;
