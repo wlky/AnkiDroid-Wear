@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.yannik.ankidroid_wear"
-        minSdkVersion 21
+        minSdkVersion 18
         targetSdkVersion 22
         versionCode 10300105
         versionName "1.3alpha5"
