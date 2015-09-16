@@ -29,14 +29,13 @@ import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 import com.google.android.gms.wearable.WearableStatusCodes;
-import com.ichi2.anki.provider.FlashCardsContract;
+import com.ichi2.anki.FlashCardsContract;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -442,7 +441,6 @@ public class WearMessageListenerService extends WearableListenerService {
                         return null;
                     }
 
-
                     // Escape early if cancel() is called
                     if (isCancelled()) break;
                 }
@@ -480,6 +478,7 @@ public class WearMessageListenerService extends WearableListenerService {
 
 
     private void queryForDeckNames() {
+
         Cursor decksCursor = getContentResolver().query(FlashCardsContract.Deck.CONTENT_ALL_URI, FlashCardsContract.Deck.DEFAULT_PROJECTION, null, null, null);
 
         if (!decksCursor.moveToFirst()) {

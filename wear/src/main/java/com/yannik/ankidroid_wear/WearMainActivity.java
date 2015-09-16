@@ -194,9 +194,6 @@ public class WearMainActivity extends FragmentActivity {
         super.onPause();
 
         fireMessage(CommonIdentifiers.W2P_EXITING, "");
-
-
-        //finish(); //TODO Real onPause - onResume implementation
     }
 
     @Override
