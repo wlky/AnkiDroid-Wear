@@ -32,9 +32,10 @@
                     android:textSize="50sp"
                     android:gravity="center"
                     android:layout_height="wrap_content"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:text=":)"
-                    android:textColor="@color/dayTextColor" />
+                    android:textColor="@color/dayTextColor"
+                    android:layout_gravity="center" />
 
                 <RelativeLayout
                     android:layout_width="match_parent"
@@ -55,7 +56,7 @@
     <RelativeLayout
         android:id="@+id/questionAnswerOverlay"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"></RelativeLayout>
+        android:layout_height="match_parent"/>
 
     <com.yannik.ankidroid_wear.PullButton
         android:id="@+id/easyButton"
@@ -79,7 +80,7 @@
         app:ease_text="Good"
         app:icon="@drawable/pb_mid"
         app:upsideDown="false"
-        app:text="mid"></com.yannik.ankidroid_wear.PullButton>
+        app:text="mid"/>
 
     <com.yannik.ankidroid_wear.PullButton
         android:id="@+id/hardButton"
@@ -103,5 +104,5 @@
         app:ease_text="Again"
         app:icon="@drawable/pb_failed"
         app:upsideDown="true"
-        app:text="failed"></com.yannik.ankidroid_wear.PullButton>
+        app:text="failed"/>
 </FrameLayout>

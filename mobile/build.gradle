@@ -3,18 +3,63 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 22
     buildToolsVersion "21.1.2"
-
-    defaultConfig {
-        applicationId "com.yannik.ankidroid_wear"
-        minSdkVersion 18
-        targetSdkVersion 22
-        versionCode 10300105
-        versionName "1.3alpha5"
-    }
+//
+//    defaultConfig {
+//        applicationId "com.yannik.ankidroid_wear"
+//        minSdkVersion 18
+//        targetSdkVersion 22
+//        versionCode 10300106
+//        versionName "1.3alpha6"
+//    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+
+    def versionPropsFile = file('version.properties')
+
+    if (versionPropsFile.canRead()) {
+        def Properties versionProps = new Properties()
+
+        versionProps.load(new FileInputStream(versionPropsFile))
+        def value = 0
+        def runTasks = gradle.startParameter.taskNames
+        if ('assemble' in runTasks || ':mobile:assembleRelease' in runTasks || 'aR' in runTasks) {
+            value = 1;
+        }
+
+        def versionMajor = 1
+        def versionMinor = 3
+        def versionPatch = versionProps['VERSION_PATCH'].toInteger() + value
+        def versionBuild = versionProps['VERSION_BUILD'].toInteger() + value
+        def version_Code = versionProps['VERSION_CODE'].toInteger() + value
+
+        versionProps['VERSION_PATCH'] = versionPatch.toString()
+        versionProps['VERSION_BUILD'] = versionBuild.toString()
+        versionProps['VERSION_CODE'] = version_Code.toString()
+
+        versionProps.store(versionPropsFile.newWriter(), null)
+
+        defaultConfig {
+            versionCode version_Code
+            versionName "${versionMajor}.${versionMinor}.alpha${versionBuild}"
+            applicationId "com.yannik.ankidroid_wear"
+            minSdkVersion 18
+            targetSdkVersion 22
+        }
+    } else {
+        throw new GradleException("Could not read version.properties!")
+    }
+
+
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            output.outputFile = new File(
+                    output.outputFile.parent,
+                    output.outputFile.name.replace(".apk", "-${variant.versionName}.apk"))
         }
     }
 }
@@ -28,4 +73,5 @@ dependencies {
     compile 'com.google.android.gms:play-services:7.0.0'
     compile 'com.android.support:support-v4:22.0.0'
     compile 'com.jakewharton.timber:timber:2.5.1'
+    compile 'com.ichi2.anki:api:1.0.0alpha2'
 }
