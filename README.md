@@ -22,7 +22,7 @@ brings Anki to your wrist!
 ## Installation
 >Note: This app only works in combination with the AnkiDroid app. You can find further info about it here: http://ankisrs.net/
 
-You just have to go to the Google Play Store and download the newest version of "AnkiWear for AnkiDroid"
+You can simply download and install the newest stable version from the Google Play Store: https://play.google.com/store/apps/details?id=com.yannik.wear.anki
 
 ## Pre-Releases
 There are two methods to get pre-releases of AnkiWear. The first method is to become a google play alpha tester. This way new updates will automatically be installed on your device, as you are used to by normal apps. <br/>
