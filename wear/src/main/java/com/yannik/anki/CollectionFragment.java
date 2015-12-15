@@ -1,17 +1,15 @@
-package com.yannik.ankidroid_wear;
+package com.yannik.anki;
 
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
 import android.widget.TextView;
 
 import com.yannik.sharedvalues.CommonIdentifiers;
@@ -35,14 +33,12 @@ import java.util.List;
 public class CollectionFragment extends Fragment implements AbsListView.OnItemClickListener, WearMainActivity.JsonReceiver {
 
     private static final String ARG_PARAM1 = "collections";
-
-    private String[] collectionList;
     ArrayList<String> deckNames = new ArrayList<String>();
     ArrayList<Long> deckIDs = new ArrayList<Long>();
+    View collectionListContainer;
+    private String[] collectionList;
     private OnFragmentInteractionListener mListener;
     private Preferences settings;
-    View collectionListContainer;
-
     /**
      * The fragment's ListView/GridView.
      */
@@ -54,6 +50,13 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
      */
     private ArrayAdapter mAdapter;
 
+
+    /**
+     * Mandatory empty constructor for the fragment manager to instantiate the
+     * fragment (e.g. upon screen orientation changes).
+     */
+    public CollectionFragment() {
+    }
 
     public static CollectionFragment newInstance(String[] collectionList) {
         CollectionFragment fragment = new CollectionFragment();
@@ -79,14 +82,6 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         mAdapter.notifyDataSetChanged();
     }
 
-
-    /**
-     * Mandatory empty constructor for the fragment manager to instantiate the
-     * fragment (e.g. upon screen orientation changes).
-     */
-    public CollectionFragment() {
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -106,7 +101,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         collectionListContainer = view.findViewById(R.id.collectionListContainer);
         // Set the adapter
         mListView = (AbsListView) view.findViewById(android.R.id.list);
-        ((AdapterView<ListAdapter>) mListView).setAdapter(mAdapter);
+        mListView.setAdapter(mAdapter);
 
         // Set OnItemClickListener so we can be notified on item clicks
         mListView.setOnItemClickListener(this);
@@ -180,6 +175,20 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
     }
 
 
+    /**
+     * This interface must be implemented by activities that contain this
+     * fragment to allow an interaction in this fragment to be communicated
+     * to the activity and potentially other fragments contained in that
+     * activity.
+     * <p/>
+     * See the Android Training lesson <a href=
+     * "http://developer.android.com/training/basics/fragments/communicating.html"
+     * >Communicating with Other Fragments</a> for more information.
+     */
+    public interface OnFragmentInteractionListener {
+        void onFragmentInteraction(long id);
+    }
+
     class DayNightArrayAdapter extends ArrayAdapter<String>{
         public DayNightArrayAdapter(Context context, int resource, List<String> objects) {
             super(context, resource, objects);
@@ -199,20 +208,6 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
             return v;
         }
 
-    }
-
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnFragmentInteractionListener {
-        public void onFragmentInteraction(long id);
     }
 
 }

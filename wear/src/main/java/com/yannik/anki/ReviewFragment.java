@@ -1,7 +1,6 @@
-package com.yannik.ankidroid_wear;
+package com.yannik.anki;
 
 import android.animation.Animator;
-import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -21,7 +20,6 @@ import android.text.Html;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
-import android.text.method.MovementMethod;
 import android.text.style.ClickableSpan;
 import android.text.style.ImageSpan;
 import android.util.Log;
@@ -36,7 +34,6 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.yannik.sharedvalues.CommonIdentifiers;
 
@@ -57,23 +54,69 @@ import java.util.regex.Pattern;
  */
 public class ReviewFragment extends Fragment implements WearMainActivity.JsonReceiver {
 
-    private static final String W2W_REMOVE_SCREEN_LOCK = "remove_screen_lock";
     public static final String W2W_RELOAD_HTML_FOR_MEDIA = "reload_text";
+    private static final String W2W_REMOVE_SCREEN_LOCK = "remove_screen_lock";
+    private static final String SOUND_PLACEHOLDER_STRING = "awlieurablsdkvbwlaiueaghlsdkvblqi2345235.jpg";
+    private static final String SOUND_TAG_REPLACEMENT_REGEX = "\\[(sound:[^\\]]+)\\]";
+    //    private static final String SOUND_TAG_REPLACEMENT_STRING = "&#128266;";
+    private static final String SOUND_TAG_REPLACEMENT_STRING = "<img src='" + SOUND_PLACEHOLDER_STRING +
+            "'/>";
+    /**
+     * Group 1 = Contents of [sound:] tag <br>
+     * Group 2 = "fname"
+     */
+    private static final Pattern fSoundRegexps = Pattern.compile("(?i)(\\[sound:([^]]+)\\])");
+    private static Preferences settings;
+    byte playSounds = -1;
+    MyImageGetter imageGetter = new MyImageGetter();
     private TextView mTextView;
-
     private long noteID;
     private int cardOrd;
     private RelativeLayout qaOverlay;
     private PullButton failed, hard, mid, easy;
     private boolean showingEaseButtons = false, showingAnswer = false;
     private Timer easeButtonShowTimer = new Timer();
-
     private ScrollView qaScrollView;
     private ProgressBar spinner;
     private boolean scrollViewMoved;
     private String qHtml;
     private String aHtml;
+    private View rotationTarget;
+    private long duration = 180;
+    private Context mContext;
+    private RelativeLayout qaContainer;
+    private ArrayList<String> jsonQueueNames = new ArrayList<String>();
+    private ArrayList<JSONObject> jsonQueueObjects = new ArrayList<JSONObject>();
+    private Drawable soundDrawable = null;
+    private boolean soundIconClicked = false;
+    private View.OnClickListener textClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            Log.d(getClass().getName(), "textview was clicked, soundIconClicked is: " + soundIconClicked);
+            if (!scrollViewMoved && (!showingEaseButtons || (showingEaseButtons && !settings.isDoubleTapReview())) && !soundIconClicked) {
+                flipCard(showingAnswer);
+            }
+        }
+    };
+    private SoundClickListener onSoundIconClickListener = new SoundClickListener() {
+        @Override
+        public void onSoundClick(View v, String soundName) {
+            soundIconClicked = true;
+            Log.d("Anki", "sound icon clicked " + soundName);
+            if (soundName != null && !soundName.isEmpty()) {
+                WearMainActivity.fireMessage(CommonIdentifiers.W2P_PLAY_SOUNDS, new JSONArray().put(soundName).toString());
+            }
+        }
+    };
+    private Timer screenTimeoutTimer;
+    private long lastResetTimeMillis = 0;
+    private int numButtons = 4;
+    private JSONArray nextReviewTimes;
+    private Spanned q, a;
 
+    public ReviewFragment() {
+        // Required empty public constructor
+    }
 
     /**
      * Use this factory method to create a new instance of
@@ -88,10 +131,6 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         ReviewFragment.settings = settings;
         fragment.setArguments(args);
         return fragment;
-    }
-
-    public ReviewFragment() {
-        // Required empty public constructor
     }
 
     @Override
@@ -151,7 +190,6 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         }
     }
 
-
     private void showAnswer() {
         qaScrollView.scrollTo(0, 0);
         showingAnswer = true;
@@ -170,8 +208,6 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
             sendReviewStateToPhone();
         }
     }
-
-    byte playSounds = -1;
 
     private void sendReviewStateToPhone() {
         if (settings.getPlaySound() != 1 || playSounds == 0) return;
@@ -235,10 +271,6 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         makeLinksFocusable(mTextView);
     }
 
-
-    private View rotationTarget;
-    private long duration = 180;
-
     private void flipCard(final boolean isShowingAnswer) {
         rotationTarget.setRotationY(0);
         if (settings.isFlipCardsAnimationActive()) {
@@ -282,21 +314,6 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         qaOverlay.setOnClickListener(textClickListener);
     }
 
-
-    private View.OnClickListener textClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            Log.d(getClass().getName(), "textview was clicked, soundIconClicked is: " + soundIconClicked);
-            if (!scrollViewMoved && (!showingEaseButtons || (showingEaseButtons && !settings.isDoubleTapReview())) && !soundIconClicked) {
-                flipCard(showingAnswer);
-            }
-        }
-    };
-
-    private ObjectAnimator animator;
-
-    private static Preferences settings;
-
     public void applySettings() {
         if (settings == null || mTextView == null || !isAdded()) return;
         resetScreenTimeout(true);
@@ -309,9 +326,6 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
             qaContainer.setBackgroundResource(R.drawable.round_rect_night);
         }
     }
-
-    private Context mContext;
-    private RelativeLayout qaContainer;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -345,9 +359,9 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
 
                 qaOverlay.setOnTouchListener(new View.OnTouchListener() {
 
+                    private final float SCROLL_THRESHOLD = ViewConfiguration.get(getActivity().getBaseContext()).getScaledTouchSlop();
                     private float mDownX;
                     private float mDownY;
-                    private final float SCROLL_THRESHOLD = ViewConfiguration.get(getActivity().getBaseContext()).getScaledTouchSlop();
 
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
@@ -374,17 +388,11 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                             }
                         }
                         gestureDetector.onTouchEvent(event);
-                        qaScrollView.onTouchEvent(event);
 
-
-//                        soundIconClicked = false;
-//                        int scrollViewOffset = qaScrollView.getScrollY();
-//                        event.setLocation(event.getRawX(), event.getRawY()+scrollViewOffset);
-//                        if (mTextView.onTouchEvent(event)) {
-//                            Log.d(getClass().getName(), "textview was touched, soundIconClicked is: " + soundIconClicked);
-//                            if (soundIconClicked) return false;
-//                        }
-
+                        soundIconClicked = false;
+                        qaScrollView.dispatchTouchEvent(event);
+                        Log.d(getClass().getName(), "textview was touched, soundIconClicked is: " + soundIconClicked);
+                        if (soundIconClicked) return false;
 
                         return false;
 
@@ -463,7 +471,6 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         spinner.setVisibility(View.GONE);
     }
 
-
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
@@ -489,16 +496,6 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         super.onDetach();
         Log.d(getClass().getName(), "ReviewFragment.onDetach");
     }
-
-    private ArrayList<String> jsonQueueNames = new ArrayList<String>();
-    private ArrayList<JSONObject> jsonQueueObjects = new ArrayList<JSONObject>();
-
-    private static final String SOUND_PLACEHOLDER_STRING = "awlieurablsdkvbwlaiueaghlsdkvblqi2345235.jpg";
-    private static final String SOUND_TAG_REPLACEMENT_REGEX = "\\[(sound:[^\\]]+)\\]";
-    //    private static final String SOUND_TAG_REPLACEMENT_STRING = "&#128266;";
-    private static final String SOUND_TAG_REPLACEMENT_STRING = "<img src='" + SOUND_PLACEHOLDER_STRING +
-            "'/>";
-    MyImageGetter imageGetter = new MyImageGetter();
 
     @Override
     public void onJsonReceive(String path, JSONObject js) {
@@ -551,62 +548,12 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         }
     }
 
-
-    private class MyImageGetter implements Html.ImageGetter {
-
-        public Drawable getDrawable(String source) {
-            Bitmap bitmap = null;
-
-            if (source.equals(SOUND_PLACEHOLDER_STRING)) {
-                Drawable sound = getResources().getDrawable(R.drawable.ic_volume_down_black_48dp);
-                sound.setBounds(0, 0, sound.getIntrinsicWidth(), sound.getIntrinsicHeight());
-                return sound;
-            }
-
-            if (WearMainActivity.availableAssets.containsKey(source)) {
-                bitmap = WearMainActivity.loadBitmapFromAsset(WearMainActivity.availableAssets.get(source));
-                BitmapDrawable bit = new BitmapDrawable(getResources(), bitmap);
-                bit.setBounds(0, 0, bit.getIntrinsicWidth(), bit.getIntrinsicHeight());
-                return bit;
-            } else {
-                Drawable d = new ColorDrawable(Color.TRANSPARENT);
-                d.setBounds(0, 0, ReviewFragment.this.getView().getWidth() / 2, ReviewFragment.this.getView().getHeight() / 2);
-                return d;
-            }
-
-
-        }
-    }
-
-    class ImageLoaderTask extends AsyncTask<String, Void, Void> {
-        @Override
-        protected Void doInBackground(String... nodes) {
-            setSpansFromQAHtml(true);
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void result) {
-            updateFromHtmlText();
-        }
-
-
-    }
-
-
-    /**
-     * Group 1 = Contents of [sound:] tag <br>
-     * Group 2 = "fname"
-     */
-    private static final Pattern fSoundRegexps = Pattern.compile("(?i)(\\[sound:([^]]+)\\])");
-
     public void setSpansFromQAHtml(boolean withImages) {
         Matcher m;
 
         m = fSoundRegexps.matcher(qHtml);
         while (m.find()) {
             String fname = m.group(2);
-
         }
 
         q = makeSoundIconsClickable(Html.fromHtml(qHtml.replaceAll(SOUND_TAG_REPLACEMENT_REGEX, SOUND_TAG_REPLACEMENT_STRING).replaceAll("</?a.*?>", ""), withImages ? imageGetter : null, null), false);
@@ -634,7 +581,7 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
 
                 final String soundName;
                 String soundName1 = "";
-                if(soundIndex < sounds.length()){
+                if (soundIndex < sounds.length()) {
                     try {
                         soundName1 = sounds.getString(soundIndex);
                     } catch (JSONException e) {
@@ -645,29 +592,16 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                 soundIndex++;
 
 
+                ClickableString click_span = new ClickableString(onSoundIconClickListener, soundName);
 
-                ClickableSpan click_span = new ClickableSpan() {
+                ClickableSpan[] click_spans = qss.getSpans(start, end, ClickableSpan.class);
 
-                    @Override
-                    public void onClick(View widget) {
-                        onSoundIconClickListener.onSoundClick(widget, soundName);
-
+                if (click_spans.length != 0) {
+                    // remove all click spans
+                    for (ClickableSpan c_span : click_spans) {
+                        qss.removeSpan(c_span);
                     }
-
-                };
-
-//                ClickableSpan[] click_spans = qss.getSpans(start, end, ClickableSpan.class);
-//
-//                if (click_spans.length != 0) {
-//
-//                    // remove all click spans
-//
-//                    for (ClickableSpan c_span : click_spans) {
-//                        qss.removeSpan(c_span);
-//                    }
-//
-//
-//                }
+                }
 
 
                 qss.setSpan(click_span, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -695,49 +629,14 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         return qss;
     }
 
-    private boolean soundIconClicked = false;
-
-    private ClickableString.SoundClickListener onSoundIconClickListener = new ClickableString.SoundClickListener() {
-        @Override
-        public void onSoundClick(View v, String soundName) {
-            soundIconClicked = true;
-            Log.d("Anki", "sound icon clicked " + soundName);
-            if (soundName != null && !soundName.isEmpty()) {
-                WearMainActivity.fireMessage(CommonIdentifiers.W2P_PLAY_SOUNDS, new JSONArray().put(soundName).toString());
-            }
-        }
-    };
-
-    private static class ClickableString extends ClickableSpan {
-        private SoundClickListener mListener;
-        private String soundName;
-
-        public ClickableString(SoundClickListener listener, String soundName) {
-            mListener = listener;
-            this.soundName = soundName;
-        }
-
-        @Override
-        public void onClick(View v) {
-            mListener.onSoundClick(v, soundName);
-        }
-
-        interface SoundClickListener {
-            void onSoundClick(View view, String soundName);
-        }
-    }
-
     private void makeLinksFocusable(TextView tv) {
-        MovementMethod m = tv.getMovementMethod();
-        if ((m == null) || !(m instanceof LinkMovementMethod)) {
-            if (tv.getLinksClickable()) {
-                tv.setMovementMethod(LinkMovementMethod.getInstance());
-            }
-        }
+//        MovementMethod m = tv.getMovementMethod();
+//        if ((m == null) || !(m instanceof LinkMovementMethod)) {
+//            if (tv.getLinksClickable()) {
+        tv.setMovementMethod(LinkMovementMethod.getInstance());
+//            }
+//        }
     }
-
-    private Timer screenTimeoutTimer;
-    private long lastResetTimeMillis = 0;
 
     synchronized void resetScreenTimeout(boolean forceReset) {
 
@@ -768,8 +667,63 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         lastResetTimeMillis = System.currentTimeMillis();
     }
 
+    interface SoundClickListener {
+        void onSoundClick(View view, String soundName);
+    }
 
-    private int numButtons = 4;
-    private JSONArray nextReviewTimes;
-    private Spanned q, a;
+    private class MyImageGetter implements Html.ImageGetter {
+
+        public Drawable getDrawable(String source) {
+            if (source.equals(SOUND_PLACEHOLDER_STRING)) {
+                if (soundDrawable == null) {
+                    soundDrawable = getResources().getDrawable(R.drawable.ic_volume_down_black_48dp);
+                    soundDrawable.setBounds(0, 0, soundDrawable.getIntrinsicWidth(), soundDrawable.getIntrinsicHeight());
+                }
+                return soundDrawable;
+            }
+
+            if (WearMainActivity.availableAssets.containsKey(source)) {
+                Bitmap bitmap = WearMainActivity.loadBitmapFromAsset(WearMainActivity.availableAssets.get(source));
+                BitmapDrawable bit = new BitmapDrawable(getResources(), bitmap);
+                bit.setBounds(0, 0, bit.getIntrinsicWidth(), bit.getIntrinsicHeight());
+                return bit;
+            } else {
+                Drawable d = new ColorDrawable(Color.TRANSPARENT);
+                d.setBounds(0, 0, ReviewFragment.this.getView().getWidth() / 2, ReviewFragment.this.getView().getHeight() / 2);
+                return d;
+            }
+        }
+    }
+
+    class ImageLoaderTask extends AsyncTask<String, Void, Void> {
+        @Override
+        protected Void doInBackground(String... nodes) {
+            setSpansFromQAHtml(true);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            updateFromHtmlText();
+        }
+
+
+    }
+
+    private class ClickableString extends ClickableSpan {
+        private SoundClickListener mListener;
+        private String soundName;
+
+        public ClickableString(SoundClickListener listener, String soundName) {
+            mListener = listener;
+            this.soundName = soundName;
+        }
+
+        @Override
+        public void onClick(View v) {
+            mListener.onSoundClick(v, soundName);
+        }
+
+
+    }
 }

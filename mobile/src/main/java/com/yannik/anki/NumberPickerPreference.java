@@ -1,4 +1,4 @@
-package com.yannik.ankidroid_wear;
+package com.yannik.anki;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -15,7 +15,8 @@ public class NumberPickerPreference extends DialogPreference {
 
     Integer mValue;
     NumberPicker mNumberPicker;
-
+    String summaryPostFix = "";
+    private int min = 0, max = 100;
     /*
     * We declare the layout resource file as well as the
     * text for the positive and negative dialog buttons.
@@ -56,8 +57,6 @@ public class NumberPickerPreference extends DialogPreference {
 
     }
 
-    private int min=0,max=100;
-    String summaryPostFix = "";
     /*
     * Bind data to our content views
     * */

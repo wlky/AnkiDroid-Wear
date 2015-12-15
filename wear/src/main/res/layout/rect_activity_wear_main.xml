@@ -6,16 +6,16 @@
     app:layout_box="all">
 
     <RelativeLayout
+        android:id="@+id/qaContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/qaContainer"
         android:background="@drawable/round_rect_day">
 
         <ScrollView
+            android:id="@+id/questionAnswerScrollView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:id="@+id/questionAnswerScrollView"
             android:layout_gravity="top">
 
             <LinearLayout
@@ -29,13 +29,15 @@
 
                 <TextView
                     android:id="@+id/text"
-                    android:textSize="50sp"
-                    android:gravity="center"
-                    android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
                     android:text=":)"
                     android:textColor="@color/dayTextColor"
-                    android:layout_gravity="center" />
+                    android:textSize="50sp" />
 
                 <RelativeLayout
                     android:layout_width="match_parent"
@@ -48,9 +50,9 @@
             style="?android:attr/progressBarStyleLarge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:visibility="gone"
+            android:layout_centerHorizontal="true"
             android:layout_centerInParent="true"
-            android:layout_centerHorizontal="true" />
+            android:visibility="gone" />
     </RelativeLayout>
 
     <RelativeLayout
@@ -58,20 +60,20 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <com.yannik.ankidroid_wear.PullButton
+    <com.yannik.anki.PullButton
         android:id="@+id/easyButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|left"
         android:visibility="invisible"
-        app:icon="@drawable/pb_easy"
         app:ease_text="Easy"
-        app:upsideDown="false"
-        app:text="easy">
+        app:icon="@drawable/pb_easy"
+        app:text="easy"
+        app:upsideDown="false">
 
-    </com.yannik.ankidroid_wear.PullButton>
+    </com.yannik.anki.PullButton>
 
-    <com.yannik.ankidroid_wear.PullButton
+    <com.yannik.anki.PullButton
         android:id="@+id/midButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -79,23 +81,23 @@
         android:visibility="invisible"
         app:ease_text="Good"
         app:icon="@drawable/pb_mid"
-        app:upsideDown="false"
-        app:text="mid"/>
+        app:text="mid"
+        app:upsideDown="false" />
 
-    <com.yannik.ankidroid_wear.PullButton
+    <com.yannik.anki.PullButton
         android:id="@+id/hardButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="top|left"
         android:visibility="invisible"
         app:ease_text="Hard"
         app:icon="@drawable/pb_hard"
-        app:upsideDown="true"
         app:text="hard"
-        android:layout_gravity="top|left">
+        app:upsideDown="true">
 
-    </com.yannik.ankidroid_wear.PullButton>
+    </com.yannik.anki.PullButton>
 
-    <com.yannik.ankidroid_wear.PullButton
+    <com.yannik.anki.PullButton
         android:id="@+id/failedButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -103,6 +105,6 @@
         android:visibility="invisible"
         app:ease_text="Again"
         app:icon="@drawable/pb_failed"
-        app:upsideDown="true"
-        app:text="failed"/>
+        app:text="failed"
+        app:upsideDown="true" />
 </FrameLayout>

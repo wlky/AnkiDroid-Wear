@@ -1,4 +1,4 @@
-package com.yannik.ankidroid_wear;
+package com.yannik.anki;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -23,7 +23,16 @@ import java.io.File;
 
 
 public class SettingsActivity extends ActionBarActivity {
+    static Animation rotation;
+    static ImageView sendingIndicator;
     MessageReceiver messageReceiver;
+    private boolean isRefreshing = false;
+
+    private static void startRotation() {
+        rotation.setRepeatCount(Animation.INFINITE);
+        sendingIndicator.startAnimation(rotation);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,64 +56,6 @@ public class SettingsActivity extends ActionBarActivity {
     protected void onDestroy(){
         super.onDestroy();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver);
-    }
-
-    public static class SettingsFragment extends PreferenceFragment {
-
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-
-            addPreferencesFromResource(R.xml.activity_settings);
-
-            NumberPickerPreference fontSizeNumberPicker = (NumberPickerPreference) this.findPreference(getResources().getString(R.string.font_size_key));
-            NumberPickerPreference screenTimeoutNumberPicker = (NumberPickerPreference) this.findPreference(getResources().getString(R.string.screen_timeout));
-            EditTextPreference mediaLocationDir = (EditTextPreference) this.findPreference(getResources().getString(R.string.media_folder_location));
-            if(mediaLocationDir.getText() == null || mediaLocationDir.getText().isEmpty()) {
-                mediaLocationDir.setText(Environment.getExternalStorageDirectory() + "/AnkiDroid/collection.media");
-            }
-            CardMedia.mediaFolder = (String)mediaLocationDir.getText();
-
-            SendToWatchWhenPreferencesChangeListener listener = new SendToWatchWhenPreferencesChangeListener();
-            fontSizeNumberPicker.setOnPreferenceChangeListener(listener);
-            screenTimeoutNumberPicker.setOnPreferenceChangeListener(listener);
-            this.findPreference(getResources().getString(R.string.card_flip_animation_key)).setOnPreferenceChangeListener(listener);
-            this.findPreference(getResources().getString(R.string.double_tap_key)).setOnPreferenceChangeListener(listener);
-            this.findPreference(getResources().getString(R.string.play_sounds)).setOnPreferenceChangeListener(listener);
-            this.findPreference(getResources().getString(R.string.ask_before_first_sound)).setOnPreferenceChangeListener(listener);
-            this.findPreference(getResources().getString(R.string.day_mode)).setOnPreferenceChangeListener(listener);
-            mediaLocationDir.setOnPreferenceChangeListener(listener);
-
-        }
-        class SendToWatchWhenPreferencesChangeListener implements Preference.OnPreferenceChangeListener{
-            @Override
-            public boolean onPreferenceChange(Preference preference, Object newValue) {
-
-
-                if(preference.getKey().equals(getResources().getString(R.string.media_folder_location))){
-                    CardMedia.mediaFolder = (String)newValue;
-                    if(!new File((String)newValue).exists()){
-                        Toast.makeText(getActivity(),"Folder does not exist",Toast.LENGTH_LONG).show();
-                    }
-                    return true;
-                }
-
-                ((SettingsActivity)getActivity()).sendPreferencesToWatch();
-                SettingsActivity.startRotation();
-
-                return true;
-            }
-        }
-    }
-
-
-
-    static Animation rotation;
-    static ImageView sendingIndicator;
-
-    private static void startRotation(){
-        rotation.setRepeatCount(Animation.INFINITE);
-        sendingIndicator.startAnimation(rotation);
     }
 
     @Override
@@ -143,8 +94,6 @@ public class SettingsActivity extends ActionBarActivity {
         return true;
     }
 
-    private boolean isRefreshing = false;
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
@@ -161,6 +110,54 @@ public class SettingsActivity extends ActionBarActivity {
         startService(intent);
     }
 
+    public static class SettingsFragment extends PreferenceFragment {
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+
+            addPreferencesFromResource(R.xml.activity_settings);
+
+            NumberPickerPreference fontSizeNumberPicker = (NumberPickerPreference) this.findPreference(getResources().getString(R.string.font_size_key));
+            NumberPickerPreference screenTimeoutNumberPicker = (NumberPickerPreference) this.findPreference(getResources().getString(R.string.screen_timeout));
+            EditTextPreference mediaLocationDir = (EditTextPreference) this.findPreference(getResources().getString(R.string.media_folder_location));
+            if (mediaLocationDir.getText() == null || mediaLocationDir.getText().isEmpty()) {
+                mediaLocationDir.setText(Environment.getExternalStorageDirectory() + "/AnkiDroid/collection.media");
+            }
+            CardMedia.mediaFolder = mediaLocationDir.getText();
+
+            SendToWatchWhenPreferencesChangeListener listener = new SendToWatchWhenPreferencesChangeListener();
+            fontSizeNumberPicker.setOnPreferenceChangeListener(listener);
+            screenTimeoutNumberPicker.setOnPreferenceChangeListener(listener);
+            this.findPreference(getResources().getString(R.string.card_flip_animation_key)).setOnPreferenceChangeListener(listener);
+            this.findPreference(getResources().getString(R.string.double_tap_key)).setOnPreferenceChangeListener(listener);
+            this.findPreference(getResources().getString(R.string.play_sounds)).setOnPreferenceChangeListener(listener);
+            this.findPreference(getResources().getString(R.string.ask_before_first_sound)).setOnPreferenceChangeListener(listener);
+            this.findPreference(getResources().getString(R.string.day_mode)).setOnPreferenceChangeListener(listener);
+            mediaLocationDir.setOnPreferenceChangeListener(listener);
+
+        }
+
+        class SendToWatchWhenPreferencesChangeListener implements Preference.OnPreferenceChangeListener {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+
+
+                if (preference.getKey().equals(getResources().getString(R.string.media_folder_location))) {
+                    CardMedia.mediaFolder = (String) newValue;
+                    if (!new File((String) newValue).exists()) {
+                        Toast.makeText(getActivity(), "Folder does not exist", Toast.LENGTH_LONG).show();
+                    }
+                    return true;
+                }
+
+                ((SettingsActivity) getActivity()).sendPreferencesToWatch();
+                SettingsActivity.startRotation();
+
+                return true;
+            }
+        }
+    }
 
     class MessageReceiver extends BroadcastReceiver {
         @Override

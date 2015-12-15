@@ -1,4 +1,4 @@
-package com.yannik.ankidroid_wear;
+package com.yannik.anki;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -41,17 +41,73 @@ import java.util.Iterator;
 import java.util.List;
 
 public class WearMainActivity extends FragmentActivity {
-    private static final String TAG = "WearMain";
     public static final String PREFS_NAME = "ANKIDROID_WEAR_PREFERENCES";
-
+    private static final String TAG = "WearMain";
+    public static HashMap<String, Asset> availableAssets = new HashMap<String, Asset>();
     private static GoogleApiClient googleApiClient;
+    private static Handler mHandler = new Handler();
+    Preferences preferences;
+    boolean firstStart = true;
+    ArrayList<JsonReceiver> jsonReceivers = new ArrayList<JsonReceiver>();
     private MessageReceiver messageReceiver;
     private IntentFilter messageFilter;
 
+    public static void fireMessage(final String path, final String data) {
+        fireMessage(data, path, 0);
+    }
 
-    public static HashMap<String, Asset> availableAssets = new HashMap<String, Asset>();
+    private static void fireMessage(final String data, final String path, final int retryCount) {
+        Log.d(TAG, "Firing Request " + path);
+        // Send the RPC
+        PendingResult<NodeApi.GetConnectedNodesResult> nodes = Wearable.NodeApi.getConnectedNodes(googleApiClient);
+        nodes.setResultCallback(new ResultCallback<NodeApi.GetConnectedNodesResult>() {
+            @Override
+            public void onResult(NodeApi.GetConnectedNodesResult result) {
+                for (int i = 0; i < result.getNodes().size(); i++) {
+                    Node node = result.getNodes().get(i);
+                    String nName = node.getDisplayName();
+                    String nId = node.getId();
+                    Log.d(TAG, "firing Message with path: " + path);
 
-    Preferences preferences;
+                    PendingResult<MessageApi.SendMessageResult> messageResult = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(),
+                            path, (data == null ? "" : data).getBytes());
+                    messageResult.setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
+                        @Override
+                        public void onResult(MessageApi.SendMessageResult sendMessageResult) {
+                            Status status = sendMessageResult.getStatus();
+
+                            Log.d(TAG, "Status: " + status.toString());
+                            if (!status.isSuccess()) {
+                                if (retryCount > 5) return;
+                                mHandler.postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        fireMessage(data, path, retryCount + 1);
+                                    }
+                                }, 1000 * retryCount);
+                            }
+
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    public static Bitmap loadBitmapFromAsset(Asset asset) {
+        if (asset == null) {
+            throw new IllegalArgumentException("Asset must be non-null");
+        }
+        InputStream assetInputStream = Wearable.DataApi.getFdForAsset(
+                googleApiClient, asset).await().getInputStream();
+
+        if (assetInputStream == null) {
+            Log.w(TAG, "Requested an unknown Asset.");
+            return null;
+        }
+        // decode the stream into a bitmap
+        return BitmapFactory.decodeStream(assetInputStream);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -167,8 +223,6 @@ public class WearMainActivity extends FragmentActivity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
-    boolean firstStart = true;
-
     @Override
     protected void onStart() {
         Log.d(getClass().getName(), "MainActivity.onStart");
@@ -202,70 +256,9 @@ public class WearMainActivity extends FragmentActivity {
         super.onResume();
     }
 
-    public static void fireMessage(final String path, final String data ) {
-        fireMessage(data, path, 0);
+    interface JsonReceiver {
+        void onJsonReceive(String path, JSONObject json);
     }
-
-    private static Handler mHandler = new Handler();
-
-    private static void fireMessage(final String data, final String path,final int retryCount) {
-        Log.d(TAG, "Firing Request " + path);
-        // Send the RPC
-        PendingResult<NodeApi.GetConnectedNodesResult> nodes = Wearable.NodeApi.getConnectedNodes(googleApiClient);
-        nodes.setResultCallback(new ResultCallback<NodeApi.GetConnectedNodesResult>() {
-            @Override
-            public void onResult(NodeApi.GetConnectedNodesResult result) {
-                for (int i = 0; i < result.getNodes().size(); i++) {
-                    Node node = result.getNodes().get(i);
-                    String nName = node.getDisplayName();
-                    String nId = node.getId();
-                    Log.d(TAG, "firing Message with path: " + path);
-
-                    PendingResult<MessageApi.SendMessageResult> messageResult = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(),
-                            path, (data == null ? "" : data).getBytes());
-                    messageResult.setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
-                        @Override
-                        public void onResult(MessageApi.SendMessageResult sendMessageResult) {
-                            Status status = sendMessageResult.getStatus();
-
-                            Log.d(TAG, "Status: " + status.toString());
-                            if(!status.isSuccess()) {
-                                if (retryCount > 5) return;
-                                mHandler.postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        fireMessage(data, path, retryCount + 1);
-                                    }
-                                }, 1000 * retryCount);
-                            }
-
-                        }
-                    });
-                }
-            }
-        });
-    }
-
-
-
-    public static Bitmap  loadBitmapFromAsset(Asset asset) {
-        if (asset == null) {
-            throw new IllegalArgumentException("Asset must be non-null");
-        }
-        InputStream assetInputStream = Wearable.DataApi.getFdForAsset(
-                googleApiClient, asset).await().getInputStream();
-
-        if (assetInputStream == null) {
-            Log.w(TAG, "Requested an unknown Asset.");
-            return null;
-        }
-        // decode the stream into a bitmap
-        return BitmapFactory.decodeStream(assetInputStream);
-    }
-
-
-
-    ArrayList<JsonReceiver> jsonReceivers = new ArrayList<JsonReceiver>();
 
     public class MessageReceiver extends BroadcastReceiver {
         @Override
@@ -284,10 +277,6 @@ public class WearMainActivity extends FragmentActivity {
             }
 
         }
-    }
-
-    interface JsonReceiver {
-        public void onJsonReceive(String path, JSONObject json);
     }
 
     private class PagerAdapter extends FragmentPagerAdapter {

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">AnkiDroid-Wear</string>
+    <string name="app_name">AnkiWear</string>
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Send settings to wear</string>

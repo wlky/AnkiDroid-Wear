@@ -1,4 +1,4 @@
-package com.yannik.ankidroid_wear;
+package com.yannik.anki;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -30,7 +30,7 @@ public class CardMedia {
      * Group 4 = Backreference to "str" (i.e., same type of quote character)
      */
     private static final Pattern fImgRegExpQ = Pattern.compile("(?i)(<img[^>]* src=([\\\"'])([^>]+?)(\\2)[^>]*>)");
-
+    public static String mediaFolder = null;
 
     /**
      * Percent-escape UTF-8 characters in local image filenames.
@@ -120,8 +120,6 @@ public class CardMedia {
         return inSampleSize;
     }
 
-
-    public static String mediaFolder = null;
     public static String getMediaPath(String name){
         if(mediaFolder == null || !new File(mediaFolder).exists()){
             mediaFolder = Environment.getExternalStorageDirectory().getAbsolutePath() + "/AnkiDroid/collection.media/";

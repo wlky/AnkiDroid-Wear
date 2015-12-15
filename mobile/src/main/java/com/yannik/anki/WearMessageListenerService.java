@@ -1,4 +1,4 @@
-package com.yannik.ankidroid_wear;
+package com.yannik.anki;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -30,6 +30,7 @@ import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 import com.google.android.gms.wearable.WearableStatusCodes;
 import com.ichi2.anki.FlashCardsContract;
+import com.yannik.sharedvalues.CommonIdentifiers;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -40,8 +41,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.yannik.sharedvalues.CommonIdentifiers;
-
 import timber.log.Timber;
 
 
@@ -50,10 +49,23 @@ import timber.log.Timber;
  */
 public class WearMessageListenerService extends WearableListenerService {
 
+    public static final int TASK_SEND_SETTINGS = 12;
+    public static final String[] SIMPLE_CARD_PROJECTION = {
+            FlashCardsContract.Card.ANSWER_PURE,
+            FlashCardsContract.Card.QUESTION_SIMPLE};
     private static final String TAG = "WearMessageListener";
-    private GoogleApiClient googleApiClient;
+    private static final Uri DUE_CARD_REVIEW_INFO_URI = FlashCardsContract.ReviewInfo.CONTENT_URI;
+    private static final Uri REQUEST_DECKS_URI = Uri.withAppendedPath(FlashCardsContract.AUTHORITY_URI, "decks");
+    static Handler soundThreadHandler = new Handler();
+    static MediaPlayer soundMediaPlayer;
     private static ArrayList<String> deckNames = new ArrayList<String>();
     private static long cardStartTime;
+    private final String[] okImageExtensions = new String[]{"jpg", "png", "gif", "jpeg"};
+    private final String[] okSoundExtensions = new String[]{"3gp", "mp3", "wma"};
+    ArrayList<Uri> soundsToPlay;
+    SoundPlayerOnCompletionListener soundEndedListener = new SoundPlayerOnCompletionListener();
+    ArrayList<CardInfo> cardQueue = new ArrayList<CardInfo>();
+    private GoogleApiClient googleApiClient;
 
     @Override
     public void onCreate() {
@@ -67,7 +79,6 @@ public class WearMessageListenerService extends WearableListenerService {
 
     }
 
-
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -75,12 +86,9 @@ public class WearMessageListenerService extends WearableListenerService {
         //LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver);
     }
 
-    public static final int TASK_SEND_SETTINGS = 12;
-
     private void sendNoMoreCardsToWear() {
         fireMessage(null, CommonIdentifiers.P2W_NO_MORE_CARDS);
     }
-
 
     private void sendCardToWear(String q, String a, JSONArray nextReviewTimes, long noteID, int cardOrd) {
         Log.v(TAG, "Sending Card to Wear: Q: " + q + "\n A: " + a);
@@ -98,7 +106,6 @@ public class WearMessageListenerService extends WearableListenerService {
         //fireMessage((Html.fromHtml(mCurrentCard._getQA().get("q")).toString() + "<-!SEP!->" + Html.fromHtml(mCurrentCard.getPureAnswerForReading())).getBytes());
 
     }
-
 
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
@@ -200,8 +207,6 @@ public class WearMessageListenerService extends WearableListenerService {
         }
     }
 
-    ArrayList<Uri> soundsToPlay;
-
     private synchronized void setSoundQueue(JSONArray soundFileNames) {
         Log.d("TAG", "Setting sound to queue: " + (soundsToPlay == null ? "null" : soundsToPlay.size()));
         if (soundsToPlay == null) {
@@ -239,9 +244,6 @@ public class WearMessageListenerService extends WearableListenerService {
 
     }
 
-    static Handler soundThreadHandler = new Handler();
-    static MediaPlayer soundMediaPlayer;
-
     private synchronized void startPlayingSounds() {
         if (soundsToPlay == null) return;
         if (soundsToPlay.size() >= 1) {
@@ -271,19 +273,6 @@ public class WearMessageListenerService extends WearableListenerService {
             }
         }
     }
-
-    SoundPlayerOnCompletionListener soundEndedListener = new SoundPlayerOnCompletionListener();
-
-    class SoundPlayerOnCompletionListener implements MediaPlayer.OnCompletionListener {
-
-        @Override
-        public void onCompletion(MediaPlayer mp) {
-            mp.stop();
-            mp.reset();
-            startPlayingSounds();
-        }
-    }
-
 
     private void fireMessage(final byte[] data, final String path) {
         fireMessage(data, path, 0);
@@ -329,12 +318,6 @@ public class WearMessageListenerService extends WearableListenerService {
             }
         });
     }
-
-
-    private static final Uri DUE_CARD_REVIEW_INFO_URI = FlashCardsContract.ReviewInfo.CONTENT_URI;
-    private static final Uri REQUEST_DECKS_URI = Uri.withAppendedPath(FlashCardsContract.AUTHORITY_URI, "decks");
-
-    ArrayList<CardInfo> cardQueue = new ArrayList<CardInfo>();
 
     private void queryForCurrentCard(long deckID) {
         Log.d(TAG, "WearMessageListenerService: queryForCurrentCard");
@@ -413,9 +396,85 @@ public class WearMessageListenerService extends WearableListenerService {
 
     }
 
-    public static final String[] SIMPLE_CARD_PROJECTION = {
-            FlashCardsContract.Card.ANSWER_PURE,
-            FlashCardsContract.Card.QUESTION_SIMPLE};
+    private boolean isImage(String name) {
+        return hasCertainExtension(name, okImageExtensions);
+    }
+
+    private boolean isSound(String name) {
+        return hasCertainExtension(name, okSoundExtensions);
+    }
+
+    private boolean hasCertainExtension(String name, String[] extensions) {
+        for (String extension : extensions) {
+            if (name.trim().toLowerCase().endsWith(extension)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void queryForDeckNames() {
+
+        Cursor decksCursor = getContentResolver().query(FlashCardsContract.Deck.CONTENT_ALL_URI, FlashCardsContract.Deck.DEFAULT_PROJECTION, null, null, null);
+
+        if (!decksCursor.moveToFirst()) {
+            Log.d(TAG, "query for decks returned no result");
+            decksCursor.close();
+        } else {
+            JSONObject decks = new JSONObject();
+            do {
+                long deckID = decksCursor.getLong(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_ID));
+                String deckName = decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_NAME));
+
+
+                try {
+                    JSONObject deckOptions = new JSONObject(decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.OPTIONS)));
+                    JSONArray deckCounts = new JSONArray(decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_COUNTS)));
+                    Log.d(TAG, "deckCounts " + deckCounts);
+                    Log.d(TAG, "deck Options " + deckOptions);
+                    decks.put(deckName, deckID);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            } while (decksCursor.moveToNext());
+
+            sendDecksToWear(decks);
+        }
+    }
+
+    private void sendDecksToWear(JSONObject decks) {
+        fireMessage(decks.toString().getBytes(), CommonIdentifiers.P2W_COLLECTION_LIST);
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        sendSettings();
+        return START_NOT_STICKY;
+    }
+
+    public void sendSettings() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        JSONObject js = new JSONObject();
+        Map<String, ?> preferences = prefs.getAll();
+        for (String key : preferences.keySet()) {
+            try {
+                js.put(key, preferences.get(key));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        fireMessage(js.toString().getBytes(), CommonIdentifiers.P2W_CHANGE_SETTINGS);
+    }
+
+    class SoundPlayerOnCompletionListener implements MediaPlayer.OnCompletionListener {
+
+        @Override
+        public void onCompletion(MediaPlayer mp) {
+            mp.stop();
+            mp.reset();
+            startPlayingSounds();
+        }
+    }
 
     private class GrabAndProcessFilesTask extends AsyncTask<CardInfo, Void, Void> {
         @Override
@@ -453,63 +512,6 @@ public class WearMessageListenerService extends WearableListenerService {
         }
     }
 
-
-    private final String[] okImageExtensions = new String[]{"jpg", "png", "gif", "jpeg"};
-
-    private boolean isImage(String name) {
-        return hasCertainExtension(name, okImageExtensions);
-    }
-
-    private final String[] okSoundExtensions = new String[]{"3gp", "mp3", "wma"};
-
-    private boolean isSound(String name) {
-        return hasCertainExtension(name, okSoundExtensions);
-    }
-
-
-    private boolean hasCertainExtension(String name, String[] extensions) {
-        for (String extension : extensions) {
-            if (name.trim().toLowerCase().endsWith(extension)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-
-    private void queryForDeckNames() {
-
-        Cursor decksCursor = getContentResolver().query(FlashCardsContract.Deck.CONTENT_ALL_URI, FlashCardsContract.Deck.DEFAULT_PROJECTION, null, null, null);
-
-        if (!decksCursor.moveToFirst()) {
-            Log.d(TAG, "query for decks returned no result");
-            decksCursor.close();
-        } else {
-            JSONObject decks = new JSONObject();
-            do {
-                long deckID = decksCursor.getLong(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_ID));
-                String deckName = decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_NAME));
-
-
-                try {
-                    JSONObject deckOptions = new JSONObject(decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.OPTIONS)));
-                    JSONArray deckCounts = new JSONArray(decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_COUNTS)));
-                    Log.d(TAG, "deckCounts " + deckCounts);
-                    Log.d(TAG, "deck Options " + deckOptions);
-                    decks.put(deckName, deckID);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            } while (decksCursor.moveToNext());
-
-            sendDecksToWear(decks);
-        }
-    }
-
-    private void sendDecksToWear(JSONObject decks) {
-        fireMessage(decks.toString().getBytes(), CommonIdentifiers.P2W_COLLECTION_LIST);
-    }
-
     class CardInfo {
         String q = "", a = "";
         int cardOrd;
@@ -528,26 +530,5 @@ public class WearMessageListenerService extends WearableListenerService {
 
             soundUris.add(uri);
         }
-    }
-
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        sendSettings();
-        return START_NOT_STICKY;
-    }
-
-    public void sendSettings() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        JSONObject js = new JSONObject();
-        Map<String, ?> preferences = prefs.getAll();
-        for (String key : preferences.keySet()) {
-            try {
-                js.put(key, preferences.get(key));
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-        fireMessage(js.toString().getBytes(), CommonIdentifiers.P2W_CHANGE_SETTINGS);
     }
 }

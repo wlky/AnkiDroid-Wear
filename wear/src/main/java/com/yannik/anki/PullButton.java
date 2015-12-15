@@ -1,4 +1,4 @@
-package com.yannik.ankidroid_wear;
+package com.yannik.anki;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -24,13 +24,14 @@ import android.widget.TextView;
  */
 public class PullButton extends RelativeLayout {
 
+    private final ImageButton icon;
+    private final TextView textView;
+    private final TextView easeTextView;
+    OnClickListener ocl;
     private float homePosition, extendedPosition, homeAlpha = 0.7f, extendedAlpha = 1;
     private int minMovementDistance = 50;
     private Point displaySize = new Point();
     private int exitY = 0;
-    private final ImageButton icon;
-    private final TextView textView;
-    private final TextView easeTextView;
     private int imageResId = -1;
     private boolean upsideDown;
 
@@ -153,6 +154,35 @@ public class PullButton extends RelativeLayout {
         setX(displaySize.x / 2 - getWidth());
     }
 
+    public void centerX() {
+        setX(displaySize.x / 2 - getWidth() / 2);
+    }
+
+    public void setOnSwipeListener(OnClickListener ocl) {
+        this.ocl = ocl;
+    }
+
+    public void setImageRessource(int res) {
+        imageResId = res;
+        if (icon != null) {
+            icon.setImageResource(res);
+        }
+    }
+
+    public void setText(String text) {
+        textView.setText(text);
+    }
+
+    public void slideIn(long delay) {
+        if (upsideDown) {
+            setY(-getHeight());
+        } else {
+            setY(displaySize.y);
+        }
+        setAlpha(homeAlpha);
+        setVisibility(View.VISIBLE);
+        animate().setStartDelay(delay).y(homePosition).setListener(null);
+    }
 
     class SwipeTouchListener implements OnTouchListener {
         private float yDiff;
@@ -225,38 +255,6 @@ public class PullButton extends RelativeLayout {
 
             return true;
         }
-    }
-
-    public void centerX() {
-        setX(displaySize.x / 2 - getWidth() / 2);
-    }
-
-    OnClickListener ocl;
-
-    public void setOnSwipeListener(OnClickListener ocl) {
-        this.ocl = ocl;
-    }
-
-    public void setImageRessource(int res) {
-        imageResId = res;
-        if (icon != null) {
-            icon.setImageResource(res);
-        }
-    }
-
-    public void setText(String text) {
-        textView.setText(text);
-    }
-
-    public void slideIn(long delay) {
-        if (upsideDown) {
-            setY(-getHeight());
-        } else {
-            setY(displaySize.y);
-        }
-        setAlpha(homeAlpha);
-        setVisibility(View.VISIBLE);
-        animate().setStartDelay(delay).y(homePosition).setListener(null);
     }
 
 }

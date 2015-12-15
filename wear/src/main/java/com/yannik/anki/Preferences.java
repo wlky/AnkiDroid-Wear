@@ -1,4 +1,4 @@
-package com.yannik.ankidroid_wear;
+package com.yannik.anki;
 
 import android.content.SharedPreferences;
 
@@ -6,6 +6,14 @@ import android.content.SharedPreferences;
 * Created by Yannik on 29.04.2015.
 */
 class Preferences {
+    public static String CARD_FONT_SIZE;
+    public static String DOUBLE_TAP;
+    public static String FLIP_ANIMATION;
+    public static String SELECTED_DECK;
+    public static String SCREEN_TIMEOUT;
+    public static String PLAY_SOUNDS;
+    public static String ASK_BEFORE_FIRST_SOUND;
+    public static String DAY_MODE;
     private WearMainActivity wearMainActivity;
     private float cardFontSize = 40;
     private boolean doubleTapReview = true;
@@ -15,15 +23,6 @@ class Preferences {
     private int playSound = 0;
     private boolean askBeforeFirstSound;
     private boolean dayMode = true;
-
-    public static String CARD_FONT_SIZE;
-    public static String DOUBLE_TAP;
-    public static String FLIP_ANIMATION;
-    public static String SELECTED_DECK;
-    public static String SCREEN_TIMEOUT;
-    public static String PLAY_SOUNDS;
-    public static String ASK_BEFORE_FIRST_SOUND;
-    public static String DAY_MODE;
 
 
     public Preferences(WearMainActivity wearMainActivity){

@@ -6,53 +6,53 @@
         android:title="Review">
 
         <ListPreference
-            android:key="@string/play_sounds"
-            android:title="Sounds"
-            android:entries="@array/SoundOptions"
             android:defaultValue="1"
+            android:entries="@array/SoundOptions"
+            android:entryValues="@array/SoundOptionsAlias"
+            android:key="@string/play_sounds"
             android:summary="%s"
-            android:entryValues="@array/SoundOptionsAlias"/>
+            android:title="Sounds" />
 
         <CheckBoxPreference
-            android:title="Ask once before playing sounds"
             android:defaultValue="true"
             android:key="@string/ask_before_first_sound"
+            android:title="Ask once before playing sounds"
             />
 
         <CheckBoxPreference
-            android:title="Day Mode"
             android:defaultValue="true"
             android:key="@string/day_mode"
+            android:title="Day Mode"
             />
 
-        <com.yannik.ankidroid_wear.NumberPickerPreference
-            android:title="Font size"
-            app:summaryPostFix=" points"
+        <com.yannik.anki.NumberPickerPreference
+            android:defaultValue="40"
             android:key="@string/font_size_key"
-            android:defaultValue="40" />
+            android:title="Font size"
+            app:summaryPostFix=" points" />
 
-        <com.yannik.ankidroid_wear.NumberPickerPreference
-            android:title="Screen Timeout Delay"
-            app:summaryPostFix=" seconds"
-            app:minValue="30"
-            app:maxValue="400"
+        <com.yannik.anki.NumberPickerPreference
+            android:defaultValue="60"
             android:key="@string/screen_timeout"
-            android:defaultValue="60" />
+            android:title="Screen Timeout Delay"
+            app:maxValue="400"
+            app:minValue="30"
+            app:summaryPostFix=" seconds" />
 
         <CheckBoxPreference
-            android:title="Double tap answer to show question"
             android:defaultValue="true"
             android:key="@string/double_tap_key"
+            android:title="Double tap answer to show question"
             />
         <CheckBoxPreference
-            android:title="Card flip animation"
             android:defaultValue="true"
             android:key="@string/card_flip_animation_key"
+            android:title="Card flip animation"
             />
 
         <EditTextPreference
-            android:title="AnkiDroid Media Folder Location"
             android:key="@string/media_folder_location"
+            android:title="AnkiDroid Media Folder Location"
             />
 
 

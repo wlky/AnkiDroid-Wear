@@ -1,15 +1,15 @@
-<preference-headers xmlns:android="http://schemas.android.com/apk/res/android">
+<preference-headers>
 
     <!-- These settings headers are only used on tablets. -->
 
-    <header android:fragment="com.yannik.ankidroid_wear.SettingsActivity$GeneralPreferenceFragment"
-        android:title="@string/pref_header_general" />
+    <!--<header android:fragment="com.yannik.anki.SettingsActivity$GeneralPreferenceFragment"-->
+    <!--android:title="@string/pref_header_general" />-->
 
-    <header
-        android:fragment="com.yannik.ankidroid_wear.SettingsActivity$NotificationPreferenceFragment"
-        android:title="@string/pref_header_notifications" />
+    <!--<header-->
+    <!--android:fragment="com.yannik.anki.SettingsActivity$NotificationPreferenceFragment"-->
+    <!--android:title="@string/pref_header_notifications" />-->
 
-    <header android:fragment="com.yannik.ankidroid_wear.SettingsActivity$DataSyncPreferenceFragment"
-        android:title="@string/pref_header_data_sync" />
+    <!--<header android:fragment="com.yannik.anki.SettingsActivity$DataSyncPreferenceFragment"-->
+    <!--android:title="@string/pref_header_data_sync" />-->
 
 </preference-headers>
