@@ -20,7 +20,7 @@ brings Anki to your wrist!
 
 
 ## Installation
->Note: This app only works in combination with the AnkiDroid app. You can find further info about it here: http://ankisrs.net/
+>Note: This app only works in combination with the AnkiDroid app. You can find further info about it here: https://play.google.com/store/apps/details?id=com.ichi2.anki
 
 You can simply download and install the newest stable version from the Google Play Store: https://play.google.com/store/apps/details?id=com.yannik.wear.anki
 
