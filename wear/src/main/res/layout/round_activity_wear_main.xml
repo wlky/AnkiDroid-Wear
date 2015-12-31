@@ -1,15 +1,16 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<FrameLayout android:id="@+id/mainFrame"
+             xmlns:android="http://schemas.android.com/apk/res/android"
 
-    android:id="@+id/mainFrame"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+             xmlns:app="http://schemas.android.com/apk/res-auto"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent">
 
     <RelativeLayout
         android:id="@+id/qaContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@drawable/round_rect_day">
+
         <ScrollView
             android:id="@+id/questionAnswerScrollView"
             android:layout_width="match_parent"
@@ -24,7 +25,7 @@
 
                 <RelativeLayout
                     android:layout_width="match_parent"
-                    android:layout_height="40dp" />
+                    android:layout_height="40dp"/>
 
                 <TextView
                     android:id="@+id/text"
@@ -34,11 +35,11 @@
                     android:gravity="center"
                     android:text=""
                     android:textColor="@color/dayTextColor"
-                    android:textSize="50sp" />
+                    android:textSize="50sp"/>
 
                 <RelativeLayout
                     android:layout_width="match_parent"
-                    android:layout_height="40dp" />
+                    android:layout_height="40dp"/>
             </LinearLayout>
         </ScrollView>
 
@@ -49,68 +50,67 @@
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
             android:layout_centerInParent="true"
-            android:visibility="gone" />
+            android:visibility="gone"/>
     </RelativeLayout>
 
     <RelativeLayout
         android:id="@+id/questionAnswerOverlay"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        >
     </RelativeLayout>
 
 
     <com.yannik.anki.PullButton
-            android:id="@+id/easyButton"
-            android:layout_width="80dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|left"
-            android:visibility="invisible"
-            app:ease_text="Easy"
+        android:id="@+id/easyButton"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|left"
+        android:visibility="invisible"
+        app:ease_text="Easy"
         app:icon="@drawable/pb_easy"
-            app:text="easy"
+        app:text="easy"
         app:upsideDown="false"
-            >
+        >
 
     </com.yannik.anki.PullButton>
 
     <com.yannik.anki.PullButton
-            android:id="@+id/midButton"
-            android:layout_width="80dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|right"
-            android:visibility="invisible"
-            app:ease_text="Good"
-            app:icon="@drawable/pb_mid"
-            app:text="mid"
+        android:id="@+id/midButton"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|right"
+        android:visibility="invisible"
+        app:ease_text="Good"
+        app:icon="@drawable/pb_mid"
+        app:text="mid"
         app:upsideDown="false"
-            ></com.yannik.anki.PullButton>
+        />
 
     <com.yannik.anki.PullButton
-            android:id="@+id/hardButton"
-            android:layout_width="80dp"
-            android:layout_height="wrap_content"
-        android:layout_gravity="top|left"
-            android:visibility="invisible"
-            app:ease_text="Hard"
-            app:icon="@drawable/pb_hard"
-            app:text="hard"
-        app:upsideDown="true"
-            >
+        android:id="@+id/hardButton"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:visibility="invisible"
+        app:ease_text="Hard"
+        app:icon="@drawable/pb_hard"
+        app:text="hard"
+        app:upsideDown="true">
 
     </com.yannik.anki.PullButton>
 
     <com.yannik.anki.PullButton
-            android:id="@+id/failedButton"
-            android:layout_width="80dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top|right"
-            android:visibility="invisible"
-            app:ease_text="Again"
-            app:icon="@drawable/pb_failed"
-            app:text="failed"
+        android:id="@+id/failedButton"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|right"
+        android:visibility="invisible"
+        app:ease_text="Again"
+        app:icon="@drawable/pb_failed"
+        app:text="failed"
         app:upsideDown="true"
-            ></com.yannik.anki.PullButton>
-
+        />
 
 
 </FrameLayout>
