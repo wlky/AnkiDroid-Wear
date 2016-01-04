@@ -1,5 +1,7 @@
 package com.yannik.anki;
 
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -8,12 +10,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.view.ViewPager;
+import android.support.wearable.activity.WearableActivity;
+import android.support.wearable.view.FragmentGridPagerAdapter;
+import android.support.wearable.view.GridViewPager;
 import android.util.Log;
 import android.view.WindowManager;
 
@@ -40,7 +40,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-public class WearMainActivity extends FragmentActivity {
+public class WearMainActivity extends WearableActivity {
     public static final String PREFS_NAME = "ANKIDROID_WEAR_PREFERENCES";
     private static final String TAG = "WearMain";
     public static HashMap<String, Asset> availableAssets = new HashMap<String, Asset>();
@@ -110,24 +110,46 @@ public class WearMainActivity extends FragmentActivity {
     }
 
     @Override
+    public void onEnterAmbient(Bundle ambientDetails) {
+        super.onEnterAmbient(ambientDetails);
+        reviewFragment.onEnterAmbient();
+        decksFragment.onEnterAmbient();
+        Log.d(TAG, "Entered ambient mode");
+    }
+
+    @Override
+    public void onExitAmbient() {
+        super.onExitAmbient();
+        reviewFragment.onExitAmbient();
+        decksFragment.onExitAmbient();
+        Log.d(TAG, "Exited ambient mode");
+    }
+
+    private ReviewFragment reviewFragment;
+    private CollectionFragment decksFragment;
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.wear_main);
 
+        setAmbientEnabled();
+
         preferences = new Preferences(this);
         preferences.load();
-        final ViewPager viewPager = (ViewPager) findViewById(R.id.pager);
-        final PagerAdapter adapter = new PagerAdapter(getSupportFragmentManager());
+        final MyGridViewPager viewPager = (MyGridViewPager) findViewById(R.id.pager);
 
-        final ReviewFragment reviewFragment = ReviewFragment.newInstance(preferences);
-        final CollectionFragment decksFragment = CollectionFragment.newInstance(null);
+        final PagerAdapter adapter = new PagerAdapter(getFragmentManager());
+
+        reviewFragment = ReviewFragment.newInstance(preferences, viewPager);
+        decksFragment = CollectionFragment.newInstance(null);
 
         decksFragment.setChooseDeckListener(new CollectionFragment.OnFragmentInteractionListener() {
             @Override
             public void onFragmentInteraction(long id) {
                 fireMessage(CommonIdentifiers.W2P_CHOOSE_COLLECTION, "" + id);
                 fireMessage(CommonIdentifiers.W2P_REQUEST_CARD, "" + id);
-                viewPager.setCurrentItem(0);
+                viewPager.setCurrentItem(0, 0);
                 reviewFragment.indicateLoading();
                 preferences.setSelectedDeck(id);
             }
@@ -260,6 +282,11 @@ public class WearMainActivity extends FragmentActivity {
         void onJsonReceive(String path, JSONObject json);
     }
 
+    interface AmbientStatusReceiver{
+        void onExitAmbient();
+        void onEnterAmbient();
+    }
+
     public class MessageReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -279,27 +306,42 @@ public class WearMainActivity extends FragmentActivity {
         }
     }
 
-    private class PagerAdapter extends FragmentPagerAdapter {
+    private class PagerAdapter extends FragmentGridPagerAdapter {
         List<Fragment> fragmentList = null;
 
         public PagerAdapter(FragmentManager fragmentManager) {
             super(fragmentManager);
-            fragmentList = new ArrayList<Fragment>();
+            fragmentList = new ArrayList<>();
         }
 
         @Override
-        public Fragment getItem(int position) {
-            return fragmentList.get(position);
+        public Fragment getFragment(int x, int y) {
+            return fragmentList.get(y);
         }
 
-        @Override
-        public int getCount() {
-            return fragmentList.size();
-        }
+//        @Override
+//        public Fragment getItem(int position) {
+//            return fragmentList.get(position);
+//        }
+//
+//        @Override
+//        public int getCount() {
+//            return fragmentList.size();
+//        }
 
         public void addFragment(Fragment fragment) {
             fragmentList.add(fragment);
             notifyDataSetChanged();
+        }
+
+        @Override
+        public int getRowCount() {
+            return 1;
+        }
+
+        @Override
+        public int getColumnCount(int i) {
+            return 2;
         }
     }
 }

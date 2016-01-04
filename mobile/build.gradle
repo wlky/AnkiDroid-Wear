@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 22
+    compileSdkVersion 23
     buildToolsVersion "21.1.2"
 //
 //    defaultConfig {
@@ -69,9 +69,9 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     wearApp project(':wear')
     compile project (':sharedvalues')
-    compile 'com.android.support:appcompat-v7:22.0.0'
-    compile 'com.google.android.gms:play-services:7.0.0'
-    compile 'com.android.support:support-v4:22.0.0'
+    compile 'com.android.support:appcompat-v7:23.1.1'
+    compile 'com.google.android.gms:play-services:8.4.0'
+    compile 'com.android.support:support-v4:23.1.1'
     compile 'com.jakewharton.timber:timber:2.5.1'
     compile 'com.ichi2.anki:api:1.0.0alpha2'
 }

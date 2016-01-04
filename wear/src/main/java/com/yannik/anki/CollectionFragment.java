@@ -3,7 +3,7 @@ package com.yannik.anki;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import android.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,7 +30,8 @@ import java.util.List;
  * Activities containing this fragment MUST implement the {@link OnFragmentInteractionListener}
  * interface.
  */
-public class CollectionFragment extends Fragment implements AbsListView.OnItemClickListener, WearMainActivity.JsonReceiver {
+public class CollectionFragment extends Fragment implements AbsListView.OnItemClickListener,
+        WearMainActivity.JsonReceiver, WearMainActivity.AmbientStatusReceiver {
 
     private static final String ARG_PARAM1 = "collections";
     ArrayList<String> deckNames = new ArrayList<String>();
@@ -74,12 +75,17 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
     public void applySettings(){
         if (settings == null) return;
 
-        if(settings.isDayMode()) {
+        setDayMode(settings.isDayMode());
+
+        mAdapter.notifyDataSetChanged();
+    }
+
+    public void setDayMode(boolean dayMode){
+        if(dayMode) {
             collectionListContainer.setBackgroundResource(R.drawable.round_rect_day);
         }else{
             collectionListContainer.setBackgroundResource(R.drawable.round_rect_night);
         }
-        mAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -172,6 +178,16 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
 
             mAdapter.notifyDataSetChanged();
         }
+    }
+
+    @Override
+    public void onExitAmbient() {
+        applySettings();
+    }
+
+    @Override
+    public void onEnterAmbient() {
+        setDayMode(false);
     }
 
 
