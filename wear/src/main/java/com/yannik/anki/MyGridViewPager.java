@@ -1,6 +1,7 @@
 package com.yannik.anki;
 
 import android.content.Context;
+import android.graphics.Point;
 import android.support.wearable.view.GridViewPager;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -12,6 +13,7 @@ import android.view.ViewConfiguration;
 public class MyGridViewPager extends GridViewPager {
     private float mDownY;
     private float SCROLL_THRESHOLD=0;
+    private boolean dontBlockYMovement = false;
 
     public MyGridViewPager(Context context) {
         super(context);
@@ -23,31 +25,40 @@ public class MyGridViewPager extends GridViewPager {
         init();
     }
 
+    public MyGridViewPager(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+    }
+
     private void init(){
         SCROLL_THRESHOLD = ViewConfiguration.get(getContext())
                 .getScaledTouchSlop();
     }
 
-    private boolean blockYMovement = false;
     @Override
     public boolean onInterceptTouchEvent(MotionEvent event) {
 
-        if (getAdapter() != null && getAdapter().getColumnCount(getCurrentItem().x) > 1) {
-            if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-                mDownY = event.getY();
-            } else if (event.getActionMasked() == MotionEvent.ACTION_MOVE) {
-                if (blockYMovement || Math.abs(mDownY - event.getY()) > SCROLL_THRESHOLD) {
-                    blockYMovement = true;
-                    return false;
+
+        if (getAdapter() != null) {
+            Point curItem = getCurrentItem();
+            int numRows = getAdapter().getRowCount();
+            if (numRows <= 1) {
+                if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                    mDownY = event.getY();
+                } else if (event.getActionMasked() == MotionEvent.ACTION_MOVE) {
+                    if (dontBlockYMovement || Math.abs(mDownY - event.getY()) > SCROLL_THRESHOLD) {
+                        dontBlockYMovement = true;
+                        //                        Log.d(getClass().getName(), "Not blocking Y
+                        // movement. FirstDownY: " +
+                        //                                mDownY + " new Y " + event.getY());
+                        return false;
+                    }
+                } else {
+                    dontBlockYMovement = false;
                 }
-            } else {
-                blockYMovement = false;
             }
         }
+        dontBlockYMovement = false;
+        //        Log.d(getClass().getName(), "Blocking Y movement");
         return super.onInterceptTouchEvent(event);
-    }
-
-    public MyGridViewPager(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
     }
 }

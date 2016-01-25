@@ -3,6 +3,7 @@ package com.yannik.anki;
 import android.animation.Animator;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -13,7 +14,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.wearable.view.GridViewPager;
 import android.support.wearable.view.WatchViewStub;
@@ -106,7 +106,8 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
             soundIconClicked = true;
             Log.d("Anki", "sound icon clicked " + soundName);
             if (soundName != null && !soundName.isEmpty()) {
-                WearMainActivity.fireMessage(CommonIdentifiers.W2P_PLAY_SOUNDS, new JSONArray().put(soundName).toString());
+                WearMainActivity.fireMessage(CommonIdentifiers.W2P_PLAY_SOUNDS,
+                        new JSONArray().put(soundName).toString());
             }
         }
     };
@@ -115,6 +116,7 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     private int numButtons = 4;
     private JSONArray nextReviewTimes;
     private Spanned q, a;
+    private boolean buttonsHiddenOnAmbient = false;
 
     public ReviewFragment() {
         // Required empty public constructor
@@ -581,13 +583,18 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
             String fname = m.group(2);
         }
 
-        q = makeSoundIconsClickable(Html.fromHtml(qHtml.replaceAll(SOUND_TAG_REPLACEMENT_REGEX, SOUND_TAG_REPLACEMENT_STRING).replaceAll("</?a.*?>", ""), withImages ? imageGetter : null, null), false);
-        a = makeSoundIconsClickable(Html.fromHtml(aHtml.replaceAll(SOUND_TAG_REPLACEMENT_REGEX, SOUND_TAG_REPLACEMENT_STRING).replaceAll("</?a.*?>", ""), withImages ? imageGetter : null, null), true);
+        q = makeSoundIconsClickable(Html.fromHtml(qHtml.replaceAll
+                (SOUND_TAG_REPLACEMENT_REGEX,
+                        SOUND_TAG_REPLACEMENT_STRING).replaceAll("</?a.*?>", "")
+                , withImages ? imageGetter : null, null), false);
+        a = makeSoundIconsClickable(Html.fromHtml(aHtml.replaceAll
+                (SOUND_TAG_REPLACEMENT_REGEX,
+                        SOUND_TAG_REPLACEMENT_STRING).replaceAll("</?a.*?>", "")
+                , withImages ? imageGetter : null, null), true);
 
 
     }
 
-    //TODO: turn sound emoji into ImageSpan
     private Spanned makeSoundIconsClickable(Spanned text, boolean isAnswer) {
         JSONArray sounds = findSounds(isAnswer);
         SpannableString qss = new SpannableString(text);
@@ -619,14 +626,15 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
 
                 ClickableString click_span = new ClickableString(onSoundIconClickListener, soundName);
 
-                ClickableSpan[] click_spans = qss.getSpans(start, end, ClickableSpan.class);
-
-                if (click_spans.length != 0) {
-                    // remove all click spans
-                    for (ClickableSpan c_span : click_spans) {
-                        qss.removeSpan(c_span);
-                    }
-                }
+                //                ClickableSpan[] click_spans = qss.getSpans(start, end,
+                // ClickableSpan.class);
+                //
+                //                if (click_spans.length != 0) {
+                //                    // remove all click spans
+                //                    for (ClickableSpan c_span : click_spans) {
+                //                        qss.removeSpan(c_span);
+                //                    }
+                //                }
 
 
                 qss.setSpan(click_span, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -692,14 +700,13 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         lastResetTimeMillis = System.currentTimeMillis();
     }
 
-    private boolean buttonsHiddenOnAmbient = false;
-
-
     @Override
     public void onEnterAmbient() {
         if (showingEaseButtons){
             hideButtons();
             buttonsHiddenOnAmbient = true;
+        } else {
+            buttonsHiddenOnAmbient = false;
         }
         setDayMode(false);
     }
