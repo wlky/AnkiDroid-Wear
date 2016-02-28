@@ -134,6 +134,8 @@ public class SettingsActivity extends ActionBarActivity {
             this.findPreference(getResources().getString(R.string.play_sounds)).setOnPreferenceChangeListener(listener);
             this.findPreference(getResources().getString(R.string.ask_before_first_sound)).setOnPreferenceChangeListener(listener);
             this.findPreference(getResources().getString(R.string.day_mode)).setOnPreferenceChangeListener(listener);
+            this.findPreference(getResources().getString(R.string.ambient_mode_key))
+                    .setOnPreferenceChangeListener(listener);
             mediaLocationDir.setOnPreferenceChangeListener(listener);
 
         }

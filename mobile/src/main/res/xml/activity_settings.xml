@@ -46,6 +46,12 @@
             />
         <CheckBoxPreference
             android:defaultValue="true"
+            android:key="@string/ambient_mode_key"
+            android:summary="Keep showing app when display goes in ambient mode"
+            android:title="Ambient Mode"
+            />
+        <CheckBoxPreference
+            android:defaultValue="true"
             android:key="@string/card_flip_animation_key"
             android:title="Card flip animation"
             />

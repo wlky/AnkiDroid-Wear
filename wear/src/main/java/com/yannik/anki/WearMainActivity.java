@@ -51,6 +51,8 @@ public class WearMainActivity extends WearableActivity {
     ArrayList<JsonReceiver> jsonReceivers = new ArrayList<JsonReceiver>();
     private MessageReceiver messageReceiver;
     private IntentFilter messageFilter;
+    private ReviewFragment reviewFragment;
+    private CollectionFragment decksFragment;
 
     public static void fireMessage(final String path, final String data) {
         fireMessage(data, path, 0);
@@ -59,7 +61,8 @@ public class WearMainActivity extends WearableActivity {
     private static void fireMessage(final String data, final String path, final int retryCount) {
         Log.d(TAG, "Firing Request " + path);
         // Send the RPC
-        PendingResult<NodeApi.GetConnectedNodesResult> nodes = Wearable.NodeApi.getConnectedNodes(googleApiClient);
+        PendingResult<NodeApi.GetConnectedNodesResult> nodes = Wearable.NodeApi.getConnectedNodes(
+                googleApiClient);
         nodes.setResultCallback(new ResultCallback<NodeApi.GetConnectedNodesResult>() {
             @Override
             public void onResult(NodeApi.GetConnectedNodesResult result) {
@@ -69,9 +72,14 @@ public class WearMainActivity extends WearableActivity {
                     String nId = node.getId();
                     Log.d(TAG, "firing Message with path: " + path);
 
-                    PendingResult<MessageApi.SendMessageResult> messageResult = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(),
-                            path, (data == null ? "" : data).getBytes());
-                    messageResult.setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
+                    PendingResult<MessageApi.SendMessageResult> messageResult = Wearable
+                            .MessageApi.sendMessage(
+                                    googleApiClient,
+                                    node.getId(),
+                                    path,
+                                    (data == null ? "" : data).getBytes());
+                    messageResult.setResultCallback(new ResultCallback<MessageApi
+                            .SendMessageResult>() {
                         @Override
                         public void onResult(MessageApi.SendMessageResult sendMessageResult) {
                             Status status = sendMessageResult.getStatus();
@@ -112,9 +120,13 @@ public class WearMainActivity extends WearableActivity {
     @Override
     public void onEnterAmbient(Bundle ambientDetails) {
         super.onEnterAmbient(ambientDetails);
-        reviewFragment.onEnterAmbient();
-        decksFragment.onEnterAmbient();
-        Log.d(TAG, "Entered ambient mode");
+        if (preferences.isAmbientMode()) {
+            reviewFragment.onEnterAmbient();
+            decksFragment.onEnterAmbient();
+            Log.d(TAG, "Entered ambient mode");
+        } else {
+            finish();
+        }
     }
 
     @Override
@@ -123,17 +135,14 @@ public class WearMainActivity extends WearableActivity {
         reviewFragment.onExitAmbient();
         decksFragment.onExitAmbient();
         Log.d(TAG, "Exited ambient mode");
-    }
 
-    private ReviewFragment reviewFragment;
-    private CollectionFragment decksFragment;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.wear_main);
 
-        setAmbientEnabled();
 
         preferences = new Preferences(this);
         preferences.load();
@@ -141,8 +150,31 @@ public class WearMainActivity extends WearableActivity {
 
         final PagerAdapter adapter = new PagerAdapter(getFragmentManager());
 
+
+        viewPager.setOnPageChangeListener(new GridViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int i, int i1, float v, float v1, int i2, int i3) {
+            }
+
+            @Override
+            public void onPageSelected(int x, int y) {
+                Log.d(getClass().getName(), "Page selected x: " + x + " y: " + y);
+                if (x == 0 && y == 1) {
+                    fireMessage(CommonIdentifiers.W2P_REQUEST_DECKS, null);
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int i) {
+            }
+        });
+
         reviewFragment = ReviewFragment.newInstance(preferences, viewPager);
         decksFragment = CollectionFragment.newInstance(null);
+
+        if (preferences.isAmbientMode()) {
+            setAmbientEnabled();
+        }
 
         decksFragment.setChooseDeckListener(new CollectionFragment.OnFragmentInteractionListener() {
             @Override
@@ -174,8 +206,13 @@ public class WearMainActivity extends WearableActivity {
                                 preferences.setPlaySound(json.getInt(name));
                             } else if (name.equals(Preferences.ASK_BEFORE_FIRST_SOUND)) {
                                 preferences.setAskBeforeFirstSound(json.getBoolean(name));
-                            }else if (name.equals(Preferences.DAY_MODE)) {
+                            } else if (name.equals(Preferences.DAY_MODE)) {
                                 preferences.setDayMode(json.getBoolean(name));
+                            } else if (name.equals(Preferences.AMBIENT_MODE)) {
+                                preferences.setAmbientMode(json.getBoolean(name));
+                                if (preferences.isAmbientMode()) {
+                                    setAmbientEnabled();
+                                }
                             }
 
                         } catch (JSONException e) {
@@ -198,7 +235,6 @@ public class WearMainActivity extends WearableActivity {
         messageReceiver = new MessageReceiver();
 
 
-
         googleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)
                 .build();
@@ -208,20 +244,23 @@ public class WearMainActivity extends WearableActivity {
             public void onConnected(Bundle bundle) {
                 Log.d(TAG, "Wear connected to Google Api");
 
-                PendingResult<DataItemBuffer> results = Wearable.DataApi.getDataItems(googleApiClient);
+                PendingResult<DataItemBuffer> results = Wearable.DataApi.getDataItems(
+                        googleApiClient);
                 results.setResultCallback(new ResultCallback<DataItemBuffer>() {
                     @Override
                     public void onResult(DataItemBuffer dataItems) {
                         if (dataItems.getCount() != 0) {
-                            for(int i = 0; i< dataItems.getCount(); i++) {
+                            for (int i = 0; i < dataItems.getCount(); i++) {
                                 DataItem dataItem = dataItems.get(i);
-                                try{
+                                try {
                                     DataMapItem dataMapItem = DataMapItem.fromDataItem(dataItem);
                                     for (String name : dataMapItem.getDataMap().keySet()) {
-                                        WearMainActivity.availableAssets.put(name, dataMapItem.getDataMap().getAsset(name));
+                                        WearMainActivity.availableAssets.put(name,
+                                                dataMapItem.getDataMap().getAsset(name));
                                         Log.v("myTag", "Immage received on watch is: " + name);
                                     }
-                                }catch (IllegalStateException ise){}
+                                } catch (IllegalStateException ise) {
+                                }
                             }
                         }
 
@@ -232,7 +271,8 @@ public class WearMainActivity extends WearableActivity {
                 if (firstStart) {
                     firstStart = false;
                     fireMessage(CommonIdentifiers.W2P_REQUEST_SETTINGS, null);
-                    fireMessage(CommonIdentifiers.W2P_REQUEST_CARD, "" + preferences.getSelectedDeck());
+                    fireMessage(CommonIdentifiers.W2P_REQUEST_CARD,
+                            "" + preferences.getSelectedDeck());
                     fireMessage(CommonIdentifiers.W2P_REQUEST_DECKS, null);
                 }
             }
@@ -276,14 +316,19 @@ public class WearMainActivity extends WearableActivity {
     public void onResume() {
         Log.d(getClass().getName(), "MainActivity.onResume");
         super.onResume();
+        if (preferences != null) {
+            preferences.load();
+        }
+        fireMessage(CommonIdentifiers.W2P_REQUEST_DECKS, null);
     }
 
     interface JsonReceiver {
         void onJsonReceive(String path, JSONObject json);
     }
 
-    interface AmbientStatusReceiver{
+    interface AmbientStatusReceiver {
         void onExitAmbient();
+
         void onEnterAmbient();
     }
 
@@ -319,15 +364,15 @@ public class WearMainActivity extends WearableActivity {
             return fragmentList.get(y);
         }
 
-//        @Override
-//        public Fragment getItem(int position) {
-//            return fragmentList.get(position);
-//        }
-//
-//        @Override
-//        public int getCount() {
-//            return fragmentList.size();
-//        }
+        //        @Override
+        //        public Fragment getItem(int position) {
+        //            return fragmentList.get(position);
+        //        }
+        //
+        //        @Override
+        //        public int getCount() {
+        //            return fragmentList.size();
+        //        }
 
         public void addFragment(Fragment fragment) {
             fragmentList.add(fragment);
