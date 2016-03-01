@@ -14,8 +14,11 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.wearable.activity.WearableActivity;
 import android.support.wearable.view.FragmentGridPagerAdapter;
 import android.support.wearable.view.GridViewPager;
+import android.text.format.DateFormat;
 import android.util.Log;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
@@ -36,6 +39,7 @@ import org.json.JSONObject;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -53,6 +57,25 @@ public class WearMainActivity extends WearableActivity {
     private IntentFilter messageFilter;
     private ReviewFragment reviewFragment;
     private CollectionFragment decksFragment;
+    private TextView timeOverlay;
+    private Handler timeHandler = new Handler();
+    private Runnable timeRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Calendar c = Calendar.getInstance();
+            //            int hours = c.get(Calendar.HOUR);
+            //            int minutes = c.get(Calendar.MINUTE);
+            int seconds = c.get(Calendar.SECOND);
+            CharSequence timeText;
+            if (!DateFormat.is24HourFormat(WearMainActivity.this)) {
+                timeText = android.text.format.DateFormat.format("hh:mm", new java.util.Date());
+            } else {
+                timeText = android.text.format.DateFormat.format("kk:mm", new java.util.Date());
+            }
+            timeOverlay.setText(timeText);
+            timeHandler.postDelayed(this, 1000 * (60 - seconds));
+        }
+    };
 
     public static void fireMessage(final String path, final String data) {
         fireMessage(data, path, 0);
@@ -123,6 +146,11 @@ public class WearMainActivity extends WearableActivity {
         if (preferences.isAmbientMode()) {
             reviewFragment.onEnterAmbient();
             decksFragment.onEnterAmbient();
+            timeOverlay.setVisibility(View.VISIBLE);
+
+            timeHandler = new Handler();
+            timeHandler.post(timeRunnable);
+
             Log.d(TAG, "Entered ambient mode");
         } else {
             finish();
@@ -134,6 +162,8 @@ public class WearMainActivity extends WearableActivity {
         super.onExitAmbient();
         reviewFragment.onExitAmbient();
         decksFragment.onExitAmbient();
+        timeOverlay.setVisibility(View.GONE);
+        timeHandler.removeCallbacks(timeRunnable);
         Log.d(TAG, "Exited ambient mode");
 
     }
@@ -186,6 +216,8 @@ public class WearMainActivity extends WearableActivity {
                 preferences.setSelectedDeck(id);
             }
         });
+
+        timeOverlay = (TextView) findViewById(R.id.time_overlay);
 
         jsonReceivers.add(new JsonReceiver() {
             @Override
