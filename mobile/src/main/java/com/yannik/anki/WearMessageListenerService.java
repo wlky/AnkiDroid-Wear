@@ -14,6 +14,7 @@ import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
@@ -66,6 +67,8 @@ public class WearMessageListenerService extends WearableListenerService {
     SoundPlayerOnCompletionListener soundEndedListener = new SoundPlayerOnCompletionListener();
     ArrayList<CardInfo> cardQueue = new ArrayList<CardInfo>();
     private GoogleApiClient googleApiClient;
+    private long lastToastTime;
+    private Handler uiHandler = new Handler();
 
     @Override
     public void onCreate() {
@@ -417,6 +420,20 @@ public class WearMessageListenerService extends WearableListenerService {
 
         Cursor decksCursor = getContentResolver().query(FlashCardsContract.Deck.CONTENT_ALL_URI, FlashCardsContract.Deck.DEFAULT_PROJECTION, null, null, null);
 
+        if (decksCursor == null) {
+            if (System.currentTimeMillis() - lastToastTime > 10000) {
+                lastToastTime = System.currentTimeMillis();
+                //have to run the Toast with a Handler since otherwise, since we're starting it from a Service the Service stops before disappear is called on the Toast
+                uiHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getBaseContext(), "Couldn't query for decks. Do you have AnkiDroid installed?", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+            }
+            return;
+        }
         if (!decksCursor.moveToFirst()) {
             Log.d(TAG, "query for decks returned no result");
             decksCursor.close();
