@@ -1,6 +1,7 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<FrameLayout
     android:id="@+id/mainFrame"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_box="all">
@@ -14,22 +15,24 @@
         <ScrollView
             android:id="@+id/questionAnswerScrollView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:layout_gravity="top">
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            >
 
-            <LinearLayout
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:paddingBottom="25dp"
+                android:paddingTop="25dp">
 
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="20dp" />
+                <!--<RelativeLayout-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="10dp" />-->
 
                 <TextView
                     android:id="@+id/text"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:clickable="true"
@@ -37,12 +40,12 @@
                     android:gravity="center"
                     android:text=":)"
                     android:textColor="@color/dayTextColor"
-                    android:textSize="50sp" />
+                    android:textSize="50sp"/>
 
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="20dp" />
-            </LinearLayout>
+                <!--<RelativeLayout-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="10dp" />-->
+            </FrameLayout>
         </ScrollView>
 
         <ProgressBar
@@ -52,7 +55,7 @@
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
             android:layout_centerInParent="true"
-            android:visibility="gone" />
+            android:visibility="gone"/>
     </RelativeLayout>
 
     <RelativeLayout
@@ -82,7 +85,7 @@
         app:ease_text="Good"
         app:icon="@drawable/pb_mid"
         app:text="mid"
-        app:upsideDown="false" />
+        app:upsideDown="false"/>
 
     <com.yannik.anki.PullButton
         android:id="@+id/hardButton"
@@ -106,5 +109,5 @@
         app:ease_text="Again"
         app:icon="@drawable/pb_failed"
         app:text="failed"
-        app:upsideDown="true" />
+        app:upsideDown="true"/>
 </FrameLayout>

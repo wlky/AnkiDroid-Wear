@@ -14,6 +14,7 @@ class Preferences {
     public static String PLAY_SOUNDS;
     public static String ASK_BEFORE_FIRST_SOUND;
     public static String DAY_MODE;
+    public static String AMBIENT_MODE;
     private WearMainActivity wearMainActivity;
     private float cardFontSize = 40;
     private boolean doubleTapReview = true;
@@ -23,6 +24,7 @@ class Preferences {
     private int playSound = 0;
     private boolean askBeforeFirstSound;
     private boolean dayMode = true;
+    private boolean ambientMode = true;
 
 
     public Preferences(WearMainActivity wearMainActivity){
@@ -35,6 +37,7 @@ class Preferences {
         PLAY_SOUNDS = wearMainActivity.getResources().getString(R.string.play_sounds);
         ASK_BEFORE_FIRST_SOUND = wearMainActivity.getResources().getString(R.string.ask_before_first_sound);
         DAY_MODE = wearMainActivity.getResources().getString(R.string.day_mode);
+        AMBIENT_MODE = wearMainActivity.getResources().getString(R.string.ambient_mode_key);
     }
 
     public float getCardFontSize() {
@@ -94,7 +97,17 @@ class Preferences {
         editor.putInt(PLAY_SOUNDS, playSound);
         editor.putBoolean(ASK_BEFORE_FIRST_SOUND, askBeforeFirstSound);
         editor.putBoolean(DAY_MODE, dayMode);
+        editor.putBoolean(AMBIENT_MODE, ambientMode);
         editor.commit();
+    }
+
+    public boolean isAmbientMode() {
+        return ambientMode;
+    }
+
+    public void setAmbientMode(boolean ambientMode) {
+        this.ambientMode = ambientMode;
+        save();
     }
 
     public void load(){
@@ -107,6 +120,7 @@ class Preferences {
         playSound = settings.getInt(PLAY_SOUNDS, playSound);
         askBeforeFirstSound = settings.getBoolean(ASK_BEFORE_FIRST_SOUND, askBeforeFirstSound);
         dayMode = settings.getBoolean(ASK_BEFORE_FIRST_SOUND, dayMode);
+        ambientMode = settings.getBoolean(AMBIENT_MODE, ambientMode);
     }
 
 

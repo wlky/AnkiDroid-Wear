@@ -184,6 +184,22 @@ public class PullButton extends RelativeLayout {
         animate().setStartDelay(delay).y(homePosition).setListener(null);
     }
 
+    public void animateOut(float velocity) {
+
+        animate()
+                .setStartDelay(0)
+                .y(exitY)
+                .setDuration(Math.min((long) ((Math.abs(getY() - exitY)) / Math.abs(velocity)), 500))
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        if (ocl != null) ocl.onClick(PullButton.this);
+                        setY(displaySize.y + 10);
+                        animate().setStartDelay(0).y(homePosition).setListener(null).setDuration(250);
+                    }
+                });
+    }
+
     class SwipeTouchListener implements OnTouchListener {
         private float yDiff;
 
@@ -230,18 +246,7 @@ public class PullButton extends RelativeLayout {
 
                         System.out.println("Velocity is: " + yVelocity);
                         System.out.println("Distance is: " + (viewPositionY - exitY));
-                        v.animate()
-                                .setStartDelay(0)
-                                .y(exitY)
-                                .setDuration(Math.min((long) ((Math.abs(viewPositionY - exitY)) / Math.abs(mVelocityTracker.getYVelocity())), 500))
-                                .setListener(new AnimatorListenerAdapter() {
-                                    @Override
-                                    public void onAnimationEnd(Animator animation) {
-                                        if (ocl != null) ocl.onClick(PullButton.this);
-                                        v.setY(displaySize.y + 10);
-                                        v.animate().setStartDelay(0).y(homePosition).setListener(null).setDuration(250);
-                                    }
-                                });
+                        animateOut(mVelocityTracker.getYVelocity());
                     } else if (viewPositionY + v.getHeight() < displaySize.y) {
                         v.animate().setStartDelay(0).y(extendedPosition).alpha(extendedAlpha).setListener(null);
                     } else {

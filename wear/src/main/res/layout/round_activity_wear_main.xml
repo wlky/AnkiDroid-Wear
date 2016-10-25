@@ -1,9 +1,9 @@
-<FrameLayout android:id="@+id/mainFrame"
-             xmlns:android="http://schemas.android.com/apk/res/android"
-
-             xmlns:app="http://schemas.android.com/apk/res-auto"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent">
+<FrameLayout
+    android:id="@+id/mainFrame"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
     <RelativeLayout
         android:id="@+id/qaContainer"
@@ -56,10 +56,7 @@
     <RelativeLayout
         android:id="@+id/questionAnswerOverlay"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        >
-    </RelativeLayout>
-
+        android:layout_height="match_parent"/>
 
     <com.yannik.anki.PullButton
         android:id="@+id/easyButton"
@@ -70,8 +67,7 @@
         app:ease_text="Easy"
         app:icon="@drawable/pb_easy"
         app:text="easy"
-        app:upsideDown="false"
-        >
+        app:upsideDown="false">
 
     </com.yannik.anki.PullButton>
 
@@ -84,8 +80,7 @@
         app:ease_text="Good"
         app:icon="@drawable/pb_mid"
         app:text="mid"
-        app:upsideDown="false"
-        />
+        app:upsideDown="false"/>
 
     <com.yannik.anki.PullButton
         android:id="@+id/hardButton"
