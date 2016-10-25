@@ -7,6 +7,7 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -14,6 +15,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.wearable.view.GridViewPager;
 import android.support.wearable.view.WatchViewStub;
@@ -25,6 +27,7 @@ import android.text.style.ClickableSpan;
 import android.text.style.ImageSpan;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -67,6 +70,8 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
      * Group 2 = "fname"
      */
     private static final Pattern fSoundRegexps = Pattern.compile("(?i)(\\[sound:([^]]+)\\])");
+    private static final int EASY = 0, MID = 1, HARD = 2, FAILED = 3;
+    private static final int GESTURE_BUTTON_ANIMATION_TIME_MS = 1000;
     private static Preferences settings;
     private static GridViewPager gridViewPager;
     byte playSounds = -1;
@@ -75,7 +80,8 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     private long noteID;
     private int cardOrd;
     private RelativeLayout qaOverlay;
-    private PullButton failed, hard, mid, easy;
+    //    private PullButton easeButtons[FAILED], easeButtons[HARD], easeButtons[MID], easeButtons[EASY];
+    private PullButton[] easeButtons;
     private boolean showingEaseButtons = false, showingAnswer = false;
     private Timer easeButtonShowTimer = new Timer();
     private ScrollView qaScrollView;
@@ -117,6 +123,7 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     private JSONArray nextReviewTimes;
     private Spanned q, a;
     private boolean buttonsHiddenOnAmbient = false;
+    private float gestureButtonVelocity = 1;
 
     public ReviewFragment() {
         // Required empty public constructor
@@ -141,14 +148,16 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Resources r = getResources();
+        gestureButtonVelocity = r.getDisplayMetrics().heightPixels / GESTURE_BUTTON_ANIMATION_TIME_MS;
     }
 
     private void hideButtons() {
         showingEaseButtons = false;
-        easy.setVisibility(View.GONE);
-        mid.setVisibility(View.GONE);
-        hard.setVisibility(View.GONE);
-        failed.setVisibility(View.GONE);
+
+        for (PullButton easeButton : easeButtons) {
+            easeButton.setVisibility(View.GONE);
+        }
     }
 
     private void showButtons() {
@@ -157,38 +166,38 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         try {
             switch (numButtons) {
                 case 2:
-                    mid.centerX();
-                    failed.centerX();
-                    mid.slideIn(100);
-                    failed.slideIn(300);
-                    failed.setText(nextReviewTimes.getString(0));
-                    mid.setText(nextReviewTimes.getString(1));
+                    easeButtons[MID].centerX();
+                    easeButtons[FAILED].centerX();
+                    easeButtons[MID].slideIn(100);
+                    easeButtons[FAILED].slideIn(300);
+                    easeButtons[FAILED].setText(nextReviewTimes.getString(0));
+                    easeButtons[MID].setText(nextReviewTimes.getString(1));
                     break;
                 case 3:
-                    failed.centerX();
-                    easy.left();
-                    mid.right();
-                    easy.slideIn(100);
-                    mid.slideIn(300);
-                    failed.slideIn(500);
-                    failed.setText(nextReviewTimes.getString(0));
-                    mid.setText(nextReviewTimes.getString(1));
-                    easy.setText(nextReviewTimes.getString(2));
+                    easeButtons[FAILED].centerX();
+                    easeButtons[EASY].left();
+                    easeButtons[MID].right();
+                    easeButtons[EASY].slideIn(100);
+                    easeButtons[MID].slideIn(300);
+                    easeButtons[FAILED].slideIn(500);
+                    easeButtons[FAILED].setText(nextReviewTimes.getString(0));
+                    easeButtons[MID].setText(nextReviewTimes.getString(1));
+                    easeButtons[EASY].setText(nextReviewTimes.getString(2));
 
                     break;
                 case 4:
-                    easy.left();
-                    mid.right();
-                    hard.left();
-                    failed.right();
-                    easy.slideIn(100);
-                    mid.slideIn(300);
-                    hard.slideIn(500);
-                    failed.slideIn(700);
-                    failed.setText(nextReviewTimes.getString(0));
-                    hard.setText(nextReviewTimes.getString(1));
-                    mid.setText(nextReviewTimes.getString(2));
-                    easy.setText(nextReviewTimes.getString(3));
+                    easeButtons[EASY].left();
+                    easeButtons[MID].right();
+                    easeButtons[HARD].left();
+                    easeButtons[FAILED].right();
+                    easeButtons[EASY].slideIn(100);
+                    easeButtons[MID].slideIn(300);
+                    easeButtons[HARD].slideIn(500);
+                    easeButtons[FAILED].slideIn(700);
+                    easeButtons[FAILED].setText(nextReviewTimes.getString(0));
+                    easeButtons[HARD].setText(nextReviewTimes.getString(1));
+                    easeButtons[MID].setText(nextReviewTimes.getString(2));
+                    easeButtons[EASY].setText(nextReviewTimes.getString(3));
                     break;
             }
         } catch (JSONException e) {
@@ -378,22 +387,19 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
 
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
-                        //                        Log.v("test", "ontouchevent " + event.getAction
-                        // ());
+//                        Log.v("test", "ontouchevent " + event.getAction());
 
 
                         resetScreenTimeout(false);
 
-                        //                        soundIconClicked = false;
-                        //                        if (mTextView.onTouchEvent(event)) {
-                        //                            Log.d(getClass().getName(), "textview was
-                        // touched, soundIconClicked is: " + soundIconClicked);
-                        //                            if (soundIconClicked) return false;
-                        //                        }
+//                        soundIconClicked = false;
+//                        if (mTextView.onTouchEvent(event)) {
+//                            Log.d(getClass().getName(), "textview was touched, soundIconClicked is: " + soundIconClicked);
+//                            if (soundIconClicked) return false;
+//                        }
 
 
                         if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-
                             mDownX = event.getX();
                             mDownY = event.getY();
                             scrollViewMoved = false;
@@ -425,11 +431,12 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                     }
                 });
 
-                easy = (PullButton) stub.findViewById(R.id.easyButton);
-                mid = (PullButton) stub.findViewById(R.id.midButton);
-                hard = (PullButton) stub.findViewById(R.id.hardButton);
-                failed = (PullButton) stub.findViewById(R.id.failedButton);
 
+                easeButtons = new PullButton[4];
+                easeButtons[EASY] = (PullButton) stub.findViewById(R.id.easyButton);
+                easeButtons[MID] = (PullButton) stub.findViewById(R.id.midButton);
+                easeButtons[HARD] = (PullButton) stub.findViewById(R.id.hardButton);
+                easeButtons[FAILED] = (PullButton) stub.findViewById(R.id.failedButton);
 
                 View.OnClickListener easeButtonListener = new View.OnClickListener() {
                     @Override
@@ -451,28 +458,15 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                                 break;
                         }
 
-                        JSONObject json = new JSONObject();
-                        try {
-                            json.put("ease", ease);
-                            json.put("note_id", noteID);
-                            json.put("card_ord", cardOrd);
-                            json.put("deck_id", settings.getSelectedDeck());
-                            WearMainActivity.fireMessage(CommonIdentifiers.W2P_RESPOND_CARD_EASE,
-                                    json.toString());
-                            indicateLoading();
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
 
-
+                        answerCard(ease);
                     }
                 };
 
 
-                failed.setOnSwipeListener(easeButtonListener);
-                easy.setOnSwipeListener(easeButtonListener);
-                hard.setOnSwipeListener(easeButtonListener);
-                mid.setOnSwipeListener(easeButtonListener);
+                for (PullButton easeButton : easeButtons) {
+                    easeButton.setOnSwipeListener(easeButtonListener);
+                }
 
                 applySettings();
                 showLoadingSpinner();
@@ -480,6 +474,26 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         });
 
         return view;
+    }
+
+
+    private void answerCard(int ease) {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("ease", ease);
+            json.put("note_id", noteID);
+            json.put("card_ord", cardOrd);
+            json.put("deck_id", settings.getSelectedDeck());
+            WearMainActivity.fireMessage(CommonIdentifiers.W2P_RESPOND_CARD_EASE, json.toString());
+            indicateLoading();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
     }
 
     public void indicateLoading() {
@@ -591,7 +605,6 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                 (SOUND_TAG_REPLACEMENT_REGEX,
                         SOUND_TAG_REPLACEMENT_STRING).replaceAll("</?a.*?>", "")
                 , withImages ? imageGetter : null, null), true);
-
 
     }
 
@@ -717,6 +730,31 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
             showButtons();
         }
         applySettings();
+    }
+
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+
+        int answerInt = -1;
+        switch (keyCode) {
+
+            case KeyEvent.KEYCODE_NAVIGATE_NEXT:
+                answerInt = 1;
+                break;
+            case KeyEvent.KEYCODE_NAVIGATE_PREVIOUS:
+                answerInt = 4;
+                break;
+        }
+        if (answerInt != -1) {
+            if (showingAnswer) {
+                easeButtons[answerInt - 1].animateOut(gestureButtonVelocity);
+//                answerCard(answerInt);
+            } else {
+                showAnswer();
+            }
+            return true;
+        }
+        // If you did not handle it, let it be handled by the next possible element as deemed by the Activity.
+        return false;
     }
 
     interface SoundClickListener {

@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 23
-    buildToolsVersion "23.0.2"
+    buildToolsVersion "23.0.3"
 //
 //    defaultConfig {
 //        applicationId "com.yannik.ankidroid_wear"
@@ -70,7 +70,7 @@ dependencies {
     wearApp project(':wear')
     compile project (':sharedvalues')
     compile 'com.android.support:appcompat-v7:23.1.1'
-    compile 'com.google.android.gms:play-services:8.4.0'
+    compile 'com.google.android.gms:play-services:9.6.1'
     compile 'com.android.support:support-v4:23.1.1'
     compile 'com.jakewharton.timber:timber:2.5.1'
     compile 'com.ichi2.anki:api:1.0.0alpha2'

@@ -16,6 +16,7 @@ import android.support.wearable.view.FragmentGridPagerAdapter;
 import android.support.wearable.view.GridViewPager;
 import android.text.format.DateFormat;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
@@ -76,6 +77,7 @@ public class WearMainActivity extends WearableActivity {
             timeHandler.postDelayed(this, 1000 * (60 - seconds));
         }
     };
+    private MyGridViewPager viewPager;
 
     public static void fireMessage(final String path, final String data) {
         fireMessage(data, path, 0);
@@ -176,6 +178,7 @@ public class WearMainActivity extends WearableActivity {
 
         preferences = new Preferences(this);
         preferences.load();
+        viewPager = (MyGridViewPager) findViewById(R.id.pager);
         final MyGridViewPager viewPager = (MyGridViewPager) findViewById(R.id.pager);
 
         final PagerAdapter adapter = new PagerAdapter(getFragmentManager());
@@ -315,6 +318,14 @@ public class WearMainActivity extends WearableActivity {
             }
         });
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (viewPager.getCurrentItem().x == 0) {
+            return reviewFragment.onKeyDown(keyCode, event);
+        }
+        return false;
     }
 
     @Override
