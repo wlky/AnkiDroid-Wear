@@ -17,7 +17,7 @@ brings Anki to your wrist!
  - Adjustable font size
  - Re-show question from answer screen by single/double tapping (can be configured in settings)
  - Additional delay for screen timeout (can be adjusted in settings)
- - Wrist-Gestures for answering cars with one hand
+ - Wrist-Gestures for answering cards with one hand
 
 
 ## Installation
