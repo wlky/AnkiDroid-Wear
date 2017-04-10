@@ -4,13 +4,18 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,6 +28,17 @@ import java.io.File;
 
 
 public class SettingsActivity extends ActionBarActivity {
+
+    private static final String TAG = "WearMessageListener";
+
+    /** Request code returned in param to callback when user has granted or refused read anki cards perm. */
+    private static final int MY_PERMISSIONS_REQUEST_READ_ANKI = 24;
+
+    /** Permission to read/write ankidroid cards, this is a permission with a permissionLevel= dangerous.
+     * @link https://github.com/ankidroid/Anki-Android/blob/master/AnkiDroid/src/main/AndroidManifest.xml */
+    public static final String COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE =
+            "com.ichi2.anki.permission.READ_WRITE_DATABASE";
+
     static Animation rotation;
     static ImageView sendingIndicator;
     MessageReceiver messageReceiver;
@@ -49,6 +65,23 @@ public class SettingsActivity extends ActionBarActivity {
         messageReceiver = new MessageReceiver();
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver,messageFilter);
 
+        // check for permissions to read Ankidroid database
+        if (ContextCompat.checkSelfPermission(this,
+                COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            Log.v(TAG, "Asking user for dangerous permission : read anki database");
+
+            // We don't wonder whether or not we should ask user as application CAN NOT work without
+            // this permission and would consequently be completely useless.
+            // So we ask all the time till use finally agrees.
+
+            ActivityCompat.requestPermissions(this,
+                    new String[]{COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE},
+                    MY_PERMISSIONS_REQUEST_READ_ANKI);
+
+            // See callback in #onRequestPermissionsResult()
+        }
 
     }
 
@@ -103,6 +136,32 @@ public class SettingsActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String permissions[],
+                                           @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_READ_ANKI: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay!
+                    Log.v(TAG, "User granted dangerous permission : read AnkiDroid database");
+                } else {
+                    // permission was NOT granted, explain user this is required!
+                    Log.w(TAG, "User DID NOT grant dangerous permission : read anki database");
+                    Toast.makeText(this,
+                            getString(R.string.settings_activity__permission_necessary),
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+            default:
+                Log.w(TAG, "UN-MANAGED request permission result code = " + requestCode);
+
+        }
     }
 
     private void sendPreferencesToWatch() {

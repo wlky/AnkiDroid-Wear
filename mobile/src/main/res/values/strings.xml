@@ -4,4 +4,9 @@
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Send settings to wear</string>
     <string name="media_folder_location">media_folder_location</string>
+
+    <string name="settings_activity__permission_necessary">WARNING : Application will not work without you
+        granting access to AnkiDroid scards!!"</string>
+    <string name="wearservice_permissionnotgranted_toast">Permission to read Ankidroid cards was not granted.
+        Please open AnkiWear settings.</string>
 </resources>

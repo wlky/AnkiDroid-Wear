@@ -4,6 +4,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.media.AudioManager;
@@ -12,6 +13,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -44,17 +46,20 @@ import java.util.Map;
 
 import timber.log.Timber;
 
+import static com.yannik.anki.SettingsActivity.COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE;
+
 
 /**
- * Created by Yannik on 12.03.2015.
+ * @author Created by Yannik on 12.03.2015.
  */
 public class WearMessageListenerService extends WearableListenerService {
+
+    private static final String TAG = "WearMessageListener";
 
     public static final int TASK_SEND_SETTINGS = 12;
     public static final String[] SIMPLE_CARD_PROJECTION = {
             FlashCardsContract.Card.ANSWER_PURE,
             FlashCardsContract.Card.QUESTION_SIMPLE};
-    private static final String TAG = "WearMessageListener";
     private static final Uri DUE_CARD_REVIEW_INFO_URI = FlashCardsContract.ReviewInfo.CONTENT_URI;
     private static final Uri REQUEST_DECKS_URI = Uri.withAppendedPath(FlashCardsContract.AUTHORITY_URI, "decks");
     static Handler soundThreadHandler = new Handler();
@@ -126,6 +131,7 @@ public class WearMessageListenerService extends WearableListenerService {
             queryForCurrentCard(deckID);
             setSoundQueue(null);
         } else if (messageEvent.getPath().equals(CommonIdentifiers.W2P_CHOOSE_COLLECTION)) {
+            // region CHOOSE COLLECTION
             long deckId = Long.valueOf(new String(messageEvent.getData()));
             Log.v(TAG, "Message received on phone is: " + deckId);
 
@@ -159,17 +165,19 @@ public class WearMessageListenerService extends WearableListenerService {
                     Log.d(TAG, "deck Options " + deckOptions);
                     decks.put(deckName, deckID);
                 } catch (JSONException e) {
+                    Log.e(TAG, "JSONException " + e);
                     e.printStackTrace();
                 }
 
                 decksCursor.close();
             }
-
+            // endregion CHOOSE COLLECTION
 
         } else if (messageEvent.getPath().equals(CommonIdentifiers.W2P_REQUEST_DECKS)) {
             queryForDeckNames();
 
         } else if (messageEvent.getPath().equals(CommonIdentifiers.W2P_RESPOND_CARD_EASE)) {
+
             int ease = 0;
             JSONObject json;
             String easeString = null;
@@ -191,6 +199,7 @@ public class WearMessageListenerService extends WearableListenerService {
 
 
             } catch (JSONException e) {
+                Log.e(TAG, "JSONException " + e);
                 e.printStackTrace();
             }
         } else if (messageEvent.getPath().equals(CommonIdentifiers.W2P_REQUEST_SETTINGS)) {
@@ -323,7 +332,8 @@ public class WearMessageListenerService extends WearableListenerService {
     }
 
     private void queryForCurrentCard(long deckID) {
-        Log.d(TAG, "WearMessageListenerService: queryForCurrentCard");
+        Log.d(TAG, "QueryForCurrentCard");
+
         String deckArguments[] = new String[deckID == -1 ? 1 : 2];
         String deckSelector = "limit=?";
         deckArguments[0] = "" + 1;
@@ -332,71 +342,89 @@ public class WearMessageListenerService extends WearableListenerService {
             deckArguments[1] = "" + deckID;
         }
 
-        Cursor reviewInfoCursor = getContentResolver().query(DUE_CARD_REVIEW_INFO_URI, null, deckSelector, deckArguments, null);
-
-        if (reviewInfoCursor == null || !reviewInfoCursor.moveToFirst()) {
-            Log.d(TAG, "query for due card info returned no result");
-            sendNoMoreCardsToWear();
-            if (reviewInfoCursor != null) {
-                reviewInfoCursor.close();
-            }
-        } else {
-            cardQueue.clear();
-            do {
-                CardInfo card = new CardInfo();
-
-                card.cardOrd = reviewInfoCursor.getInt(reviewInfoCursor.getColumnIndex(FlashCardsContract.ReviewInfo.CARD_ORD));
-                card.noteID = reviewInfoCursor.getLong(reviewInfoCursor.getColumnIndex(FlashCardsContract.ReviewInfo.NOTE_ID));
-                card.buttonCount = reviewInfoCursor.getInt(reviewInfoCursor.getColumnIndex(FlashCardsContract.ReviewInfo.BUTTON_COUNT));
-
-                try {
-                    card.fileNames = new JSONArray(reviewInfoCursor.getString(reviewInfoCursor.getColumnIndex(FlashCardsContract.ReviewInfo.MEDIA_FILES)));
-                    card.nextReviewTexts = new JSONArray(reviewInfoCursor.getString(reviewInfoCursor.getColumnIndex(FlashCardsContract.ReviewInfo.NEXT_REVIEW_TIMES)));
-                } catch (JSONException e) {
-                    e.printStackTrace();
+        // This call requires com.ichi2.anki.permission.READ_WRITE_DATABASE to be granted by user as it is
+        // marked as "dangerous" by ankidroid app. This permission has been asked before. Would crash if
+        // not granted, so checking
+        if (ContextCompat.checkSelfPermission(this,
+                COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE)
+                != PackageManager.PERMISSION_GRANTED) {
+            uiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getBaseContext(),
+                            R.string.wearservice_permissionnotgranted_toast,
+                            Toast.LENGTH_SHORT).show();
                 }
-                Log.v(TAG, "card added to queue: " + card.fileNames);
+            });
+        } else {
+            // permission has been granted, normal case
 
-                new GrabAndProcessFilesTask().execute(card);
+            Cursor reviewInfoCursor =
+                    getContentResolver().query(DUE_CARD_REVIEW_INFO_URI, null, deckSelector, deckArguments, null);
 
-                cardQueue.add(card);
-            } while (reviewInfoCursor.moveToNext());
+            if (reviewInfoCursor == null || !reviewInfoCursor.moveToFirst()) {
+                Log.d(TAG, "query for due card info returned no result");
+                sendNoMoreCardsToWear();
+                if (reviewInfoCursor != null) {
+                    reviewInfoCursor.close();
+                }
+            } else {
+                cardQueue.clear();
+                do {
+                    CardInfo card = new CardInfo();
 
-            reviewInfoCursor.close();
+                    card.cardOrd = reviewInfoCursor.getInt(reviewInfoCursor.getColumnIndex(FlashCardsContract.ReviewInfo.CARD_ORD));
+                    card.noteID = reviewInfoCursor.getLong(reviewInfoCursor.getColumnIndex(FlashCardsContract.ReviewInfo.NOTE_ID));
+                    card.buttonCount = reviewInfoCursor.getInt(reviewInfoCursor.getColumnIndex(FlashCardsContract.ReviewInfo.BUTTON_COUNT));
 
-            if (cardQueue.size() >= 1) {
+                    try {
+                        card.fileNames = new JSONArray(reviewInfoCursor.getString(reviewInfoCursor.getColumnIndex(FlashCardsContract.ReviewInfo.MEDIA_FILES)));
+                        card.nextReviewTexts = new JSONArray(reviewInfoCursor.getString(reviewInfoCursor.getColumnIndex(FlashCardsContract.ReviewInfo.NEXT_REVIEW_TIMES)));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    Log.v(TAG, "card added to queue: " + card.fileNames);
 
-                for (CardInfo card : cardQueue) {
-                    Uri noteUri = Uri.withAppendedPath(FlashCardsContract.Note.CONTENT_URI, Long.toString(card.noteID));
-                    Uri cardsUri = Uri.withAppendedPath(noteUri, "cards");
-                    Uri specificCardUri = Uri.withAppendedPath(cardsUri, Integer.toString(card.cardOrd));
-                    final Cursor specificCardCursor = getContentResolver().query(specificCardUri,
-                            SIMPLE_CARD_PROJECTION,  // projection
-                            null,  // selection is ignored for this URI
-                            null,  // selectionArgs is ignored for this URI
-                            null   // sortOrder is ignored for this URI
-                    );
+                    new GrabAndProcessFilesTask().execute(card);
 
-                    if (specificCardCursor == null || !specificCardCursor.moveToFirst()) {
-                        Log.d(TAG, "query for due card info returned no result");
-                        sendNoMoreCardsToWear();
-                        if (specificCardCursor != null) {
+                    cardQueue.add(card);
+                } while (reviewInfoCursor.moveToNext());
+
+                reviewInfoCursor.close();
+
+                if (cardQueue.size() >= 1) {
+
+                    for (CardInfo card : cardQueue) {
+                        Uri noteUri = Uri.withAppendedPath(FlashCardsContract.Note.CONTENT_URI, Long.toString(card.noteID));
+                        Uri cardsUri = Uri.withAppendedPath(noteUri, "cards");
+                        Uri specificCardUri = Uri.withAppendedPath(cardsUri, Integer.toString(card.cardOrd));
+                        final Cursor specificCardCursor = getContentResolver().query(specificCardUri,
+                                SIMPLE_CARD_PROJECTION,  // projection
+                                null,  // selection is ignored for this URI
+                                null,  // selectionArgs is ignored for this URI
+                                null   // sortOrder is ignored for this URI
+                        );
+
+                        if (specificCardCursor == null || !specificCardCursor.moveToFirst()) {
+                            Log.d(TAG, "query for due card info returned no result");
+                            sendNoMoreCardsToWear();
+                            if (specificCardCursor != null) {
+                                specificCardCursor.close();
+                            }
+                            return;
+                        } else {
+                            card.a = specificCardCursor.getString(specificCardCursor.getColumnIndex(FlashCardsContract.Card.ANSWER_PURE));
+                            card.q = specificCardCursor.getString(specificCardCursor.getColumnIndex(FlashCardsContract.Card.QUESTION_SIMPLE));
                             specificCardCursor.close();
                         }
-                        return;
-                    } else {
-                        card.a = specificCardCursor.getString(specificCardCursor.getColumnIndex(FlashCardsContract.Card.ANSWER_PURE));
-                        card.q = specificCardCursor.getString(specificCardCursor.getColumnIndex(FlashCardsContract.Card.QUESTION_SIMPLE));
-                        specificCardCursor.close();
                     }
-                }
 
-                CardInfo nextCard = cardQueue.get(0);
-                cardStartTime = System.currentTimeMillis();
-                sendCardToWear(nextCard.q, nextCard.a, nextCard.nextReviewTexts, nextCard.noteID, nextCard.cardOrd);
+                    CardInfo nextCard = cardQueue.get(0);
+                    cardStartTime = System.currentTimeMillis();
+                    sendCardToWear(nextCard.q, nextCard.a, nextCard.nextReviewTexts, nextCard.noteID, nextCard.cardOrd);
+                }
             }
         }
-
     }
 
     private boolean isImage(String name) {
@@ -418,45 +446,68 @@ public class WearMessageListenerService extends WearableListenerService {
 
     private void queryForDeckNames() {
 
-        Cursor decksCursor = getContentResolver().query(FlashCardsContract.Deck.CONTENT_ALL_URI, FlashCardsContract.Deck.DEFAULT_PROJECTION, null, null, null);
-
-        if (decksCursor == null) {
-            if (System.currentTimeMillis() - lastToastTime > 10000) {
-                lastToastTime = System.currentTimeMillis();
-                //have to run the Toast with a Handler since otherwise, since we're starting it from a Service the Service stops before disappear is called on the Toast
-                uiHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getBaseContext(), "Couldn't query for decks. Do you have AnkiDroid installed?", Toast.LENGTH_SHORT).show();
-                    }
-                });
-
-            }
-            return;
-        }
-        if (!decksCursor.moveToFirst()) {
-            Log.d(TAG, "query for decks returned no result");
-            decksCursor.close();
-        } else {
-            JSONObject decks = new JSONObject();
-            do {
-                long deckID = decksCursor.getLong(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_ID));
-                String deckName = decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_NAME));
-
-
-                try {
-                    JSONObject deckOptions = new JSONObject(decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.OPTIONS)));
-                    JSONArray deckCounts = new JSONArray(decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_COUNTS)));
-                    Log.d(TAG, "deckCounts " + deckCounts);
-                    Log.d(TAG, "deck Options " + deckOptions);
-                    decks.put(deckName, deckID);
-                } catch (JSONException e) {
-                    e.printStackTrace();
+        // This call requires com.ichi2.anki.permission.READ_WRITE_DATABASE to be granted by user as it is
+        // marked as "dangerous" by ankidroid app. This permission has been asked before. Would crash if
+        // not granted, so checking
+        if (ContextCompat.checkSelfPermission(this,
+                COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE)
+                != PackageManager.PERMISSION_GRANTED) {
+            uiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getBaseContext(),
+                            R.string.wearservice_permissionnotgranted_toast,
+                            Toast.LENGTH_SHORT).show();
                 }
-            } while (decksCursor.moveToNext());
+            });
+        } else {
+            // permission has been granted, normal case
 
-            sendDecksToWear(decks);
-        }
+            Cursor decksCursor =
+                    getContentResolver().query(FlashCardsContract.Deck.CONTENT_ALL_URI,
+                            FlashCardsContract.Deck.DEFAULT_PROJECTION, null, null, null);
+
+            if (decksCursor == null) {
+                if (System.currentTimeMillis() - lastToastTime > 10000) {
+                    lastToastTime = System.currentTimeMillis();
+                    //have to run the Toast with a Handler since otherwise, since we're starting it
+                    // from a Service the Service stops before disappear is called on the Toast
+                    uiHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getBaseContext(),
+                                    "Couldn't query for decks. Do you have AnkiDroid installed?",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+                }
+                return;
+            }
+            if (!decksCursor.moveToFirst()) {
+                Log.d(TAG, "query for decks returned no result");
+                decksCursor.close();
+            } else {
+                JSONObject decks = new JSONObject();
+                do {
+                    long deckID = decksCursor.getLong(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_ID));
+                    String deckName = decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_NAME));
+
+
+                    try {
+                        JSONObject deckOptions = new JSONObject(decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.OPTIONS)));
+                        JSONArray deckCounts = new JSONArray(decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_COUNTS)));
+                        Log.d(TAG, "deckCounts " + deckCounts);
+                        Log.d(TAG, "deck Options " + deckOptions);
+                        decks.put(deckName, deckID);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                } while (decksCursor.moveToNext());
+
+                sendDecksToWear(decks);
+            }
+        };
     }
 
     private void sendDecksToWear(JSONObject decks) {
