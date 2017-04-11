@@ -36,6 +36,7 @@
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
+    <uses-permission android:name="com.ichi2.anki.permission.READ_WRITE_DATABASE"/>
 </manifest>
 
 

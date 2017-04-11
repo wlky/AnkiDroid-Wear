@@ -57,7 +57,7 @@ import java.util.regex.Pattern;
  * create an instance of this fragment.
  */
 public class ReviewFragment extends Fragment implements WearMainActivity.JsonReceiver, WearMainActivity.AmbientStatusReceiver {
-
+    private static final String TAG = "ReviewFragment";
     public static final String W2W_RELOAD_HTML_FOR_MEDIA = "reload_text";
     private static final String W2W_REMOVE_SCREEN_LOCK = "remove_screen_lock";
     private static final String SOUND_PLACEHOLDER_STRING = "awlieurablsdkvbwlaiueaghlsdkvblqi2345235.jpg";
@@ -528,8 +528,6 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         }
         jsonQueueNames.clear();
         jsonQueueObjects.clear();
-
-
     }
 
     @Override
@@ -565,6 +563,7 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
 
                 setQA(true);
             } catch (JSONException e) {
+                Log.e(TAG, "JSONException " + e);
                 e.printStackTrace();
             }
         } else if (path.equals(CommonIdentifiers.P2W_NO_MORE_CARDS)) {

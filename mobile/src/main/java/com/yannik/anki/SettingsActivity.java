@@ -29,7 +29,6 @@ import java.io.File;
 
 
 public class SettingsActivity extends ActionBarActivity {
-
     /**
      * Permission to read/write ankidroid cards, this is a permission with a permissionLevel= dangerous.
      *
@@ -98,9 +97,24 @@ public class SettingsActivity extends ActionBarActivity {
                     new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                     MY_PERMISSIONS_REQUEST_READ_STORAGE);
 
-            // See callback in #onRequestPermissionsResult()
-        }
+            // check for permissions to read Ankidroid database
+            if (ContextCompat.checkSelfPermission(this,
+                    COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE)
+                    != PackageManager.PERMISSION_GRANTED) {
 
+                Log.v(TAG, "Asking user for dangerous permission : read anki database");
+
+                // We don't wonder whether or not we should ask user as application CAN NOT work without
+                // this permission and would consequently be completely useless.
+                // So we ask all the time till use finally agrees.
+
+                ActivityCompat.requestPermissions(this,
+                        new String[]{COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE},
+                        MY_PERMISSIONS_REQUEST_READ_ANKI);
+
+                // See callback in #onRequestPermissionsResult()
+            }
+        }
     }
 
     @Override

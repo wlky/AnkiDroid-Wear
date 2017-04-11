@@ -84,7 +84,7 @@ public class WearMainActivity extends WearableActivity {
     }
 
     private static void fireMessage(final String data, final String path, final int retryCount) {
-        Log.d(TAG, "Firing Request " + path);
+        Log.d(TAG, "Firing Request " + path + " retryCount = " + retryCount);
         // Send the RPC
         PendingResult<NodeApi.GetConnectedNodesResult> nodes = Wearable.NodeApi.getConnectedNodes(
                 googleApiClient);
@@ -95,7 +95,7 @@ public class WearMainActivity extends WearableActivity {
                     Node node = result.getNodes().get(i);
                     String nName = node.getDisplayName();
                     String nId = node.getId();
-                    Log.d(TAG, "firing Message with path: " + path);
+                    Log.d(TAG, "Firing Message with path: " + path);
 
                     PendingResult<MessageApi.SendMessageResult> messageResult = Wearable
                             .MessageApi.sendMessage(
@@ -111,7 +111,10 @@ public class WearMainActivity extends WearableActivity {
 
                             Log.d(TAG, "Status: " + status.toString());
                             if (!status.isSuccess()) {
-                                if (retryCount > 5) return;
+                                if (retryCount > 5) {
+                                    Log.w(TAG, "Too many retries, giving up.");
+                                    return;
+                                }
                                 mHandler.postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
@@ -119,7 +122,6 @@ public class WearMainActivity extends WearableActivity {
                                     }
                                 }, 1000 * retryCount);
                             }
-
                         }
                     });
                 }
@@ -385,6 +387,7 @@ public class WearMainActivity extends WearableActivity {
                 try {
                     js = new JSONObject(message);
                 } catch (JSONException e) {
+                    Log.e(TAG, "JSONException " + e);
                 }
             }
             for (JsonReceiver jsr : jsonReceivers) {

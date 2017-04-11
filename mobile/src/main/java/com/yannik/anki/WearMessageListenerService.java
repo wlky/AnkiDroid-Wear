@@ -1,5 +1,6 @@
 package com.yannik.anki;
 
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -54,11 +55,12 @@ import static com.yannik.anki.SettingsActivity.COM_ICHI2_ANKI_PERMISSION_READ_WR
  */
 public class WearMessageListenerService extends WearableListenerService {
 
+    private static final String TAG = "WearMessageListener";
+
     public static final int TASK_SEND_SETTINGS = 12;
     public static final String[] SIMPLE_CARD_PROJECTION = {
             FlashCardsContract.Card.ANSWER_PURE,
             FlashCardsContract.Card.QUESTION_SIMPLE};
-    private static final String TAG = "WearMessageListener";
     private static final Uri DUE_CARD_REVIEW_INFO_URI = FlashCardsContract.ReviewInfo.CONTENT_URI;
     private static final Uri REQUEST_DECKS_URI = Uri.withAppendedPath(FlashCardsContract.AUTHORITY_URI, "decks");
     static Handler soundThreadHandler = new Handler();
@@ -389,6 +391,7 @@ public class WearMessageListenerService extends WearableListenerService {
                             == PackageManager.PERMISSION_GRANTED) {
                         new GrabAndProcessFilesTask().execute(card);
                     }
+
 
 
                     cardQueue.add(card);
