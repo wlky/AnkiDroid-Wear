@@ -40,8 +40,8 @@ public class SettingsActivity extends ActionBarActivity {
     /**
      * Request code returned in param to callback when user has granted or refused read anki cards perm.
      */
-    private static final int MY_PERMISSIONS_REQUEST_READ_ANKI = 24;
-    private static final int MY_PERMISSIONS_REQUEST_READ_STORAGE = 38;
+    private static final int MY_PERMISSIONS_REQUEST = 24;
+    ;
     static Animation rotation;
     static ImageView sendingIndicator;
     MessageReceiver messageReceiver;
@@ -69,9 +69,8 @@ public class SettingsActivity extends ActionBarActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, messageFilter);
 
         // check for permissions to read Ankidroid database
-        if (ContextCompat.checkSelfPermission(this,
-                COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE)
-                != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE) != PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
 
             Log.v(TAG, "Asking user for dangerous permission : read anki database");
 
@@ -80,41 +79,12 @@ public class SettingsActivity extends ActionBarActivity {
             // So we ask all the time till use finally agrees.
 
             ActivityCompat.requestPermissions(this,
-                    new String[]{COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE},
-                    MY_PERMISSIONS_REQUEST_READ_ANKI);
+                    new String[]{COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE, Manifest.permission.READ_EXTERNAL_STORAGE},
+                    MY_PERMISSIONS_REQUEST);
 
             // See callback in #onRequestPermissionsResult()
         }
 
-        // check for permissions to read external storage
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.READ_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            Log.v(TAG, "Asking user for permission : read external storage");
-
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                    MY_PERMISSIONS_REQUEST_READ_STORAGE);
-
-            // check for permissions to read Ankidroid database
-            if (ContextCompat.checkSelfPermission(this,
-                    COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE)
-                    != PackageManager.PERMISSION_GRANTED) {
-
-                Log.v(TAG, "Asking user for dangerous permission : read anki database");
-
-                // We don't wonder whether or not we should ask user as application CAN NOT work without
-                // this permission and would consequently be completely useless.
-                // So we ask all the time till use finally agrees.
-
-                ActivityCompat.requestPermissions(this,
-                        new String[]{COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE},
-                        MY_PERMISSIONS_REQUEST_READ_ANKI);
-
-                // See callback in #onRequestPermissionsResult()
-            }
-        }
     }
 
     @Override
@@ -174,40 +144,44 @@ public class SettingsActivity extends ActionBarActivity {
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String permissions[],
                                            @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case MY_PERMISSIONS_REQUEST_READ_ANKI: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if (requestCode != MY_PERMISSIONS_REQUEST) {
+            return;
+        }
+        for (int i = 0; i < permissions.length; i++) {
+            String permission = permissions[i];
+            int result = grantResults[i];
+            switch (permission) {
+                case COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE: {
+                    // If request is cancelled, the result arrays are empty.
+                    if (grantResults.length > 0
+                            && result == PackageManager.PERMISSION_GRANTED) {
 
-                    // permission was granted, yay!
-                    Log.v(TAG, "User granted dangerous permission : read AnkiDroid database");
-                } else {
-                    // permission was NOT granted, explain user this is required!
-                    Log.w(TAG, "User DID NOT grant dangerous permission : read anki database");
-                    Toast.makeText(this,
-                            getString(R.string.settings_activity__permission_necessary),
-                            Toast.LENGTH_LONG).show();
+                        // permission was granted, yay!
+                        Log.v(TAG, "User granted dangerous permission : read AnkiDroid database");
+                    } else {
+                        // permission was NOT granted, explain user this is required!
+                        Log.w(TAG, "User DID NOT grant dangerous permission : read anki database");
+                        Toast.makeText(this,
+                                getString(R.string.settings_activity__permission_necessary),
+                                Toast.LENGTH_LONG).show();
+                    }
                 }
-            }
-            case MY_PERMISSIONS_REQUEST_READ_STORAGE: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                case Manifest.permission.READ_EXTERNAL_STORAGE: {
+                    // If request is cancelled, the result arrays are empty.
+                    if (grantResults.length > 0
+                            && result == PackageManager.PERMISSION_GRANTED) {
 
-                    // permission was granted, yay!
-                    Log.v(TAG, "User granted permission : read external storage");
-                } else {
-                    // permission was NOT granted, explain user this is required!
-                    Log.w(TAG, "User DID NOT grant permission : read external storage");
-                    Toast.makeText(this,
-                            getString(R.string.settings_activity__permission_necessary),
-                            Toast.LENGTH_LONG).show();
+                        // permission was granted
+                        Log.v(TAG, "User granted permission : read external storage");
+                    } else {
+                        // permission was NOT granted, explain user this is required!
+                        Log.w(TAG, "User DID NOT grant permission : read external storage");
+                    }
                 }
-            }
-            default:
-                Log.w(TAG, "UN-MANAGED request permission result code = " + requestCode);
+                default:
+                    Log.w(TAG, "UN-MANAGED request permission result code = " + requestCode);
 
+            }
         }
     }
 
