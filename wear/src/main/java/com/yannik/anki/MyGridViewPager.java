@@ -8,7 +8,7 @@ import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 
 /**
- * Created by Yannik on 05.01.2016.
+ * @author Created by Yannik on 05.01.2016.
  */
 public class MyGridViewPager extends GridViewPager {
     private float mDownY;

@@ -1,3 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- rect_activity_wear_main.xml -->
+<!--  -->
+<!-- Wear main page, for rectangular screens -->
+<!---->
+<!-- Resources and Ids for this page must start with "wear_main__" -->
+
 <FrameLayout
     android:id="@+id/mainFrame"
     xmlns:android="http://schemas.android.com/apk/res/android"
