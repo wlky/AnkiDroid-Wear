@@ -569,7 +569,7 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         } else if (path.equals(CommonIdentifiers.P2W_NO_MORE_CARDS)) {
             blockControls();
             hideLoadingSpinner();
-            mTextView.setText("No more Cards");
+            mTextView.setText(R.string.review_frag__no_more_cards);
         } else if (path.equals(W2W_REMOVE_SCREEN_LOCK)) {
             getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             Log.d("ReviewFragment", "removing screen lock");

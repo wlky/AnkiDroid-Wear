@@ -1,6 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- strings.xml -->
+<!--  -->
+<!-- English and untranslatable strings in the android wear part of the app -->
+
 <resources>
-    <string name="app_name">AnkiWear</string>
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="selected_deck">selected_deck</string>
+    <string name="app_name" translatable="false">AnkiWear</string>
+    <string name="selected_deck" translatable="false">selected_deck</string>
+    <string name="wear_main__please_wait" translatable="false">:)</string>
+
+    <string name="review_frag__no_more_cards">No more Cards</string>
+
+    <string name="common__good">Good</string>
+    <string name="common_hard">Hard</string>
+    <string name="common_again">Again</string>
+    <string name="common_easy">Easy</string>
 
 </resources>
