@@ -21,13 +21,13 @@
     <string name="pref_play_sounds__title">Sounds</string>
     <string name="pref_ask_before_play_sounds__title">Ask once before playing sounds</string>
     <string name="pref_day_mode__title">Day Mode</string>
-    <string name="pref_card_fontsize__postfix">points</string>
+    <string name="pref_card_fontsize__postfix">\u0020points</string>
     <string name="pref_screen_timeout__title">Screen Timeout Delay</string>
     <string name="pref_double_tap_key__title">Double tap answer to show question</string>
     <string name="pref_ambient_mode__title">Ambient mode</string>
     <string name="pref_ambient_mode__summary">Keep showing app when display goes in ambient mode</string>
     <string name="pref_card_flip_animation__title">Card flip animation</string>
     <string name="pref_media_folder_location__title">AnkiDroid Media Folder Location</string>
-    <string name="pref_screen_timeout__postfix">seconds</string>
+    <string name="pref_screen_timeout__postfix">\u0020seconds</string>
     <string name="pref_fontsize__title">Font size</string>
 </resources>
