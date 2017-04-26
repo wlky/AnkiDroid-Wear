@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- strings.xml -->
+<!--  -->
+<!-- French strings in the "mobile" part of the app -->
+
+<resources>
+    <string name="app_name">AnkiWear</string>
+
+    <string name="action_settings">Envoyer les paramètres à la montre</string>
+
+    <string name="settings_activity__permission_necessary">ATTENTION : L\'application ne fonctionnera pas si
+    vous ne donnez pas accès aux cartes Ankidroid!!</string>
+
+    <string name="wearservice_permissionnotgranted_toast">La permission d\accéder aux cartes Ankidroid n\'a
+        pas été accordée. Ceci peut etre fait dans l\'application Ankiwear.</string>
+    <string name="menu_send">Send</string>
+
+    <string name="pref_review_category__title">Révision</string>
+    <string name="pref_play_sounds__title">Sons</string>
+    <string name="pref_ask_before_play_sounds__title">Demander avant de jouer les sons</string>
+    <string name="pref_day_mode__title">mode jour</string>
+    <string name="pref_card_fontsize__postfix">\u0020points</string>
+    <string name="pref_screen_timeout__title">Délai avant extinction de l\'écran</string>
+    <string name="pref_double_tap_key__title">Double tap pour remontrer la question</string>
+    <string name="pref_ambient_mode__title">Mode ambient</string>
+    <string name="pref_ambient_mode__summary">Afficher l\'applicaiton également en mode ambient</string>
+    <string name="pref_card_flip_animation__title">Animer le retournement de carte</string>
+    <string name="pref_media_folder_location__title">Dossier pour les médias d\'AnkiDroid</string>
+    <string name="pref_screen_timeout__postfix">\u0020secondes</string>
+    <string name="pref_fontsize__title">Taille de la fonte</string>
+</resources>

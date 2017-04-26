@@ -1,13 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- strings.xml -->
+<!--  -->
+<!-- English (default) strings in the "mobile" part of the app -->
+
 <resources>
     <string name="app_name">AnkiWear</string>
 
-    <string name="hello_world">Hello world!</string>
     <string name="action_settings">Send settings to wear</string>
-    <string name="media_folder_location">media_folder_location</string>
+    <string name="media_folder_location" translatable="false">media_folder_location</string>
 
     <string name="settings_activity__permission_necessary">WARNING : Application will not work without you
         granting access to AnkiDroid cards!!"</string>
 
     <string name="wearservice_permissionnotgranted_toast">Permission to read Ankidroid cards was not granted.
         Please open AnkiWear settings.</string>
+    <string name="menu_send">Send</string>
+
+    <string name="pref_review_category__title">Review</string>
+    <string name="pref_play_sounds__title">Sounds</string>
+    <string name="pref_ask_before_play_sounds__title">Ask once before playing sounds</string>
+    <string name="pref_day_mode__title">Day Mode</string>
+    <string name="pref_card_fontsize__postfix">\u0020points</string>
+    <string name="pref_screen_timeout__title">Screen Timeout Delay</string>
+    <string name="pref_double_tap_key__title">Double tap answer to show question</string>
+    <string name="pref_ambient_mode__title">Ambient mode</string>
+    <string name="pref_ambient_mode__summary">Keep showing app when display goes in ambient mode</string>
+    <string name="pref_card_flip_animation__title">Card flip animation</string>
+    <string name="pref_media_folder_location__title">AnkiDroid Media Folder Location</string>
+    <string name="pref_screen_timeout__postfix">\u0020seconds</string>
+    <string name="pref_fontsize__title">Font size</string>
 </resources>
