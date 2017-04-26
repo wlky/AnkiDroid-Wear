@@ -30,4 +30,6 @@
     <string name="pref_media_folder_location__title">AnkiDroid Media Folder Location</string>
     <string name="pref_screen_timeout__postfix">\u0020seconds</string>
     <string name="pref_fontsize__title">Font size</string>
+    <string name="sound_option_dont_play_sounds">Do not play sounds</string>
+    <string name="sound_option_play_on_phone">Play sounds on phone</string>
 </resources>

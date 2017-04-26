@@ -29,4 +29,6 @@
     <string name="pref_media_folder_location__title">Dossier pour les médias d\'AnkiDroid</string>
     <string name="pref_screen_timeout__postfix">\u0020secondes</string>
     <string name="pref_fontsize__title">Taille de la fonte</string>
+    <string name="sound_option_dont_play_sounds">Ne pas jouer les sons</string>
+    <string name="sound_option_play_on_phone">Jouer les sons sur le téléphone</string>
 </resources>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AnkiWear</string>
+    <string name="menu_send">Senden</string>
+    <string name="pref_ambient_mode__summary">App auch im Energiesparmodus anzeigen</string>
+    <string name="pref_ambient_mode__title">Energiesparmodus</string>
+    <string name="pref_ask_before_play_sounds__title">Einmal nachfragen bevor Töne abgespielt werden</string>
+    <string name="pref_card_flip_animation__title">Animierte Kartendrehung</string>
+    <string name="pref_card_fontsize__postfix">\u0020Punkte</string>
+    <string name="pref_day_mode__title">Tag-Modus</string>
+    <string name="pref_double_tap_key__title">Antwort doppelklicken um Frage anzuzeigen</string>
+    <string name="pref_fontsize__title">Schriftgröße</string>
+    <string name="pref_media_folder_location__title">AnkiDroid Medienordner Pfad</string>
+    <string name="pref_play_sounds__title">Töne</string>
+    <string name="pref_review_category__title">Lernen</string>
+    <string name="pref_screen_timeout__postfix">\u0020Sekunden</string>
+    <string name="pref_screen_timeout__title">Zeit bis Energiesparmodus</string>
+    <string name="settings_activity__permission_necessary">ACHTUNG: Diese App wird nicht funktionieren ohne die AnkiDroid Berechtung nicht funktionieren!!</string>
+    <string name="wearservice_permissionnotgranted_toast">Berechtung die AnkiDroid Karten zu lesen wurde nicht gewährt. Bitte öffnen Sie die AnkiWear Einstellungen.</string>
+    <string name="action_settings">Einstellungen an die Uhr übertragen</string>
+    <string name="sound_option_dont_play_sounds">Keine Töne abspielen</string>
+    <string name="sound_option_play_on_phone">Töne auf dem Handy abspielen</string>
+</resources>

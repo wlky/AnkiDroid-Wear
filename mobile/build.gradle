@@ -19,6 +19,9 @@ android {
         }
     }
 
+    lintOptions {
+        disable 'MissingTranslation'
+    }
 
     def versionPropsFile = file('version.properties')
 
