@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +23,9 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.yannik.sharedvalues.CommonIdentifiers.P2W_COLLECTION_LIST_DECK_COUNT;
+import static com.yannik.sharedvalues.CommonIdentifiers.P2W_COLLECTION_LIST_DECK_ID;
+
 /**
  * A fragment representing a list of Items.
  * <p/>
@@ -33,13 +38,15 @@ import java.util.List;
 public class CollectionFragment extends Fragment implements AbsListView.OnItemClickListener,
         WearMainActivity.JsonReceiver, WearMainActivity.AmbientStatusReceiver {
 
+    private static final String TAG = "CollectionFragment";
+
     private static final String ARG_PARAM1 = "collections";
-    ArrayList<String> deckNames = new ArrayList<String>();
-    ArrayList<Long> deckIDs = new ArrayList<Long>();
+    ArrayList<Deck> decks = new ArrayList<>();
     View collectionListContainer;
     private String[] collectionList;
     private OnFragmentInteractionListener mListener;
     private Preferences settings;
+
     /**
      * The fragment's ListView/GridView.
      */
@@ -97,7 +104,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         }
 
         mAdapter = new DayNightArrayAdapter(getActivity(),
-                R.layout.collection_list_item, this.deckNames);
+                R.layout.collection_list_item, decks);
     }
 
     @Override
@@ -143,7 +150,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         if (null != mListener) {
             // Notify the active callbacks interface (the activity, if the
             // fragment is attached to one) that an item has been selected.
-            mListener.onFragmentInteraction(deckIDs.get(position));
+            mListener.onFragmentInteraction(decks.get(position).getID());
         }
     }
 
@@ -162,17 +169,25 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
 
     @Override
     public void onJsonReceive(String path, JSONObject js) {
+
         if (path.equals(CommonIdentifiers.P2W_COLLECTION_LIST)) {
+
             JSONArray collectionNames = js.names();
             if (collectionNames == null) return;
-            deckNames.clear();
-            deckIDs.clear();
+
+            decks.clear();
+
             for (int i = 0; i < collectionNames.length(); i++) {
                 String colName;
+                long deckID;
+                String deckCounts;
                 try {
                     colName = collectionNames.getString(i);
-                    deckNames.add(colName);
-                    deckIDs.add(js.getLong(colName));
+                    JSONObject deckObject = js.getJSONObject(colName);
+                    deckID = deckObject.getLong(P2W_COLLECTION_LIST_DECK_ID);
+                    deckCounts = deckObject.getString(P2W_COLLECTION_LIST_DECK_COUNT);
+                    Deck newDeck = new Deck(colName, deckID, deckCounts);
+                    decks.add(newDeck);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -183,6 +198,9 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
             }
 
             mAdapter.notifyDataSetChanged();
+
+        } else {
+            Log.w(TAG, "Received message with un-managed path");
         }
     }
 
@@ -211,13 +229,19 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         void onFragmentInteraction(long id);
     }
 
-    class DayNightArrayAdapter extends ArrayAdapter<String>{
-        public DayNightArrayAdapter(Context context, int resource, List<String> objects) {
-            super(context, resource, objects);
+    /**
+     * Customised adapter for displaying list of deck names.
+     * Supports day and night mode.
+     */
+    private class DayNightArrayAdapter extends ArrayAdapter<Deck>{
+
+        DayNightArrayAdapter(Context context, int layoutResourceID, List<Deck> decks) {
+            super(context, layoutResourceID, decks);
         }
 
+        @NonNull
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
             TextView v = (TextView)super.getView(position, convertView, parent);
             if(settings == null || settings.isDayMode()){
                 v.setTextColor(getResources().getColor(R.color.dayTextColor));
@@ -232,4 +256,27 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
 
     }
 
+    /**
+     * Deck is an immutable object.
+     */
+    private class Deck {
+        private final String mName;
+        private final String mDeckCounts;
+        private long mID;
+
+        public Deck(String parName, long parDeckID, String parDeckCounts) {
+            mName = parName;
+            mID = parDeckID;
+            mDeckCounts = parDeckCounts;
+        }
+
+        public long getID() {
+            return mID;
+        }
+
+        @Override
+        public String toString() {
+            return mName + "  " + mDeckCounts;
+        }
+    }
 }

@@ -18,6 +18,11 @@ public class CommonIdentifiers {
 
     /** Message path for sending decks list. */
     public static final String P2W_COLLECTION_LIST = "/com.ichi2.wear/collections";
+    /** JSON key for deck id long. */
+    public static final String P2W_COLLECTION_LIST_DECK_ID = "deck_id";
+    /** JSON key for deck counts String. */
+    public static final String P2W_COLLECTION_LIST_DECK_COUNT = "deck_count";
+
     public static final String W2P_EXITING = "/com.ichi2.wear/exit";
 
 

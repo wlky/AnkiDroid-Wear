@@ -48,6 +48,8 @@ import java.util.Map;
 import timber.log.Timber;
 
 import static com.yannik.anki.SettingsActivity.COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE;
+import static com.yannik.sharedvalues.CommonIdentifiers.P2W_COLLECTION_LIST_DECK_COUNT;
+import static com.yannik.sharedvalues.CommonIdentifiers.P2W_COLLECTION_LIST_DECK_ID;
 
 
 /**
@@ -495,24 +497,34 @@ public class WearMessageListenerService extends WearableListenerService {
                 Log.d(TAG, "query for decks returned no result");
                 decksCursor.close();
             } else {
-                JSONObject decks = new JSONObject();
+                JSONObject decksJSONObj = new JSONObject();
                 do {
                     long deckID = decksCursor.getLong(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_ID));
                     String deckName = decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_NAME));
 
-
                     try {
                         JSONObject deckOptions = new JSONObject(decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.OPTIONS)));
                         JSONArray deckCounts = new JSONArray(decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_COUNTS)));
-                        Log.d(TAG, "deckCounts " + deckCounts);
-                        Log.d(TAG, "deck Options " + deckOptions);
-                        decks.put(deckName, deckID);
+
+                        Log.d(TAG, "deckName = " + deckName);
+                        Log.d(TAG, "deckCounts = " + deckCounts);
+                        Log.v(TAG, "deck Options = " + deckOptions);
+
+                        // Creating json object as we have numerous deck related information
+                        // Re-using flashcardscontract identifiers.
+                        JSONObject deckOJSONObj = new JSONObject();
+                        deckOJSONObj.put(P2W_COLLECTION_LIST_DECK_ID, deckID);
+                        deckOJSONObj.put(P2W_COLLECTION_LIST_DECK_COUNT, deckCounts);
+
+                        decksJSONObj.put(deckName, deckOJSONObj);
+
                     } catch (JSONException e) {
+                        Log.e(TAG, "Exception when generating JSON");
                         e.printStackTrace();
                     }
                 } while (decksCursor.moveToNext());
 
-                sendDecksToWear(decks);
+                sendDecksToWear(decksJSONObj);
             }
         }
         ;
