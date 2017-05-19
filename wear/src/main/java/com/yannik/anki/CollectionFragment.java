@@ -11,7 +11,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.yannik.sharedvalues.CommonIdentifiers;
@@ -40,10 +41,9 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
 
     private static final String TAG = "CollectionFragment";
 
-    private static final String ARG_PARAM1 = "collections";
-    ArrayList<Deck> decks = new ArrayList<>();
+    /** The list of decks that will be displayed, will be provided by. */
+    ArrayList<Deck> mDecks = new ArrayList<>();
     View collectionListContainer;
-    private String[] collectionList;
     private OnFragmentInteractionListener mListener;
     private Preferences settings;
 
@@ -56,7 +56,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
      * The Adapter which will be used to populate the ListView/GridView with
      * Views.
      */
-    private ArrayAdapter mAdapter;
+    private BaseAdapter mAdapter;
 
 
     /**
@@ -66,12 +66,8 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
     public CollectionFragment() {
     }
 
-    public static CollectionFragment newInstance(String[] collectionList) {
-        CollectionFragment fragment = new CollectionFragment();
-        Bundle args = new Bundle();
-        args.putStringArray(ARG_PARAM1, collectionList);
-        fragment.setArguments(args);
-        return fragment;
+    public static CollectionFragment newInstance() {
+        return new CollectionFragment();
     }
 
     public void setSettings(Preferences settings){
@@ -99,12 +95,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (getArguments() != null) {
-            this.collectionList = getArguments().getStringArray(ARG_PARAM1);
-        }
-
-        mAdapter = new DayNightArrayAdapter(getActivity(),
-                R.layout.collection_list_item, decks);
+        mAdapter = new DayNightArrayAdapter(getActivity(), mDecks);
     }
 
     @Override
@@ -150,20 +141,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         if (null != mListener) {
             // Notify the active callbacks interface (the activity, if the
             // fragment is attached to one) that an item has been selected.
-            mListener.onFragmentInteraction(decks.get(position).getID());
-        }
-    }
-
-    /**
-     * The default content for this Fragment has a TextView that is shown when
-     * the list is empty. If you would like to change the text, call this method
-     * to supply the text it should use.
-     */
-    public void setEmptyText(CharSequence emptyText) {
-        View emptyView = mListView.getEmptyView();
-
-        if (emptyView instanceof TextView) {
-            ((TextView) emptyView).setText(emptyText);
+            mListener.onFragmentInteraction(mDecks.get(position).getID());
         }
     }
 
@@ -175,7 +153,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
             JSONArray collectionNames = js.names();
             if (collectionNames == null) return;
 
-            decks.clear();
+            mDecks.clear();
 
             for (int i = 0; i < collectionNames.length(); i++) {
                 String colName;
@@ -187,7 +165,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
                     deckID = deckObject.getLong(P2W_COLLECTION_LIST_DECK_ID);
                     deckCounts = deckObject.getString(P2W_COLLECTION_LIST_DECK_COUNT);
                     Deck newDeck = new Deck(colName, deckID, deckCounts);
-                    decks.add(newDeck);
+                    mDecks.add(newDeck);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -233,44 +211,101 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
      * Customised adapter for displaying list of deck names.
      * Supports day and night mode.
      */
-    private class DayNightArrayAdapter extends ArrayAdapter<Deck>{
+    private class DayNightArrayAdapter extends BaseAdapter{
 
-        DayNightArrayAdapter(Context context, int layoutResourceID, List<Deck> decks) {
-            super(context, layoutResourceID, decks);
+        private final Context mContext;
+        private final List<Deck> mDNAADecks;
+
+        DayNightArrayAdapter(Context parContext, List<Deck> parDecks) {
+            mContext = parContext;
+            mDNAADecks = parDecks;
+        }
+
+        @Override
+        public int getCount() {
+            if (mDNAADecks != null) {
+                return mDNAADecks.size();
+            } else {
+                return 0;
+            }
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return mDNAADecks.get(position);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
         }
 
         @NonNull
         @Override
-        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-            TextView v = (TextView)super.getView(position, convertView, parent);
-            if(settings == null || settings.isDayMode()){
-                v.setTextColor(getResources().getColor(R.color.dayTextColor));
-                v.setBackgroundResource(R.drawable.round_rect_day);
-            }else{
-                v.setTextColor(getResources().getColor(R.color.nightTextColor));
-                v.setBackgroundResource(R.drawable.round_rect_night);
+        public View getView(int position, View view, @NonNull ViewGroup parent) {
+            if (view == null) {
+                view = LayoutInflater.from(mContext).inflate(R.layout.collection_list_item, parent, false);
             }
 
-            return v;
+            DeckViewHolder viewHolder = (DeckViewHolder) view.getTag();
+            if (viewHolder == null) {
+                viewHolder = new DeckViewHolder();
+                viewHolder.catLayout = (RelativeLayout) view.findViewById(R.id.colllist__mainLayout);
+                viewHolder.catName = (TextView) view.findViewById(R.id.colllist__textcategory);
+                viewHolder.catNumber = (TextView) view.findViewById(R.id.colllist__textNumber);
+                view.setTag(viewHolder);
+            }
+
+            // setting here values to the fields of my items from my fan object
+            Deck oneDeck = mDNAADecks.get(position);
+            viewHolder.catName.setText(oneDeck.getName());
+            viewHolder.catNumber.setText(oneDeck.getDeckCounts());
+
+            // coloring background
+            if (settings == null || settings.isDayMode()) {
+                viewHolder.catName.setTextColor(getResources().getColor(R.color.dayTextColor));
+                viewHolder.catNumber.setTextColor(getResources().getColor(R.color.dayTextColor));
+                viewHolder.catLayout.setBackgroundResource(R.drawable.round_rect_day);
+            } else {
+                viewHolder.catName.setTextColor(getResources().getColor(R.color.nightTextColor));
+                viewHolder.catNumber.setTextColor(getResources().getColor(R.color.nightTextColor));
+                viewHolder.catLayout.setBackgroundResource(R.drawable.round_rect_night);
+            }
+
+            return view;
         }
 
+        private class DeckViewHolder {
+            public RelativeLayout catLayout;
+            public TextView catName;
+            public TextView catNumber;
+        }
     }
 
     /**
      * Deck is an immutable object.
+     * Build using provided JSON.
      */
     private class Deck {
         private final String mName;
         private final String mDeckCounts;
         private long mID;
 
-        public Deck(String parName, long parDeckID, String parDeckCounts) {
+        Deck(String parName, long parDeckID, String parDeckCounts) {
             mName = parName;
             mID = parDeckID;
             mDeckCounts = parDeckCounts;
         }
 
-        public long getID() {
+        public String getName() {
+            return mName;
+        }
+
+        public String getDeckCounts() {
+            return mDeckCounts;
+        }
+
+        long getID() {
             return mID;
         }
 
