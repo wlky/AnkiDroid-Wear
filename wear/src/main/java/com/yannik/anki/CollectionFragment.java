@@ -5,6 +5,7 @@ import android.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,6 +24,8 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.yannik.sharedvalues.CommonIdentifiers.P2W_COLLECTION_LIST_DECK_COUNT;
 import static com.yannik.sharedvalues.CommonIdentifiers.P2W_COLLECTION_LIST_DECK_ID;
@@ -216,6 +219,12 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         private final Context mContext;
         private final List<Deck> mDNAADecks;
 
+        private class DeckViewHolder {
+            RelativeLayout catLayout;
+            TextView catName;
+            TextView catNumber;
+        }
+
         DayNightArrayAdapter(Context parContext, List<Deck> parDecks) {
             mContext = parContext;
             mDNAADecks = parDecks;
@@ -259,7 +268,8 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
             // setting here values to the fields of my items from my fan object
             Deck oneDeck = mDNAADecks.get(position);
             viewHolder.catName.setText(oneDeck.getName());
-            viewHolder.catNumber.setText(oneDeck.getDeckCounts());
+            // Using fromHtml to allow easy one character coloration
+            viewHolder.catNumber.setText(Html.fromHtml(sumCountsForDeck(oneDeck)));
 
             // coloring background
             if (settings == null || settings.isDayMode()) {
@@ -275,43 +285,152 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
             return view;
         }
 
-        private class DeckViewHolder {
-            public RelativeLayout catLayout;
-            public TextView catName;
-            public TextView catNumber;
+        /**
+         * Will compute the counts by summing all sub-decks and format it in HTML
+         *
+         * @param parOneDeck deck for which to be compute the sum for him and sub decks
+         * @return sums formatted HTML, ready to be displayed
+         */
+        private String sumCountsForDeck(Deck parOneDeck) {
+
+            int mNewCountSum = 0;
+            int mLearningCountSum = 0;
+            int mReviewCountSum = 0;
+            for (Deck oneDeck : mDNAADecks) {
+                if (oneDeck.getName().contains(parOneDeck.getName())) {
+                    mNewCountSum += oneDeck.getNewCount();
+                    mLearningCountSum += oneDeck.getLearningCount();
+                    mReviewCountSum += oneDeck.getReviewCount();
+                }
+            }
+
+            // format and colorize to produce HTML
+            StringBuilder res = new StringBuilder();
+
+            if (mNewCountSum == 0) {
+                res.append("<font color='grey'>0</font>");
+            } else {
+                res.append("<font color='blue'>");
+                res.append(mNewCountSum);
+                res.append("</font>");
+            }
+            res.append(" ");
+            if (mLearningCountSum == 0) {
+                res.append("<font color='grey'>0</font>");
+            } else {
+                res.append("<font color='red'>");
+                res.append(mLearningCountSum);
+                res.append("</font>");
+            }
+            res.append(" ");
+            if (mReviewCountSum == 0) {
+                res.append("<font color='grey'>0</font>");
+                } else {
+                res.append("<font color='green'>");
+                res.append(mReviewCountSum);
+                res.append("</font>");
+            }
+
+            return res.toString();
         }
     }
 
     /**
      * Deck is an immutable object.
-     * Build using provided JSON.
+     * Built using provided JSON.
      */
     private class Deck {
-        private final String mName;
-        private final String mDeckCounts;
+        /** The deck name. e.g. : "computing::java". */
+        private String mName;
+        /** The unique identifier of this deck. e.g. : "1472977314172". */
         private long mID;
+        /** The number of cards in this deck with status "new". */
+        private int mNewCount;
+        /** The number of cards in this deck with status "learning". */
+        private int mLearningCount;
+        /** The number of cards in this deck with status "to review". */
+        private int mReviewCount;
 
+        /**
+         * Full params constructor.
+         * @param parName The deck name. e.g. : "computing::java".
+         * @param parDeckID The unique identifier of this deck. e.g. : "1472977314172".
+         * @param parDeckCounts The number of cards of each type. e.g. : "[4,3,5]"
+         */
         Deck(String parName, long parDeckID, String parDeckCounts) {
-            mName = parName;
-            mID = parDeckID;
-            mDeckCounts = parDeckCounts;
+            setName(parName);
+            setID(parDeckID);
+            setDeckCounts(parDeckCounts);
         }
 
+        /**
+         * @return The deck name. e.g. : "computing::java".
+         */
         public String getName() {
             return mName;
         }
 
-        public String getDeckCounts() {
-            return mDeckCounts;
+        /**
+         * @return The number of cards in this deck with status "new".
+         */
+        int getNewCount() {
+            return mNewCount;
         }
 
+        /**
+         * @return The number of cards in this deck with status "learning".
+         */
+        int getLearningCount() {
+            return mLearningCount;
+        }
+
+        /**
+         * @return The number of cards in this deck with status "to review".
+         */
+        int getReviewCount() {
+            return mReviewCount;
+        }
+
+        /**
+         * Parse deck counts string.
+         * @param parDeckCounts The number of cards of each type [learn, review, new]. e.g. : "[4,3,5]"
+         */
+        private void setDeckCounts(String parDeckCounts) {
+            // These are the deck counts of the Deck. [learn, review, new]
+            Pattern pattern = Pattern.compile("\\[([0-9]+),([0-9]+),([0-9]+)\\]");
+            Matcher matcher = pattern.matcher(parDeckCounts);
+            if (matcher.matches()) {
+                mLearningCount = Integer.valueOf(matcher.group(1));
+                mReviewCount = Integer.valueOf(matcher.group(2));
+                mNewCount = Integer.valueOf(matcher.group(3));
+            }
+        }
+
+        private void setID(long parID) {
+            mID = parID;
+        }
+
+        private void setName(String parName) {
+            mName = parName;
+        }
+
+        /**
+         * @return The unique identifier of this deck. e.g. : "1472977314172".
+         */
         long getID() {
             return mID;
         }
 
         @Override
         public String toString() {
-            return mName + "  " + mDeckCounts;
+            final StringBuffer sb = new StringBuffer("Deck{");
+            sb.append("mName='").append(mName).append('\'');
+            sb.append(", mID=").append(mID);
+            sb.append(", mNewCount=").append(mNewCount);
+            sb.append(", mLearningCount=").append(mLearningCount);
+            sb.append(", mReviewCount=").append(mReviewCount);
+            sb.append('}');
+            return sb.toString();
         }
     }
 }

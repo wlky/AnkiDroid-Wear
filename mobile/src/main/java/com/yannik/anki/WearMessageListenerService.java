@@ -163,6 +163,7 @@ public class WearMessageListenerService extends WearableListenerService {
 
                 try {
                     JSONObject deckOptions = new JSONObject(decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.OPTIONS)));
+                    // These are the deck counts of the Deck. [learn, review, new]
                     JSONArray deckCounts = new JSONArray(decksCursor.getString(decksCursor.getColumnIndex(FlashCardsContract.Deck.DECK_COUNTS)));
                     Log.d(TAG, "deckCounts " + deckCounts);
                     Log.d(TAG, "deck Options " + deckOptions);
