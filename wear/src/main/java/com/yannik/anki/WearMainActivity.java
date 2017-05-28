@@ -205,7 +205,7 @@ public class WearMainActivity extends WearableActivity {
         });
 
         reviewFragment = ReviewFragment.newInstance(preferences, viewPager);
-        decksFragment = CollectionFragment.newInstance(null);
+        decksFragment = CollectionFragment.newInstance();
 
         if (preferences.isAmbientMode()) {
             setAmbientEnabled();
