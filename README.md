@@ -40,7 +40,7 @@ This app only works with the development version of the AnkiDroid app
 - After a couple of seconds this should also automatically install the "Anki" app on your watch
 
 ### Donations
-Paypal:
+ - Paypal:
 https://www.paypal.me/wlk
-Bitcoin:
+ - Bitcoin:
 1A7osTtvUwXRNZ3dqPso5VCKgQLzaQgFr9
