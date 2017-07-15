@@ -38,3 +38,9 @@ The second method is to manually download and install the releases. You will hav
 This app only works with the development version of the AnkiDroid app
 - Download and install the latest release of AnkiWear here: https://github.com/wlky/AnkiDroid-Wear/releases
 - After a couple of seconds this should also automatically install the "Anki" app on your watch
+
+### Donations
+Paypal:
+https://www.paypal.me/wlk
+Bitcoin:
+1A7osTtvUwXRNZ3dqPso5VCKgQLzaQgFr9
