@@ -242,7 +242,7 @@ public class PullButton extends RelativeLayout {
                     mVelocityTracker.computeCurrentVelocity(1);
                     float yVelocity = mVelocityTracker.getYVelocity();
 
-                    if (viewPositionY < minMovementDistance && yVelocity >= 0) {
+                    if (viewPositionY < minMovementDistance && ((upsideDown && yVelocity >= 0) || (!upsideDown && yVelocity <= 0))) {
 
                         System.out.println("Velocity is: " + yVelocity);
                         System.out.println("Distance is: " + (viewPositionY - exitY));

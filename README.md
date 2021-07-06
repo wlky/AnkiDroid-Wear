@@ -17,6 +17,7 @@ brings Anki to your wrist!
  - Adjustable font size
  - Re-show question from answer screen by single/double tapping (can be configured in settings)
  - Additional delay for screen timeout (can be adjusted in settings)
+ - Wrist-Gestures for answering cards with one hand
 
 
 ## Installation
@@ -37,3 +38,9 @@ The second method is to manually download and install the releases. You will hav
 This app only works with the development version of the AnkiDroid app
 - Download and install the latest release of AnkiWear here: https://github.com/wlky/AnkiDroid-Wear/releases
 - After a couple of seconds this should also automatically install the "Anki" app on your watch
+
+### Donations
+ - Paypal:
+https://www.paypal.me/wlk
+ - Bitcoin:
+1A7osTtvUwXRNZ3dqPso5VCKgQLzaQgFr9
