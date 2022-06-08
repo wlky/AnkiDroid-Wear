@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- rect_activity_wear_main.xml -->
+<!--  -->
+<!-- Wear main page, for rectangular screens -->
+<!---->
+<!-- Resources and Ids for this page must start with "wear_main__" -->
+
+<FrameLayout
+    android:id="@+id/mainFrame"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/autosizingText"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:breakStrategy="simple"
+        android:visibility="invisible"/>
+
+    <RelativeLayout
+        android:id="@+id/qaContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/round_rect_day">
+
+        <ScrollView
+            android:id="@+id/questionAnswerScrollView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="top"
+            android:fillViewport="true"
+            android:focusable="true"
+            android:focusableInTouchMode="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:breakStrategy="simple"
+                    android:textColor="@color/dayTextColor"/>
+                <TextView
+                    android:id="@+id/aText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:breakStrategy="simple"
+                    android:textColor="@color/dayTextColor"
+                    android:visibility="gone"/>
+
+            </LinearLayout>
+
+
+
+        </ScrollView>
+
+        <ProgressBar
+            android:id="@+id/loadingSpinner"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerInParent="true"
+            android:visibility="gone"/>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/questionAnswerOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <com.yannik.anki.PullButton
+        android:id="@+id/easyButton"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:visibility="invisible"
+        app:ease_text="Easy"
+        app:icon="@drawable/pb_easy_sfr"
+        app:text="easy"
+        app:upsideDown="false">
+
+    </com.yannik.anki.PullButton>
+
+    <com.yannik.anki.PullButton
+        android:id="@+id/midButton"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:visibility="invisible"
+        app:ease_text="Good"
+        app:icon="@drawable/pb_mid_sr"
+        app:text="mid"
+        app:upsideDown="false"/>
+
+    <com.yannik.anki.PullButton
+        android:id="@+id/hardButton"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:visibility="invisible"
+        app:ease_text="Hard"
+        app:icon="@drawable/pb_hard_sr"
+        app:text="hard"
+        app:upsideDown="true">
+
+    </com.yannik.anki.PullButton>
+
+    <com.yannik.anki.PullButton
+        android:id="@+id/failedButton"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:visibility="invisible"
+        app:ease_text="Again"
+        app:icon="@drawable/pb_failed_sfr"
+        app:text="failed"
+        app:upsideDown="true"
+        />
+
+
+</FrameLayout>

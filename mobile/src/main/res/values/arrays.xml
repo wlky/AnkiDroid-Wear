@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="SoundOptionsAlias">
+        <item>0</item>
+        <item>1</item>
+        <!--<item>2</item>-->
+    </string-array>
+    <string-array name="SoundOptions">
+        <item>@string/sound_option_dont_play_sounds</item>
+        <item>@string/sound_option_play_on_phone</item>
+        <!--<item>Play sounds on watch (if possible)</item>-->
+    </string-array>
+
+</resources>

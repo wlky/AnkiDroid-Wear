@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- One item in the collection list -->
+<!---->
+<!-- Resources and Ids for this page must start with "colllist__" -->
+
+
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/colllist__mainLayout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="@drawable/round_rect_day"
+    >
+    <TextView
+        android:id="@+id/colllist__textNumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceListItemSmall"
+        android:gravity="center_vertical"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:textColor="@color/dayTextColor"
+        android:paddingStart="?android:attr/listPreferredItemPaddingStart"
+        android:paddingEnd="?android:attr/listPreferredItemPaddingEnd"
+        android:minHeight="?android:attr/listPreferredItemHeightSmall"
+        tools:text="[1,2,3]"/>
+    <TextView
+        android:id="@+id/colllist__textcategory"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceListItemSmall"
+        android:gravity="center_vertical"
+        android:textColor="@color/dayTextColor"
+        android:paddingStart="?android:attr/listPreferredItemPaddingStart"
+        android:paddingEnd="0dip"
+        android:minHeight="?android:attr/listPreferredItemHeightSmall"
+        android:layout_toStartOf="@id/colllist__textNumber"
+        tools:text="fake category with a very long name just to see"/>
+
+</RelativeLayout>
