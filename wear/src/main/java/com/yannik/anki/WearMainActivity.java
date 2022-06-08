@@ -10,7 +10,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.content.LocalBroadcastManager;
+//import android.support.v4.content.LocalBroadcastManager;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.support.wearable.activity.WearableActivity;
 import android.support.wearable.view.FragmentGridPagerAdapter;
 import android.support.wearable.view.GridViewPager;
@@ -233,6 +234,10 @@ public class WearMainActivity extends WearableActivity {
                             String name = it.next();
                             if (name.equals(Preferences.CARD_FONT_SIZE)) {
                                 preferences.setCardFontSize((float) json.getInt(name));
+                            } else if (name.equals(Preferences.CARD_MAX_FONT_SIZE)) {
+                                preferences.setCardMaxFontSize((float) json.getInt(name));
+                            } else if (name.equals(Preferences.CARD_EXTRA_PADDING)) {
+                                preferences.setCardExtraPadding((float) json.getInt(name));
                             } else if (name.equals(Preferences.DOUBLE_TAP)) {
                                 preferences.setDoubleTapReview(json.getBoolean(name));
                             } else if (name.equals(Preferences.FLIP_ANIMATION)) {
@@ -245,6 +250,8 @@ public class WearMainActivity extends WearableActivity {
                                 preferences.setAskBeforeFirstSound(json.getBoolean(name));
                             } else if (name.equals(Preferences.DAY_MODE)) {
                                 preferences.setDayMode(json.getBoolean(name));
+                            } else if (name.equals(Preferences.ALTERNATIVE_CARD_MODE)) {
+                                preferences.setAltCardMode(json.getBoolean(name));
                             } else if (name.equals(Preferences.AMBIENT_MODE)) {
                                 preferences.setAmbientMode(json.getBoolean(name));
                                 if (preferences.isAmbientMode()) {

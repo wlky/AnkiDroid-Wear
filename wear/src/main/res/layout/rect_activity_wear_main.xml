@@ -14,6 +14,15 @@
     android:layout_height="match_parent"
     app:layout_box="all">
 
+    <TextView
+        android:id="@+id/autosizingText"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:breakStrategy="simple"
+        android:visibility="invisible"/>
+
     <RelativeLayout
         android:id="@+id/qaContainer"
         android:layout_width="match_parent"
@@ -24,36 +33,45 @@
             android:id="@+id/questionAnswerScrollView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layout_gravity="top"
             android:fillViewport="true"
-            >
+            android:focusable="true"
+            android:focusableInTouchMode="true">
 
-            <FrameLayout
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:paddingBottom="25dp"
-                android:paddingTop="25dp">
-
-                <!--<RelativeLayout-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="10dp" />-->
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
+                    android:layout_gravity="top"
                     android:clickable="true"
                     android:focusable="true"
                     android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:breakStrategy="simple"
                     android:text="@string/wear_main__please_wait"
                     android:textColor="@color/dayTextColor"
                     android:textSize="50sp"/>
+                <TextView
+                    android:id="@+id/aText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:breakStrategy="simple"
+                    android:text="@string/wear_main__please_wait"
+                    android:textColor="@color/dayTextColor"
+                    android:textSize="50sp"
+                    android:visibility="gone"/>
 
-                <!--<RelativeLayout-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="10dp" />-->
-            </FrameLayout>
+            </LinearLayout>
         </ScrollView>
 
         <ProgressBar

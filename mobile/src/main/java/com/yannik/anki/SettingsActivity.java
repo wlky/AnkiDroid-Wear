@@ -11,11 +11,17 @@ import android.os.Environment;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.app.ActionBarActivity;
+//import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
+//import android.support.v4.app.ActivityCompat;
+import androidx.appcompat.app.ActionBar;
+import androidx.core.app.ActivityCompat;
+//import android.support.v4.content.ContextCompat;
+import androidx.core.content.ContextCompat;
+//import android.support.v4.content.LocalBroadcastManager;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+//import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -28,7 +34,7 @@ import android.widget.Toast;
 import java.io.File;
 
 
-public class SettingsActivity extends ActionBarActivity {
+public class SettingsActivity extends AppCompatActivity {
     /**
      * Permission to read/write ankidroid cards, this is a permission with a permissionLevel= dangerous.
      *
@@ -56,7 +62,7 @@ public class SettingsActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        android.support.v7.app.ActionBar actionBar = getSupportActionBar();
+        ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
 
         // Display the fragment as the main content
@@ -76,7 +82,7 @@ public class SettingsActivity extends ActionBarActivity {
 
             // We don't wonder whether or not we should ask user as application CAN NOT work without
             // this permission and would consequently be completely useless.
-            // So we ask all the time till use finally agrees.
+            // So we ask all the time till user finally agrees.
 
             ActivityCompat.requestPermissions(this,
                     new String[]{COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE, Manifest.permission.READ_EXTERNAL_STORAGE},
@@ -124,7 +130,6 @@ public class SettingsActivity extends ActionBarActivity {
                     }
                 }
             });
-
 
         return true;
     }
@@ -199,6 +204,8 @@ public class SettingsActivity extends ActionBarActivity {
             addPreferencesFromResource(R.xml.activity_settings);
 
             NumberPickerPreference fontSizeNumberPicker = (NumberPickerPreference) this.findPreference(getResources().getString(R.string.font_size_key));
+            NumberPickerPreference maxFontSizeNumberPicker = (NumberPickerPreference) this.findPreference(getResources().getString(R.string.max_font_size_key));
+            NumberPickerPreference extraPaddingNumberPicker = (NumberPickerPreference) this.findPreference(getResources().getString(R.string.extra_padding_key));
             NumberPickerPreference screenTimeoutNumberPicker = (NumberPickerPreference) this.findPreference(getResources().getString(R.string.screen_timeout));
             EditTextPreference mediaLocationDir = (EditTextPreference) this.findPreference(getResources().getString(R.string.media_folder_location));
             if (mediaLocationDir.getText() == null || mediaLocationDir.getText().isEmpty()) {
@@ -208,6 +215,8 @@ public class SettingsActivity extends ActionBarActivity {
 
             SendToWatchWhenPreferencesChangeListener listener = new SendToWatchWhenPreferencesChangeListener();
             fontSizeNumberPicker.setOnPreferenceChangeListener(listener);
+            maxFontSizeNumberPicker.setOnPreferenceChangeListener(listener);
+            extraPaddingNumberPicker.setOnPreferenceChangeListener(listener);
             screenTimeoutNumberPicker.setOnPreferenceChangeListener(listener);
             this.findPreference(getResources().getString(R.string.card_flip_animation_key)).setOnPreferenceChangeListener(listener);
             this.findPreference(getResources().getString(R.string.double_tap_key)).setOnPreferenceChangeListener(listener);

@@ -15,17 +15,25 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.content.LocalBroadcastManager;
+//import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+//import android.support.v4.content.LocalBroadcastManager;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+//import android.support.v4.widget.TextViewCompat;
+import androidx.core.widget.TextViewCompat;
 import android.support.wearable.view.GridViewPager;
 import android.support.wearable.view.WatchViewStub;
 import android.text.Html;
+import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.text.style.ImageSpan;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -34,6 +42,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
@@ -46,6 +55,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Matcher;
@@ -77,8 +87,18 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     byte playSounds = -1;
     MyImageGetter imageGetter = new MyImageGetter();
     private TextView mTextView;
+    private TextView asTextView;
+    private TextView aTextView;
+    private boolean autosizing;
+    private int defPadding;
+    private int extraPadding;
+    private boolean roundScreen;
+    private int p;
+    private int minTextSize;
+    private boolean altCardMode;
     private long noteID;
     private int cardOrd;
+    private int screenHeight;
     private RelativeLayout qaOverlay;
     //    private PullButton easeButtons[FAILED], easeButtons[HARD], easeButtons[MID], easeButtons[EASY];
     private PullButton[] easeButtons;
@@ -89,6 +109,8 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     private boolean scrollViewMoved;
     private String qHtml;
     private String aHtml;
+    private boolean oneSidedCard;
+    private int maxConsecutiveNewlines = 2; //Should probably be customizable
     private View rotationTarget;
     private long duration = 180;
     private Context mContext;
@@ -149,7 +171,10 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Resources r = getResources();
-        gestureButtonVelocity = r.getDisplayMetrics().heightPixels / GESTURE_BUTTON_ANIMATION_TIME_MS;
+        screenHeight = r.getDisplayMetrics().heightPixels;
+        gestureButtonVelocity = screenHeight / GESTURE_BUTTON_ANIMATION_TIME_MS;
+        p = (int) (((r.getDisplayMetrics().widthPixels)*(2-Math.sqrt(2)))/4);
+        roundScreen = this.getResources().getConfiguration().isScreenRound();
     }
 
     private void hideButtons() {
@@ -205,7 +230,6 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     }
 
     private void showAnswer() {
-        qaScrollView.scrollTo(0, 0);
         showingAnswer = true;
         updateFromHtmlText();
         if (!showingEaseButtons) {
@@ -215,7 +239,6 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     }
 
     private void showQuestion() {
-        qaScrollView.scrollTo(0, 0);
         showingAnswer = false;
         updateFromHtmlText();
         if (!showingEaseButtons) {
@@ -278,26 +301,157 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
 
     private void updateFromHtmlText() {
         if (showingAnswer) {
-            mTextView.setText(a);
+            //mTextView.setText(a);
+            //asTextView.setText(a);
+            if(altCardMode) {
+                setText(a, aTextView);
+            }
+            else {
+                setText(a, mTextView);
+
+            }
         } else {
-            mTextView.setText(q);
+            //mTextView.setText(q);
+            //asTextView.setText(q);
+            setText(q, mTextView);
         }
-        makeLinksFocusable(mTextView);
+        //updateTextSize();
+        //makeLinksFocusable(mTextView);
     }
+
+    private void setText(Spanned text, @NonNull final TextView textView) {
+        if(altCardMode && showingAnswer) {
+            aTextView.setVisibility(View.VISIBLE);
+        }
+        else {
+            aTextView.setVisibility(View.GONE);
+        }
+        if(text != null) textView.setText(text);
+        else textView.setText(R.string.review_frag__no_more_cards);
+
+        if(autosizing) {
+            if(text != null) asTextView.setText(text);
+            else asTextView.setText(R.string.review_frag__no_more_cards);
+
+            if(roundScreen) textView.setPadding(defPadding, defPadding, defPadding, defPadding);
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, minTextSize);
+            textView.post(new Runnable() {
+                @Override
+                public void run() {
+                    int lineCount = textView.getLineCount();
+                    if(lineCount < 3) {
+                        if(roundScreen) {
+                            asTextView.setPadding(defPadding-(p/2), defPadding, defPadding-(p/2), defPadding);
+                            textView.setPadding(defPadding-(p/2), defPadding, defPadding-(p/2), defPadding);
+                        }
+                        asTextView.setMaxLines(lineCount);
+                    }
+                    else {
+                        if(roundScreen) {
+                            asTextView.setPadding(defPadding, defPadding, defPadding, defPadding);
+                        }
+                        asTextView.setMaxLines(Integer.MAX_VALUE);
+                    }
+                    asTextView.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, asTextView.getTextSize());
+                            if(!(oneSidedCard && showingAnswer))cardScroll(textView);
+                        }
+                    });
+                }
+            });
+        }
+        else {
+            cardScroll(textView);
+        }
+
+        if(oneSidedCard && showingAnswer) {
+            mTextView.setText(textView.getText());
+            mTextView.setTextSize(textView.getTextSize());
+            mTextView.setPadding(mTextView.getPaddingLeft(), mTextView.getCompoundPaddingTop(), mTextView.getPaddingRight(), mTextView.getPaddingBottom());
+            aTextView.setVisibility(View.GONE);
+        }
+
+        makeLinksFocusable(textView);
+    }
+
+    private void cardScroll(final TextView textView) {
+        if (altCardMode && showingAnswer) {
+            textView.post(new Runnable() {
+                @Override
+                public void run() {
+                    qaScrollView.smoothScrollTo(0, (int) aTextView.getY()); //It's a matter of personal preference whether or not it should be a smooth scroll.
+                }
+            });
+        }
+        else {
+            qaScrollView.scrollTo(0,0);
+        }
+    }
+
+    /*private void updateTextSize() {
+        if(autosizing) {
+            if(roundScreen) {
+                mTextView.setPadding(defPadding,defPadding,defPadding,defPadding); //Unnecessary when using a rectangular screen
+            }
+            mTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, minTextSize);
+            mTextView.post(new Runnable() {
+                @Override
+                public void run() {
+                    int lineCount = mTextView.getLineCount();
+                    if(lineCount < 3) { //Prevents some types of unsightly word breaking, as well as allocating extra space for round screens.
+                        if(roundScreen) {
+                            asTextView.setPadding(defPadding-(p/2), defPadding, defPadding-(p/2), defPadding);
+                            mTextView.setPadding(defPadding-(p/2), defPadding, defPadding-(p/2), defPadding);
+                        }
+                        asTextView.setMaxLines(lineCount);
+                    }
+                    else {
+                        if(roundScreen)
+                        {
+                            asTextView.setPadding(defPadding,defPadding,defPadding,defPadding);
+                        }
+                        asTextView.setMaxLines(Integer.MAX_VALUE);
+                    }
+                    asTextView.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, asTextView.getTextSize());
+                        }
+                    });
+                }
+            });
+        }
+    }*/
 
     private void flipCard(final boolean isShowingAnswer) {
         rotationTarget.setRotationY(0);
-        if (settings.isFlipCardsAnimationActive()) {
-            final int rightOrLeftFlip = isShowingAnswer ? 1 : -1;
 
-            rotationTarget.animate().setDuration(duration).rotationY(rightOrLeftFlip * 90).setListener(new android.animation.AnimatorListenerAdapter() {
+        if(altCardMode && isShowingAnswer) {
+            qaScrollView.post(new Runnable() {
                 @Override
-                public void onAnimationEnd(Animator animation) {
+                public void run() {
+                    int aY = (int) aTextView.getY();
+                    if (!(oneSidedCard && showingAnswer) && qaScrollView.getScrollY() + screenHeight/2 < aY + (p+extraPadding)/4) {
+                        qaScrollView.scrollTo(0, aY);
+                    }
+                    else {
+                        qaScrollView.scrollTo(0,0);
+                    }
+                }
+            });
+        }
+        else if (settings.isFlipCardsAnimationActive()) {
+            final int rightOrLeftFlip = isShowingAnswer ? 1 : -1;
+            rotationTarget.animate().setDuration(duration).rotationY(rightOrLeftFlip * 90).setListener(new android.animation.AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
                     updateText(isShowingAnswer);
                     rotationTarget.setRotationY(rightOrLeftFlip * 270);
                     rotationTarget.animate().rotationY(rightOrLeftFlip * 360).setListener(null);
-                }
-            });
+                    }
+                });
         } else {
             updateText(isShowingAnswer);
         }
@@ -331,16 +485,44 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     public void applySettings() {
         if (settings == null || mTextView == null || !isAdded()) return;
         resetScreenTimeout(true);
-        mTextView.setTextSize(settings.getCardFontSize());
         setDayMode(settings.isDayMode());
+        minTextSize = (int) settings.getCardFontSize();
+        int maxTextSize = (int) settings.getCardMaxFontSize();
+        if (minTextSize < maxTextSize) {
+            autosizing = true;
+            TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(asTextView, minTextSize, maxTextSize, 1, TypedValue.COMPLEX_UNIT_DIP);
+        }
+        else
+        {
+            autosizing = false;
+            mTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, settings.getCardFontSize());
+            aTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, settings.getCardFontSize());
+        }
+
+        altCardMode = settings.isAltCardMode();
+        extraPadding = (int) settings.getCardExtraPadding();
+        if (roundScreen) {
+            defPadding = extraPadding + p;
+        }
+        else {
+            defPadding = extraPadding;
+        }
+        mTextView.setPadding(defPadding,defPadding,defPadding,defPadding);
+        aTextView.setPadding(defPadding, defPadding, defPadding, defPadding);
+        asTextView.setPadding(defPadding,defPadding,defPadding,defPadding);
+        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) aTextView.getLayoutParams();
+        params.setMargins(0, -(p + extraPadding),0,0);
+        aTextView.setLayoutParams(params);
     }
 
     private void setDayMode(boolean dayMode){
         if (dayMode) {
             mTextView.setTextColor(getResources().getColor(R.color.dayTextColor));
+            aTextView.setTextColor(getResources().getColor(R.color.dayTextColor));
             qaContainer.setBackgroundResource(R.drawable.round_rect_day);
         } else {
             mTextView.setTextColor(getResources().getColor(R.color.nightTextColor));
+            aTextView.setTextColor(getResources().getColor(R.color.nightTextColor));
             qaContainer.setBackgroundResource(R.drawable.round_rect_night);
         }
     }
@@ -358,6 +540,8 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
             @Override
             public void onLayoutInflated(WatchViewStub stub) {
                 mTextView = (TextView) stub.findViewById(R.id.text);
+                asTextView = (TextView) stub.findViewById(R.id.autosizingText);
+                aTextView = (TextView) stub.findViewById(R.id.aText);
                 qaOverlay = (RelativeLayout) stub.findViewById(R.id.questionAnswerOverlay);
                 qaScrollView = (ScrollView) stub.findViewById(R.id.questionAnswerScrollView);
                 qaContainer = (RelativeLayout) stub.findViewById(R.id.qaContainer);
@@ -376,6 +560,10 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                                 return false;
                             }
                         });
+
+                mTextView.setMinimumHeight(screenHeight);
+                aTextView.setMinimumHeight(screenHeight);
+                qaScrollView.requestFocus(); //Necessary for rotary input
 
                 qaOverlay.setOnTouchListener(new View.OnTouchListener() {
 
@@ -536,6 +724,125 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         Log.d(getClass().getName(), "ReviewFragment.onDetach");
     }
 
+    private String lTrim(String s) {
+        int i = 0;
+        while (i < s.length() && Character.isWhitespace(s.charAt(i))) {
+            i++;
+        }
+        return s.substring(i);
+    }
+
+    private String rTrim(String s) {
+        int i = s.length()-1;
+        while (i >= 0 && Character.isWhitespace(s.charAt(i))) {
+            i--;
+        }
+        return s.substring(0,i+1);
+    }
+
+
+    private String htmlTextCleanup(String cardText) {
+
+        // Text cleanup
+        cardText = cardText.replaceFirst("\\[...]", ""); //P
+        if(cardText.contains("[[type:Back]]")) {    //P?
+            oneSidedCard = true;
+        }
+        cardText = cardText.replaceAll("\\[\\[type:.*?]]", ""); //P?    Removes the [[type:abc]] text.
+
+        // Text beautifier (Removes trailing and leading whitespaces and <br>. Limits the number of consecutive <br>.)
+        if(cardText.isEmpty()) return cardText;
+        int startI = 0;
+        boolean leading = false; //Removes leading newlines
+        ArrayList<String> rows = new ArrayList <> ();
+        for (int i = 0; i < cardText.length(); i++) {
+            if (cardText.charAt(i) == '<') {
+                if(i != 0 && startI < i) {
+                    rows.add(cardText.substring(startI,i));
+                    leading = true;
+                }
+                startI = i;
+            }
+            else if (cardText.charAt(i) == '>') {
+                rows.add(cardText.substring(startI,i+1));
+                startI = i+1;
+            }
+        }
+        if(!cardText.substring(startI).isEmpty()) {
+            rows.add(cardText.substring(startI));
+            leading = true;
+        }
+        if(rows.isEmpty()) return cardText;
+
+        //P
+        if(rows.get(0).equals("<span style=\"font-family:YUMIN;font-size:100px;\">")) {
+            return rows.get(1);
+        }
+        else if(rows.size() > 2 && rows.get(1).equals("<span style=\"font-family: Mincho; font-size: 22px; \">")) {
+            rows.remove(rows.size()-4);
+        }
+
+        // More text cleanup
+        for(int i = 0; i < rows.size(); i++) {
+            switch (rows.get(i)) {
+                case "<hr />": //Temporary handling of <hr>, as fromhtml does not support it.
+                case "<hr>":
+                case "<div>": //Temporary handling of <div>, as fromhtml treats <div> as two <br>, so it might as well be converted here as to ensure correct handling of newlines in the code below.
+                case "</div>":
+                    rows.set(i, "<br>");
+                    i++;
+                    rows.add(i, "<br>");
+                    break;
+                case "</br>": //Fixes the interpretation of </br>.
+                    rows.set(i, "<br>");
+            }
+        }
+
+        if(!leading) return cardText; //When the text only consists of html tags
+
+        int consecutiveNewLines = 0;
+        int lastTextIndex = 0; //Value is irrelevant
+        for (int i = 0; i < rows.size(); i++) {
+            String element = rows.get(i);
+            if(element.startsWith("<br")) {
+                if(!leading) consecutiveNewLines += 1;
+                if(consecutiveNewLines == 1) rows.set(lastTextIndex, rTrim(rows.get(lastTextIndex)));
+                if(consecutiveNewLines > maxConsecutiveNewlines || leading) {
+                    rows.remove(i);
+                    i--;
+                }
+            }
+            else {
+                if(consecutiveNewLines > 0 || leading) element = lTrim(element);
+                if(element.isEmpty()) {
+                    rows.remove(i);
+                    i--;
+                }
+                else if(!element.startsWith("<")) {
+                    consecutiveNewLines = 0;
+                    rows.set(i, element);
+                    leading = false;
+                    lastTextIndex = i;
+                }
+            }
+        }
+        rows.set(lastTextIndex, rTrim(rows.get(lastTextIndex)));
+
+        for(int i = rows.size() - 1; i >= 0; i--) { //Removes trailing <br>
+            String element = rows.get(i);
+            if(!element.startsWith("<")){
+                break;
+            }
+            else if (element.startsWith("<br")) {
+                rows.remove(i);
+            }
+        }
+        // End of text beautifier
+
+        return TextUtils.join("", rows);
+    }
+
+
     @Override
     public void onJsonReceive(String path, JSONObject js) {
         if (qaOverlay == null || !isAdded()) {
@@ -549,8 +856,9 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
 
                 hideButtons();
                 unblockControls();
-                qHtml = js.getString("q");
-                aHtml = js.getString("a");
+                oneSidedCard = false;
+                qHtml = htmlTextCleanup(js.getString("q"));
+                aHtml = htmlTextCleanup(js.getString("a"));
 
                 setQA(false);
 
@@ -569,7 +877,10 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         } else if (path.equals(CommonIdentifiers.P2W_NO_MORE_CARDS)) {
             blockControls();
             hideLoadingSpinner();
-            mTextView.setText(R.string.review_frag__no_more_cards);
+            showingAnswer = false;
+            //mTextView.setText(R.string.review_frag__no_more_cards);
+            //asTextView.setText(R.string.review_frag__no_more_cards);
+            setText(null, mTextView);
         } else if (path.equals(W2W_REMOVE_SCREEN_LOCK)) {
             getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             Log.d("ReviewFragment", "removing screen lock");

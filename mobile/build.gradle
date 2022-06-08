@@ -1,8 +1,8 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion "25.0.2"
+    compileSdkVersion 28
+    buildToolsVersion "28.0.3"
 //
 //    defaultConfig {
 //        applicationId "com.yannik.ankidroid_wear"
@@ -32,7 +32,7 @@ android {
         def value = 0
         def runTasks = gradle.startParameter.taskNames
         if ('assemble' in runTasks || ':mobile:assembleRelease' in runTasks || 'aR' in runTasks) {
-            value = 1;
+            value = 1
         }
 
         def versionMajor = 1
@@ -52,35 +52,35 @@ android {
             versionName "${versionMajor}.${versionMinor}.alpha${versionBuild}"
             applicationId "com.yannik.wear.anki"
             minSdkVersion 18
-            targetSdkVersion 25
+            targetSdkVersion 28
         }
     } else {
-        throw new GradleException("Could not read version.properties!")
+        throw new FileNotFoundException("Could not read version.properties!")
     }
 
 
     applicationVariants.all { variant ->
-        variant.outputs.each { output ->
-            output.outputFile = new File(
-                    output.outputFile.parent,
-                    output.outputFile.name.replace(".apk", "-${variant.versionName}.apk"))
+        variant.outputs.all {
+            def flavor = variant.name
+            def versionName = variant.versionName
+            outputFileName = "prefix_${flavor}_${versionName}.apk"
         }
     }
 }
 
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
     wearApp project(':wear')
-    compile project (':sharedvalues')
-    compile 'com.android.support:appcompat-v7:25.3.1'
+    implementation project (':sharedvalues')
+    implementation 'com.android.support:appcompat-v7:28.0.0'
     // Using a subset of play services, as suggested by google/Lint
-    compile 'com.google.android.gms:play-services-wearable:10.2.1'
-    compile 'com.android.support:support-v4:25.3.1'
-    compile 'com.jakewharton.timber:timber:2.5.1'
+    implementation 'com.google.android.gms:play-services-wearable:10.2.1'
+    implementation 'com.android.support:support-v4:28.0.0'
+    implementation 'com.jakewharton.timber:timber:2.5.1'
     // API which can be used to add and query notes,cards,decks, and models to AnkiDroid
     // See https://github.com/ankidroid/Anki-Android/wiki/AnkiDroid-API
     // Available on Jcenter
-    compile 'com.ichi2.anki:api:1.1.0alpha5'
-    compile 'com.android.support:multidex:1.0.1'
+    implementation 'com.ichi2.anki:api:1.1.0alpha5'
+    implementation 'com.android.support:multidex:1.0.3'
 }

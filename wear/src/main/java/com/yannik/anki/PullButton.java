@@ -4,10 +4,12 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
@@ -65,8 +67,6 @@ public class PullButton extends RelativeLayout {
         textView = (TextView) findViewById(R.id.textView);
         easeTextView = (TextView) findViewById(R.id.ease_text);
 
-
-
         for (int i = 0; i < N; ++i) {
             int attr = a.getIndex(i);
             switch (attr) {
@@ -113,6 +113,25 @@ public class PullButton extends RelativeLayout {
                 }
 
                 setY(homePosition);
+
+                //P
+                String text = (String) easeTextView.getText();
+                if(text.equals(getResources().getString(R.string.common_hard))) {
+                    textView.setGravity(Gravity.END);
+                    textView.setTextColor(Color.parseColor("#ffa726"));
+                } else if(text.equals(getResources().getString(R.string.common_easy))) {
+                    textView.setGravity(Gravity.END);
+                    textView.setTextColor(Color.parseColor("#42a5f5"));
+
+                }
+                else if (text.equals(getResources().getString(R.string.common_again))){
+                    textView.setGravity(Gravity.START);
+                    textView.setTextColor(Color.parseColor("#ef5350"));
+                }
+                else {
+                    textView.setGravity(Gravity.START);
+                    textView.setTextColor(Color.parseColor("#66bb6a"));
+                }
 
                 ViewTreeObserver obs = getViewTreeObserver();
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {

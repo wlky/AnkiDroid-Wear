@@ -4,7 +4,8 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
+//import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -106,6 +107,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_collection, container, false);
         collectionListContainer = view.findViewById(R.id.collectionListContainer);
+
         // Set the adapter
         mListView = (AbsListView) view.findViewById(android.R.id.list);
         mListView.setAdapter(mAdapter);
