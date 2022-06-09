@@ -14,6 +14,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -22,7 +23,6 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.wearable.Asset;
 import com.google.android.gms.wearable.MessageApi;
@@ -59,25 +59,22 @@ import static com.yannik.sharedvalues.CommonIdentifiers.P2W_COLLECTION_LIST_DECK
 public class WearMessageListenerService extends WearableListenerService {
 
     private static final String TAG = "WearMessageListener";
-
-    public static final int TASK_SEND_SETTINGS = 12;
     public static final String[] SIMPLE_CARD_PROJECTION = {
             FlashCardsContract.Card.ANSWER_PURE,
             FlashCardsContract.Card.QUESTION_SIMPLE};
     private static final Uri DUE_CARD_REVIEW_INFO_URI = FlashCardsContract.ReviewInfo.CONTENT_URI;
-    private static final Uri REQUEST_DECKS_URI = Uri.withAppendedPath(FlashCardsContract.AUTHORITY_URI, "decks");
+    //private static final Uri REQUEST_DECKS_URI = Uri.withAppendedPath(FlashCardsContract.AUTHORITY_URI, "decks");
     static Handler soundThreadHandler = new Handler();
     static MediaPlayer soundMediaPlayer;
-    private static ArrayList<String> deckNames = new ArrayList<String>();
     private static long cardStartTime;
-    private final String[] okImageExtensions = new String[]{"jpg", "png", "gif", "jpeg"};
-    private final String[] okSoundExtensions = new String[]{"3gp", "mp3", "wma"};
+    private static final String[] OK_IMAGE_EXTENSIONS = new String[]{"jpg", "png", "gif", "jpeg"};
+    private static final String[] OK_SOUND_EXTENSIONS = new String[]{"3gp", "mp3", "wma"};
     ArrayList<Uri> soundsToPlay;
     SoundPlayerOnCompletionListener soundEndedListener = new SoundPlayerOnCompletionListener();
-    ArrayList<CardInfo> cardQueue = new ArrayList<CardInfo>();
-    private GoogleApiClient googleApiClient;
+    ArrayList<CardInfo> cardQueue = new ArrayList<>();
+    private static GoogleApiClient googleApiClient;
     private long lastToastTime;
-    private Handler uiHandler = new Handler();
+    private final Handler uiHandler = new Handler();
 
     @Override
     public void onCreate() {
@@ -102,7 +99,7 @@ public class WearMessageListenerService extends WearableListenerService {
 
     private void sendCardToWear(String q, String a, JSONArray nextReviewTimes, long noteID, int cardOrd) {
         Log.v(TAG, "Sending Card to Wear: Q: " + q + "\n A: " + a);
-        HashMap<String, Object> message = new HashMap<String, Object>();
+        HashMap<String, Object> message = new HashMap<>();
         message.put("q", q);
         message.put("a", a);
         message.put("b", nextReviewTimes);
@@ -126,7 +123,7 @@ public class WearMessageListenerService extends WearableListenerService {
             Log.v(TAG, "Message received on phone is: " + message);
             long deckID;
             try {
-                deckID = Long.valueOf(message);
+                deckID = Long.parseLong(message);
             } catch (NumberFormatException nfe) {
                 deckID = -1;
             }
@@ -134,7 +131,7 @@ public class WearMessageListenerService extends WearableListenerService {
             setSoundQueue(null);
         } else if (messageEvent.getPath().equals(CommonIdentifiers.W2P_CHOOSE_COLLECTION)) {
             // region CHOOSE COLLECTION
-            long deckId = Long.valueOf(new String(messageEvent.getData()));
+            long deckId = Long.parseLong(new String(messageEvent.getData()));
             Log.v(TAG, "Message received on phone is: " + deckId);
 
             ContentResolver cr = getContentResolver();
@@ -181,12 +178,10 @@ public class WearMessageListenerService extends WearableListenerService {
 
         } else if (messageEvent.getPath().equals(CommonIdentifiers.W2P_RESPOND_CARD_EASE)) {
 
-            int ease = 0;
             JSONObject json;
-            String easeString = null;
             try {
                 json = new JSONObject(new String(messageEvent.getData()));
-                ease = json.getInt("ease");
+                int ease = json.getInt("ease");
                 long timeTaken = System.currentTimeMillis() - cardStartTime;
                 ContentResolver cr = getContentResolver();
                 Uri reviewInfoUri = FlashCardsContract.ReviewInfo.CONTENT_URI;
@@ -225,7 +220,7 @@ public class WearMessageListenerService extends WearableListenerService {
     private synchronized void setSoundQueue(JSONArray soundFileNames) {
         Log.d("TAG", "Setting sound to queue: " + (soundsToPlay == null ? "null" : soundsToPlay.size()));
         if (soundsToPlay == null) {
-            soundsToPlay = new ArrayList<Uri>();
+            soundsToPlay = new ArrayList<>();
         } else {
             soundsToPlay.clear();
         }
@@ -250,12 +245,7 @@ public class WearMessageListenerService extends WearableListenerService {
             }
         }
 
-        soundThreadHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                startPlayingSounds();
-            }
-        });
+        soundThreadHandler.post(this::startPlayingSounds);
     }
 
     private synchronized void startPlayingSounds() {
@@ -295,40 +285,30 @@ public class WearMessageListenerService extends WearableListenerService {
     private void fireMessage(final byte[] data, final String path, final int retryCount) {
 
         PendingResult<NodeApi.GetConnectedNodesResult> nodes = Wearable.NodeApi.getConnectedNodes(googleApiClient);
-        nodes.setResultCallback(new ResultCallback<NodeApi.GetConnectedNodesResult>() {
-            @Override
-            public void onResult(NodeApi.GetConnectedNodesResult result) {
-                for (int i = 0; i < result.getNodes().size(); i++) {
-                    Node node = result.getNodes().get(i);
-                    Log.v(TAG, "Phone firing message with path : " + path);
+        nodes.setResultCallback(result -> {
+            for (int i = 0; i < result.getNodes().size(); i++) {
+                Node node = result.getNodes().get(i);
+                Log.v(TAG, "Phone firing message with path : " + path);
 
-                    PendingResult<MessageApi.SendMessageResult> messageResult = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(),
-                            path, data);
-                    messageResult.setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
-                        @Override
-                        public void onResult(MessageApi.SendMessageResult sendMessageResult) {
-                            Status status = sendMessageResult.getStatus();
-                            Timber.d("Status: " + status.toString());
-                            if (status.getStatusCode() != WearableStatusCodes.SUCCESS) {
-                                if (!status.isSuccess()) {
-                                    if (retryCount > 5) return;
-                                    soundThreadHandler.postDelayed(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            fireMessage(data, path, retryCount + 1);
-                                        }
-                                    }, 1000 * retryCount);
-                                }
-                            }
-                            if (path.equals(CommonIdentifiers.P2W_CHANGE_SETTINGS)) {
-                                Intent messageIntent = new Intent();
-                                messageIntent.setAction(Intent.ACTION_SEND);
-                                messageIntent.putExtra("status", status.getStatusCode());
-                                LocalBroadcastManager.getInstance(WearMessageListenerService.this).sendBroadcast(messageIntent);
-                            }
+                PendingResult<MessageApi.SendMessageResult> messageResult = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(),
+                        path, data);
+                messageResult.setResultCallback(sendMessageResult -> {
+                    Status status = sendMessageResult.getStatus();
+                    Timber.d("Status: " + status.toString());
+                    if (status.getStatusCode() != WearableStatusCodes.SUCCESS) {
+                        if (!status.isSuccess()) {
+                            if (retryCount > 5) return;
+                            soundThreadHandler.postDelayed(() -> fireMessage(data, path,
+                                    retryCount + 1), 1000L * retryCount);
                         }
-                    });
-                }
+                    }
+                    if (path.equals(CommonIdentifiers.P2W_CHANGE_SETTINGS)) {
+                        Intent messageIntent = new Intent();
+                        messageIntent.setAction(Intent.ACTION_SEND);
+                        messageIntent.putExtra("status", status.getStatusCode());
+                        LocalBroadcastManager.getInstance(WearMessageListenerService.this).sendBroadcast(messageIntent);
+                    }
+                });
             }
         });
     }
@@ -336,7 +316,7 @@ public class WearMessageListenerService extends WearableListenerService {
     private void queryForCurrentCard(long deckID) {
         Log.d(TAG, "QueryForCurrentCard");
 
-        String deckArguments[] = new String[deckID == -1 ? 1 : 2];
+        String[] deckArguments = new String[deckID == -1 ? 1 : 2];
         String deckSelector = "limit=?";
         deckArguments[0] = "" + 1;
         if (deckID != -1) {
@@ -350,14 +330,9 @@ public class WearMessageListenerService extends WearableListenerService {
         if (ContextCompat.checkSelfPermission(this,
                 COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE)
                 != PackageManager.PERMISSION_GRANTED) {
-            uiHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(getBaseContext(),
-                            R.string.wearservice_permissionnotgranted_toast,
-                            Toast.LENGTH_SHORT).show();
-                }
-            });
+            uiHandler.post(() -> Toast.makeText(getBaseContext(),
+                    R.string.wearservice_permissionnotgranted_toast,
+                    Toast.LENGTH_SHORT).show());
         } else {
             // permission has been granted, normal case
 
@@ -434,15 +409,15 @@ public class WearMessageListenerService extends WearableListenerService {
         }
     }
 
-    private boolean isImage(String name) {
-        return hasCertainExtension(name, okImageExtensions);
+    private static boolean isImage(String name) {
+        return hasCertainExtension(name, OK_IMAGE_EXTENSIONS);
     }
 
-    private boolean isSound(String name) {
-        return hasCertainExtension(name, okSoundExtensions);
+    private static boolean isSound(String name) {
+        return hasCertainExtension(name, OK_SOUND_EXTENSIONS);
     }
 
-    private boolean hasCertainExtension(String name, String[] extensions) {
+    private static boolean hasCertainExtension(String name, String[] extensions) {
         for (String extension : extensions) {
             if (name.trim().toLowerCase().endsWith(extension)) {
                 return true;
@@ -459,14 +434,9 @@ public class WearMessageListenerService extends WearableListenerService {
         if (ContextCompat.checkSelfPermission(this,
                 COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE)
                 != PackageManager.PERMISSION_GRANTED) {
-            uiHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(getBaseContext(),
-                            R.string.wearservice_permissionnotgranted_toast,
-                            Toast.LENGTH_SHORT).show();
-                }
-            });
+            uiHandler.post(() -> Toast.makeText(getBaseContext(),
+                    R.string.wearservice_permissionnotgranted_toast,
+                    Toast.LENGTH_SHORT).show());
         } else {
             // permission has been granted, normal case
 
@@ -479,14 +449,9 @@ public class WearMessageListenerService extends WearableListenerService {
                     lastToastTime = System.currentTimeMillis();
                     //have to run the Toast with a Handler since otherwise, since we're starting it
                     // from a Service the Service stops before disappear is called on the Toast
-                    uiHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getBaseContext(),
-                                    "Couldn't query for decks. Do you have AnkiDroid installed?",
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                    });
+                    uiHandler.post(() -> Toast.makeText(getBaseContext(),
+                            "Couldn't query for decks. Do you have AnkiDroid installed?",
+                            Toast.LENGTH_SHORT).show());
 
                 }
                 return;
@@ -525,7 +490,6 @@ public class WearMessageListenerService extends WearableListenerService {
                 sendDecksToWear(decksJSONObj);
             }
         }
-        ;
     }
 
     private void sendDecksToWear(JSONObject decks) {
@@ -562,7 +526,7 @@ public class WearMessageListenerService extends WearableListenerService {
         }
     }
 
-    private class GrabAndProcessFilesTask extends AsyncTask<CardInfo, Void, Void> {
+    private static class GrabAndProcessFilesTask extends AsyncTask<CardInfo, Void, Void> {
         @Override
         protected Void doInBackground(CardInfo... cards) {
             boolean nothingChanged = true;
@@ -598,7 +562,7 @@ public class WearMessageListenerService extends WearableListenerService {
         }
     }
 
-    class CardInfo {
+    static class CardInfo {
         String q = "", a = "";
         int cardOrd;
         long noteID;
@@ -611,7 +575,7 @@ public class WearMessageListenerService extends WearableListenerService {
             Uri uri = Uri.fromFile(new File(path));
 
             if (soundUris == null) {
-                soundUris = new ArrayList<Uri>();
+                soundUris = new ArrayList<>();
             }
 
             soundUris.add(uri);
