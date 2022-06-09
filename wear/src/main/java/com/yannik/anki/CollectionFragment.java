@@ -112,7 +112,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         collectionListContainer = view.findViewById(R.id.collectionListContainer);
 
         // Set the adapter
-        mListView = (AbsListView) view.findViewById(android.R.id.list);
+        mListView = view.findViewById(android.R.id.list);
         mListView.setAdapter(mAdapter);
 
         // Set OnItemClickListener so we can be notified on item clicks
@@ -264,9 +264,9 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
             DeckViewHolder viewHolder = (DeckViewHolder) view.getTag();
             if (viewHolder == null) {
                 viewHolder = new DeckViewHolder();
-                viewHolder.catLayout = (RelativeLayout) view.findViewById(R.id.colllist__mainLayout);
-                viewHolder.catName = (TextView) view.findViewById(R.id.colllist__textcategory);
-                viewHolder.catNumber = (TextView) view.findViewById(R.id.colllist__textNumber);
+                viewHolder.catLayout = view.findViewById(R.id.colllist__mainLayout);
+                viewHolder.catName = view.findViewById(R.id.colllist__textcategory);
+                viewHolder.catNumber = view.findViewById(R.id.colllist__textNumber);
                 view.setTag(viewHolder);
             }
 
@@ -344,7 +344,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
      * Deck is an immutable object.
      * Built using provided JSON.
      */
-    private class Deck {
+    private static class Deck {
         /**
          * The deck name. e.g. : "computing::java".
          */
@@ -417,9 +417,9 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
             Pattern pattern = Pattern.compile("\\[([0-9]+),([0-9]+),([0-9]+)\\]");
             Matcher matcher = pattern.matcher(parDeckCounts);
             if (matcher.matches()) {
-                mLearningCount = Integer.valueOf(matcher.group(1));
-                mReviewCount = Integer.valueOf(matcher.group(2));
-                mNewCount = Integer.valueOf(matcher.group(3));
+                mLearningCount = Integer.parseInt(matcher.group(1));
+                mReviewCount = Integer.parseInt(matcher.group(2));
+                mNewCount = Integer.parseInt(matcher.group(3));
             }
         }
 
@@ -438,16 +438,15 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
             return mID;
         }
 
+        @NonNull
         @Override
         public String toString() {
-            final StringBuffer sb = new StringBuffer("Deck{");
-            sb.append("mName='").append(mName).append('\'');
-            sb.append(", mID=").append(mID);
-            sb.append(", mNewCount=").append(mNewCount);
-            sb.append(", mLearningCount=").append(mLearningCount);
-            sb.append(", mReviewCount=").append(mReviewCount);
-            sb.append('}');
-            return sb.toString();
+            return "Deck{" + "mName='" + mName + '\'' +
+                    ", mID=" + mID +
+                    ", mNewCount=" + mNewCount +
+                    ", mLearningCount=" + mLearningCount +
+                    ", mReviewCount=" + mReviewCount +
+                    '}';
         }
     }
 }

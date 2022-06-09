@@ -9,7 +9,7 @@ import android.widget.NumberPicker;
 
 public class NumberPickerPreference extends DialogPreference {
 
-    private static String TAG = NumberPickerPreference.class.getSimpleName();
+    private static final String TAG = NumberPickerPreference.class.getSimpleName();
 
     private final int DEFAULT_VALUE = 0;
 
@@ -64,7 +64,7 @@ public class NumberPickerPreference extends DialogPreference {
         super.onBindDialogView(view);
 
         // Set min and max values to our NumberPicker
-        mNumberPicker = (NumberPicker) view.findViewById(R.id.numberPicker);
+        mNumberPicker = view.findViewById(R.id.numberPicker);
         mNumberPicker.setMinValue(min);
         mNumberPicker.setMaxValue(max);
 

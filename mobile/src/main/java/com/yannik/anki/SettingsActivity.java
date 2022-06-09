@@ -22,7 +22,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
@@ -44,7 +43,6 @@ public class SettingsActivity extends AppCompatActivity {
      * Request code returned in param to callback when user has granted or refused read anki cards perm.
      */
     private static final int MY_PERMISSIONS_REQUEST = 24;
-    ;
     static Animation rotation;
     static ImageView sendingIndicator;
     MessageReceiver messageReceiver;
@@ -60,6 +58,7 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         ActionBar actionBar = getSupportActionBar();
+        assert actionBar != null;
         actionBar.setDisplayHomeAsUpEnabled(true);
 
         // Display the fragment as the main content
@@ -71,7 +70,7 @@ public class SettingsActivity extends AppCompatActivity {
         messageReceiver = new MessageReceiver();
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, messageFilter);
 
-        // check for permissions to read Ankidroid database
+        // check for permissions to read AnkiDroid database
         if (ContextCompat.checkSelfPermission(this, COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE) != PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
 
@@ -110,21 +109,18 @@ public class SettingsActivity extends AppCompatActivity {
 
         MenuItem item = menu.findItem(R.id.sendIcon);
         item.setActionView(R.layout.action_bar_indeterminate_progress);
-        sendingIndicator = (ImageView) item.getActionView().findViewById(R.id.loadingImageView);
+        sendingIndicator = item.getActionView().findViewById(R.id.loadingImageView);
         if (isRefreshing) {
             rotation.setRepeatCount(Animation.INFINITE);
             sendingIndicator.startAnimation(rotation);
         }
         if (rotation != null) rotation.setRepeatCount(0);
-        item.getActionView().setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!isRefreshing) {
-                    sendPreferencesToWatch();
-                    isRefreshing = true;
-                    rotation.setRepeatCount(Animation.INFINITE);
-                    sendingIndicator.startAnimation(rotation);
-                }
+        item.getActionView().setOnClickListener(v -> {
+            if (!isRefreshing) {
+                sendPreferencesToWatch();
+                isRefreshing = true;
+                rotation.setRepeatCount(Animation.INFINITE);
+                sendingIndicator.startAnimation(rotation);
             }
         });
 
@@ -144,7 +140,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String permissions[],
+                                           @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         if (requestCode != MY_PERMISSIONS_REQUEST) {
             return;
@@ -155,8 +151,7 @@ public class SettingsActivity extends AppCompatActivity {
             switch (permission) {
                 case COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE: {
                     // If request is cancelled, the result arrays are empty.
-                    if (grantResults.length > 0
-                            && result == PackageManager.PERMISSION_GRANTED) {
+                    if (result == PackageManager.PERMISSION_GRANTED) {
 
                         // permission was granted, yay!
                         Log.v(TAG, "User granted dangerous permission : read AnkiDroid database");
@@ -170,8 +165,7 @@ public class SettingsActivity extends AppCompatActivity {
                 }
                 case Manifest.permission.READ_EXTERNAL_STORAGE: {
                     // If request is cancelled, the result arrays are empty.
-                    if (grantResults.length > 0
-                            && result == PackageManager.PERMISSION_GRANTED) {
+                    if (result == PackageManager.PERMISSION_GRANTED) {
 
                         // permission was granted
                         Log.v(TAG, "User granted permission : read external storage");
@@ -182,7 +176,6 @@ public class SettingsActivity extends AppCompatActivity {
                 }
                 default:
                     Log.w(TAG, "UN-MANAGED request permission result code = " + requestCode);
-
             }
         }
     }

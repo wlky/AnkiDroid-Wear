@@ -12,6 +12,8 @@ import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.WearableListenerService;
 
+import java.util.Objects;
+
 /**
  * @author Created by Yannik on 12.03.2015.
  */
@@ -39,7 +41,7 @@ public class ListenerService extends WearableListenerService {
     public void onDataChanged(DataEventBuffer dataEvents) {
         boolean newData = false;
         for (DataEvent event : dataEvents) {
-            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().equals("/image/card")) {
+            if (event.getType() == DataEvent.TYPE_CHANGED && Objects.requireNonNull(event.getDataItem().getUri().getPath()).equals("/image/card")) {
                 DataMapItem dataMapItem = DataMapItem.fromDataItem(event.getDataItem());
                 for (String name : dataMapItem.getDataMap().keySet()) {
                     WearMainActivity.availableAssets.put(name, dataMapItem.getDataMap().getAsset(name));
@@ -52,7 +54,8 @@ public class ListenerService extends WearableListenerService {
                 // Do something with the bitmap
 
 
-            } else if (event.getType() == DataEvent.TYPE_DELETED && event.getDataItem().getUri().getPath().equals("/image/card")) {
+            } else if (event.getType() == DataEvent.TYPE_DELETED
+                    && Objects.requireNonNull(event.getDataItem().getUri().getPath()).equals("/image/card")) {
                 DataMapItem dataMapItem = DataMapItem.fromDataItem(event.getDataItem());
                 for (String name : dataMapItem.getDataMap().keySet()) {
                     WearMainActivity.availableAssets.remove(name);

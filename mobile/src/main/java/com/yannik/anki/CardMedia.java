@@ -20,7 +20,7 @@ public class CardMedia {
      * Group 1 = Contents of [sound:] tag <br>
      * Group 2 = "fname"
      */
-    private static final Pattern fSoundRegexps = Pattern.compile("(?i)(\\[sound:([^]]+)\\])");
+    private static final Pattern fSoundRegexps = Pattern.compile("(?i)(\\[sound:([^]]+)])");
 
     // src element quoted case
     /**
@@ -29,7 +29,7 @@ public class CardMedia {
      * Group 3 = "fname" <br>
      * Group 4 = Backreference to "str" (i.e., same type of quote character)
      */
-    private static final Pattern fImgRegExpQ = Pattern.compile("(?i)(<img[^>]* src=([\\\"'])([^>]+?)(\\2)[^>]*>)");
+    private static final Pattern fImgRegExpQ = Pattern.compile("(?i)(<img[^>]* src=([\"'])([^>]+?)(\\2)[^>]*>)");
     public static String mediaFolder = null;
 
     /**
@@ -39,8 +39,7 @@ public class CardMedia {
      * @return The string with the filenames of any local images percent-escaped as UTF-8.
      */
     public static String escapeImages(String string, boolean unescape) {
-        Pattern p = fImgRegExpQ;
-        Matcher m = p.matcher(string);
+        Matcher m = fImgRegExpQ.matcher(string);
 
         int fnameIdx = 3;
         while (m.find()) {
@@ -125,6 +124,4 @@ public class CardMedia {
         }
         return new File(mediaFolder, name).getAbsolutePath();
     }
-
-
 }
