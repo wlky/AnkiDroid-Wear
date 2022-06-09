@@ -11,16 +11,12 @@ import android.os.Environment;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
-//import android.support.annotation.NonNull;
+
 import androidx.annotation.NonNull;
-//import android.support.v4.app.ActivityCompat;
 import androidx.appcompat.app.ActionBar;
 import androidx.core.app.ActivityCompat;
-//import android.support.v4.content.ContextCompat;
 import androidx.core.content.ContextCompat;
-//import android.support.v4.content.LocalBroadcastManager;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-//import android.support.v7.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.util.Log;

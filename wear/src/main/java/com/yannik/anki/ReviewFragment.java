@@ -15,18 +15,15 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
-//import android.support.annotation.Nullable;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-//import android.support.v4.content.LocalBroadcastManager;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-//import android.support.v4.widget.TextViewCompat;
 import androidx.core.widget.TextViewCompat;
 
 import android.support.wearable.view.GridViewPager;
 import android.support.wearable.view.WatchViewStub;
 import android.text.Html;
-import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
@@ -56,7 +53,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Matcher;
