@@ -6,6 +6,7 @@ import android.content.Context;
 import android.os.Bundle;
 //import android.support.annotation.NonNull;
 import androidx.annotation.NonNull;
+
 import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -45,7 +46,9 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
 
     private static final String TAG = "CollectionFragment";
 
-    /** The list of decks that will be displayed, will be provided by. */
+    /**
+     * The list of decks that will be displayed, will be provided by.
+     */
     ArrayList<Deck> mDecks = new ArrayList<>();
     View collectionListContainer;
     private OnFragmentInteractionListener mListener;
@@ -74,12 +77,12 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         return new CollectionFragment();
     }
 
-    public void setSettings(Preferences settings){
+    public void setSettings(Preferences settings) {
         this.settings = settings;
         applySettings();
     }
 
-    public void applySettings(){
+    public void applySettings() {
         if (settings == null) return;
 
         setDayMode(settings.isDayMode());
@@ -87,10 +90,10 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         mAdapter.notifyDataSetChanged();
     }
 
-    public void setDayMode(boolean dayMode){
-        if(dayMode) {
+    public void setDayMode(boolean dayMode) {
+        if (dayMode) {
             collectionListContainer.setBackgroundResource(R.drawable.round_rect_day);
-        }else{
+        } else {
             collectionListContainer.setBackgroundResource(R.drawable.round_rect_night);
         }
     }
@@ -136,7 +139,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         mListener = null;
     }
 
-    public void setChooseDeckListener(OnFragmentInteractionListener listener){
+    public void setChooseDeckListener(OnFragmentInteractionListener listener) {
         this.mListener = listener;
     }
 
@@ -176,7 +179,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
                 }
 
             }
-            if(mListView == null) {
+            if (mListView == null) {
                 return;
             }
 
@@ -216,7 +219,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
      * Customised adapter for displaying list of deck names.
      * Supports day and night mode.
      */
-    private class DayNightArrayAdapter extends BaseAdapter{
+    private class DayNightArrayAdapter extends BaseAdapter {
 
         private final Context mContext;
         private final List<Deck> mDNAADecks;
@@ -327,7 +330,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
             res.append(" ");
             if (mReviewCountSum == 0) {
                 res.append("<font color='grey'>0</font>");
-                } else {
+            } else {
                 res.append("<font color='green'>");
                 res.append(mReviewCountSum);
                 res.append("</font>");
@@ -342,21 +345,32 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
      * Built using provided JSON.
      */
     private class Deck {
-        /** The deck name. e.g. : "computing::java". */
+        /**
+         * The deck name. e.g. : "computing::java".
+         */
         private String mName;
-        /** The unique identifier of this deck. e.g. : "1472977314172". */
+        /**
+         * The unique identifier of this deck. e.g. : "1472977314172".
+         */
         private long mID;
-        /** The number of cards in this deck with status "new". */
+        /**
+         * The number of cards in this deck with status "new".
+         */
         private int mNewCount;
-        /** The number of cards in this deck with status "learning". */
+        /**
+         * The number of cards in this deck with status "learning".
+         */
         private int mLearningCount;
-        /** The number of cards in this deck with status "to review". */
+        /**
+         * The number of cards in this deck with status "to review".
+         */
         private int mReviewCount;
 
         /**
          * Full params constructor.
-         * @param parName The deck name. e.g. : "computing::java".
-         * @param parDeckID The unique identifier of this deck. e.g. : "1472977314172".
+         *
+         * @param parName       The deck name. e.g. : "computing::java".
+         * @param parDeckID     The unique identifier of this deck. e.g. : "1472977314172".
          * @param parDeckCounts The number of cards of each type. e.g. : "[4,3,5]"
          */
         Deck(String parName, long parDeckID, String parDeckCounts) {
@@ -395,6 +409,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
 
         /**
          * Parse deck counts string.
+         *
          * @param parDeckCounts The number of cards of each type [learn, review, new]. e.g. : "[4,3,5]"
          */
         private void setDeckCounts(String parDeckCounts) {

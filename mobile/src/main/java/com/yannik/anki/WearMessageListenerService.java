@@ -18,6 +18,7 @@ import android.preference.PreferenceManager;
 import androidx.core.content.ContextCompat;
 //import android.support.v4.content.LocalBroadcastManager;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import android.util.Log;
 import android.widget.Toast;
 
@@ -88,8 +89,6 @@ public class WearMessageListenerService extends WearableListenerService {
                 .addApi(Wearable.API)
                 .build();
         googleApiClient.connect();
-
-
     }
 
     @Override
@@ -198,7 +197,7 @@ public class WearMessageListenerService extends WearableListenerService {
                 values.put(FlashCardsContract.ReviewInfo.CARD_ORD, json.getInt("card_ord"));
                 values.put(FlashCardsContract.ReviewInfo.EASE, ease);
                 values.put(FlashCardsContract.ReviewInfo.TIME_TAKEN, timeTaken);
-                Log.d(TAG, timeTaken +" time taken " + values.getAsLong(FlashCardsContract.ReviewInfo.TIME_TAKEN));
+                Log.d(TAG, timeTaken + " time taken " + values.getAsLong(FlashCardsContract.ReviewInfo.TIME_TAKEN));
                 cr.update(reviewInfoUri, values, null, null);
 
                 queryForCurrentCard(json.getLong("deck_id"));
@@ -220,7 +219,7 @@ public class WearMessageListenerService extends WearableListenerService {
             }
         } else if (messageEvent.getPath().equals(CommonIdentifiers.W2P_EXITING)) {
             setSoundQueue(null);
-        }  else {
+        } else {
             super.onMessageReceived(messageEvent);
         }
     }
@@ -259,7 +258,6 @@ public class WearMessageListenerService extends WearableListenerService {
                 startPlayingSounds();
             }
         });
-
     }
 
     private synchronized void startPlayingSounds() {
@@ -296,7 +294,7 @@ public class WearMessageListenerService extends WearableListenerService {
         fireMessage(data, path, 0);
     }
 
-    private void fireMessage(final byte[] data, final String path,final int retryCount) {
+    private void fireMessage(final byte[] data, final String path, final int retryCount) {
 
         PendingResult<NodeApi.GetConnectedNodesResult> nodes = Wearable.NodeApi.getConnectedNodes(googleApiClient);
         nodes.setResultCallback(new ResultCallback<NodeApi.GetConnectedNodesResult>() {
@@ -314,7 +312,7 @@ public class WearMessageListenerService extends WearableListenerService {
                             Status status = sendMessageResult.getStatus();
                             Timber.d("Status: " + status.toString());
                             if (status.getStatusCode() != WearableStatusCodes.SUCCESS) {
-                                if(!status.isSuccess()) {
+                                if (!status.isSuccess()) {
                                     if (retryCount > 5) return;
                                     soundThreadHandler.postDelayed(new Runnable() {
                                         @Override
@@ -396,7 +394,6 @@ public class WearMessageListenerService extends WearableListenerService {
                             == PackageManager.PERMISSION_GRANTED) {
                         new GrabAndProcessFilesTask().execute(card);
                     }
-
 
 
                     cardQueue.add(card);

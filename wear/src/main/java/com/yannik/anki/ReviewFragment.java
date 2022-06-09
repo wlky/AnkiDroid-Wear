@@ -22,6 +22,7 @@ import androidx.annotation.Nullable;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 //import android.support.v4.widget.TextViewCompat;
 import androidx.core.widget.TextViewCompat;
+
 import android.support.wearable.view.GridViewPager;
 import android.support.wearable.view.WatchViewStub;
 import android.text.Html;
@@ -173,7 +174,7 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         Resources r = getResources();
         screenHeight = r.getDisplayMetrics().heightPixels;
         gestureButtonVelocity = screenHeight / GESTURE_BUTTON_ANIMATION_TIME_MS;
-        p = (int) (((r.getDisplayMetrics().widthPixels)*(2-Math.sqrt(2)))/4);
+        p = (int) (((r.getDisplayMetrics().widthPixels) * (2 - Math.sqrt(2))) / 4);
         roundScreen = this.getResources().getConfiguration().isScreenRound();
     }
 
@@ -303,10 +304,9 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         if (showingAnswer) {
             //mTextView.setText(a);
             //asTextView.setText(a);
-            if(altCardMode) {
+            if (altCardMode) {
                 setText(a, aTextView);
-            }
-            else {
+            } else {
                 setText(a, mTextView);
 
             }
@@ -320,34 +320,32 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     }
 
     private void setText(Spanned text, @NonNull final TextView textView) {
-        if(altCardMode && showingAnswer) {
+        if (altCardMode && showingAnswer) {
             aTextView.setVisibility(View.VISIBLE);
-        }
-        else {
+        } else {
             aTextView.setVisibility(View.GONE);
         }
-        if(text != null) textView.setText(text);
+        if (text != null) textView.setText(text);
         else textView.setText(R.string.review_frag__no_more_cards);
 
-        if(autosizing) {
-            if(text != null) asTextView.setText(text);
+        if (autosizing) {
+            if (text != null) asTextView.setText(text);
             else asTextView.setText(R.string.review_frag__no_more_cards);
 
-            if(roundScreen) textView.setPadding(defPadding, defPadding, defPadding, defPadding);
+            if (roundScreen) textView.setPadding(defPadding, defPadding, defPadding, defPadding);
             textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, minTextSize);
             textView.post(new Runnable() {
                 @Override
                 public void run() {
                     int lineCount = textView.getLineCount();
-                    if(lineCount < 3) {
-                        if(roundScreen) {
-                            asTextView.setPadding(defPadding-(p/2), defPadding, defPadding-(p/2), defPadding);
-                            textView.setPadding(defPadding-(p/2), defPadding, defPadding-(p/2), defPadding);
+                    if (lineCount < 3) {
+                        if (roundScreen) {
+                            asTextView.setPadding(defPadding - (p / 2), defPadding, defPadding - (p / 2), defPadding);
+                            textView.setPadding(defPadding - (p / 2), defPadding, defPadding - (p / 2), defPadding);
                         }
                         asTextView.setMaxLines(lineCount);
-                    }
-                    else {
-                        if(roundScreen) {
+                    } else {
+                        if (roundScreen) {
                             asTextView.setPadding(defPadding, defPadding, defPadding, defPadding);
                         }
                         asTextView.setMaxLines(Integer.MAX_VALUE);
@@ -356,17 +354,16 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                         @Override
                         public void run() {
                             textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, asTextView.getTextSize());
-                            if(!(oneSidedCard && showingAnswer))cardScroll(textView);
+                            if (!(oneSidedCard && showingAnswer)) cardScroll(textView);
                         }
                     });
                 }
             });
-        }
-        else {
+        } else {
             cardScroll(textView);
         }
 
-        if(oneSidedCard && showingAnswer) {
+        if (oneSidedCard && showingAnswer) {
             mTextView.setText(textView.getText());
             mTextView.setTextSize(textView.getTextSize());
             mTextView.setPadding(mTextView.getPaddingLeft(), mTextView.getCompoundPaddingTop(), mTextView.getPaddingRight(), mTextView.getPaddingBottom());
@@ -384,9 +381,8 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                     qaScrollView.smoothScrollTo(0, (int) aTextView.getY()); //It's a matter of personal preference whether or not it should be a smooth scroll.
                 }
             });
-        }
-        else {
-            qaScrollView.scrollTo(0,0);
+        } else {
+            qaScrollView.scrollTo(0, 0);
         }
     }
 
@@ -428,30 +424,28 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     private void flipCard(final boolean isShowingAnswer) {
         rotationTarget.setRotationY(0);
 
-        if(altCardMode && isShowingAnswer) {
+        if (altCardMode && isShowingAnswer) {
             qaScrollView.post(new Runnable() {
                 @Override
                 public void run() {
                     int aY = (int) aTextView.getY();
-                    if (!(oneSidedCard && showingAnswer) && qaScrollView.getScrollY() + screenHeight/2 < aY + (p+extraPadding)/4) {
+                    if (!(oneSidedCard && showingAnswer) && qaScrollView.getScrollY() + screenHeight / 2 < aY + (p + extraPadding) / 4) {
                         qaScrollView.scrollTo(0, aY);
-                    }
-                    else {
-                        qaScrollView.scrollTo(0,0);
+                    } else {
+                        qaScrollView.scrollTo(0, 0);
                     }
                 }
             });
-        }
-        else if (settings.isFlipCardsAnimationActive()) {
+        } else if (settings.isFlipCardsAnimationActive()) {
             final int rightOrLeftFlip = isShowingAnswer ? 1 : -1;
             rotationTarget.animate().setDuration(duration).rotationY(rightOrLeftFlip * 90).setListener(new android.animation.AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
+                @Override
+                public void onAnimationEnd(Animator animation) {
                     updateText(isShowingAnswer);
                     rotationTarget.setRotationY(rightOrLeftFlip * 270);
                     rotationTarget.animate().rotationY(rightOrLeftFlip * 360).setListener(null);
-                    }
-                });
+                }
+            });
         } else {
             updateText(isShowingAnswer);
         }
@@ -491,9 +485,7 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         if (minTextSize < maxTextSize) {
             autosizing = true;
             TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(asTextView, minTextSize, maxTextSize, 1, TypedValue.COMPLEX_UNIT_DIP);
-        }
-        else
-        {
+        } else {
             autosizing = false;
             mTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, settings.getCardFontSize());
             aTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, settings.getCardFontSize());
@@ -503,19 +495,18 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         extraPadding = (int) settings.getCardExtraPadding();
         if (roundScreen) {
             defPadding = extraPadding + p;
-        }
-        else {
+        } else {
             defPadding = extraPadding;
         }
-        mTextView.setPadding(defPadding,defPadding,defPadding,defPadding);
+        mTextView.setPadding(defPadding, defPadding, defPadding, defPadding);
         aTextView.setPadding(defPadding, defPadding, defPadding, defPadding);
-        asTextView.setPadding(defPadding,defPadding,defPadding,defPadding);
+        asTextView.setPadding(defPadding, defPadding, defPadding, defPadding);
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) aTextView.getLayoutParams();
-        params.setMargins(0, -(p + extraPadding),0,0);
+        params.setMargins(0, -(p + extraPadding), 0, 0);
         aTextView.setLayoutParams(params);
     }
 
-    private void setDayMode(boolean dayMode){
+    private void setDayMode(boolean dayMode) {
         if (dayMode) {
             mTextView.setTextColor(getResources().getColor(R.color.dayTextColor));
             aTextView.setTextColor(getResources().getColor(R.color.dayTextColor));
@@ -568,7 +559,7 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                 qaOverlay.setOnTouchListener(new View.OnTouchListener() {
 
                     private final float SCROLL_THRESHOLD = ViewConfiguration.get(getActivity()
-                            .getBaseContext())
+                                    .getBaseContext())
                             .getScaledTouchSlop();
                     private float mDownX;
                     private float mDownY;
@@ -733,11 +724,11 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     }
 
     private String rTrim(String s) {
-        int i = s.length()-1;
+        int i = s.length() - 1;
         while (i >= 0 && Character.isWhitespace(s.charAt(i))) {
             i--;
         }
-        return s.substring(0,i+1);
+        return s.substring(0, i + 1);
     }
 
 
@@ -745,45 +736,43 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
 
         // Text cleanup
         cardText = cardText.replaceFirst("\\[...]", ""); //P
-        if(cardText.contains("[[type:Back]]")) {    //P?
+        if (cardText.contains("[[type:Back]]")) {    //P?
             oneSidedCard = true;
         }
         cardText = cardText.replaceAll("\\[\\[type:.*?]]", ""); //P?    Removes the [[type:abc]] text.
 
         // Text beautifier (Removes trailing and leading whitespaces and <br>. Limits the number of consecutive <br>.)
-        if(cardText.isEmpty()) return cardText;
+        if (cardText.isEmpty()) return cardText;
         int startI = 0;
         boolean leading = false; //Removes leading newlines
-        ArrayList<String> rows = new ArrayList <> ();
+        ArrayList<String> rows = new ArrayList<>();
         for (int i = 0; i < cardText.length(); i++) {
             if (cardText.charAt(i) == '<') {
-                if(i != 0 && startI < i) {
-                    rows.add(cardText.substring(startI,i));
+                if (i != 0 && startI < i) {
+                    rows.add(cardText.substring(startI, i));
                     leading = true;
                 }
                 startI = i;
-            }
-            else if (cardText.charAt(i) == '>') {
-                rows.add(cardText.substring(startI,i+1));
-                startI = i+1;
+            } else if (cardText.charAt(i) == '>') {
+                rows.add(cardText.substring(startI, i + 1));
+                startI = i + 1;
             }
         }
-        if(!cardText.substring(startI).isEmpty()) {
+        if (!cardText.substring(startI).isEmpty()) {
             rows.add(cardText.substring(startI));
             leading = true;
         }
-        if(rows.isEmpty()) return cardText;
+        if (rows.isEmpty()) return cardText;
 
         //P
-        if(rows.get(0).equals("<span style=\"font-family:YUMIN;font-size:100px;\">")) {
+        if (rows.get(0).equals("<span style=\"font-family:YUMIN;font-size:100px;\">")) {
             return rows.get(1);
-        }
-        else if(rows.size() > 2 && rows.get(1).equals("<span style=\"font-family: Mincho; font-size: 22px; \">")) {
-            rows.remove(rows.size()-4);
+        } else if (rows.size() > 2 && rows.get(1).equals("<span style=\"font-family: Mincho; font-size: 22px; \">")) {
+            rows.remove(rows.size() - 4);
         }
 
         // More text cleanup
-        for(int i = 0; i < rows.size(); i++) {
+        for (int i = 0; i < rows.size(); i++) {
             switch (rows.get(i)) {
                 case "<hr />": //Temporary handling of <hr>, as fromhtml does not support it.
                 case "<hr>":
@@ -798,27 +787,26 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
             }
         }
 
-        if(!leading) return cardText; //When the text only consists of html tags
+        if (!leading) return cardText; //When the text only consists of html tags
 
         int consecutiveNewLines = 0;
         int lastTextIndex = 0; //Value is irrelevant
         for (int i = 0; i < rows.size(); i++) {
             String element = rows.get(i);
-            if(element.startsWith("<br")) {
-                if(!leading) consecutiveNewLines += 1;
-                if(consecutiveNewLines == 1) rows.set(lastTextIndex, rTrim(rows.get(lastTextIndex)));
-                if(consecutiveNewLines > maxConsecutiveNewlines || leading) {
+            if (element.startsWith("<br")) {
+                if (!leading) consecutiveNewLines += 1;
+                if (consecutiveNewLines == 1)
+                    rows.set(lastTextIndex, rTrim(rows.get(lastTextIndex)));
+                if (consecutiveNewLines > maxConsecutiveNewlines || leading) {
                     rows.remove(i);
                     i--;
                 }
-            }
-            else {
-                if(consecutiveNewLines > 0 || leading) element = lTrim(element);
-                if(element.isEmpty()) {
+            } else {
+                if (consecutiveNewLines > 0 || leading) element = lTrim(element);
+                if (element.isEmpty()) {
                     rows.remove(i);
                     i--;
-                }
-                else if(!element.startsWith("<")) {
+                } else if (!element.startsWith("<")) {
                     consecutiveNewLines = 0;
                     rows.set(i, element);
                     leading = false;
@@ -828,12 +816,11 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         }
         rows.set(lastTextIndex, rTrim(rows.get(lastTextIndex)));
 
-        for(int i = rows.size() - 1; i >= 0; i--) { //Removes trailing <br>
+        for (int i = rows.size() - 1; i >= 0; i--) { //Removes trailing <br>
             String element = rows.get(i);
-            if(!element.startsWith("<")){
+            if (!element.startsWith("<")) {
                 break;
-            }
-            else if (element.startsWith("<br")) {
+            } else if (element.startsWith("<br")) {
                 rows.remove(i);
             }
         }
@@ -908,12 +895,12 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         }
 
         q = makeSoundIconsClickable(Html.fromHtml(qHtml.replaceAll
-                (SOUND_TAG_REPLACEMENT_REGEX,
-                        SOUND_TAG_REPLACEMENT_STRING).replaceAll("</?a.*?>", "")
+                        (SOUND_TAG_REPLACEMENT_REGEX,
+                                SOUND_TAG_REPLACEMENT_STRING).replaceAll("</?a.*?>", "")
                 , withImages ? imageGetter : null, null), false);
         a = makeSoundIconsClickable(Html.fromHtml(aHtml.replaceAll
-                (SOUND_TAG_REPLACEMENT_REGEX,
-                        SOUND_TAG_REPLACEMENT_STRING).replaceAll("</?a.*?>", "")
+                        (SOUND_TAG_REPLACEMENT_REGEX,
+                                SOUND_TAG_REPLACEMENT_STRING).replaceAll("</?a.*?>", "")
                 , withImages ? imageGetter : null, null), true);
 
     }
@@ -1025,7 +1012,7 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
 
     @Override
     public void onEnterAmbient() {
-        if (showingEaseButtons){
+        if (showingEaseButtons) {
             hideButtons();
             buttonsHiddenOnAmbient = true;
         } else {
@@ -1036,7 +1023,7 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
 
     @Override
     public void onExitAmbient() {
-        if(buttonsHiddenOnAmbient){
+        if (buttonsHiddenOnAmbient) {
             showButtons();
         }
         applySettings();

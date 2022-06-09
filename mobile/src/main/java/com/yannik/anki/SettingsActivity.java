@@ -22,6 +22,7 @@ import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 //import android.support.v7.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatActivity;
+
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -94,7 +95,7 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy(){
+    protected void onDestroy() {
         super.onDestroy();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver);
     }
@@ -106,7 +107,7 @@ public class SettingsActivity extends AppCompatActivity {
         //inflate a menu which shows the non-animated refresh icon
         getMenuInflater().inflate(R.menu.menu_settings, menu);
 
-        if(rotation == null){
+        if (rotation == null) {
             rotation = AnimationUtils.loadAnimation(this, R.anim.refresh_animation);
             rotation.setRepeatCount(Animation.INFINITE);
         }
@@ -118,18 +119,18 @@ public class SettingsActivity extends AppCompatActivity {
             rotation.setRepeatCount(Animation.INFINITE);
             sendingIndicator.startAnimation(rotation);
         }
-            if(rotation != null)rotation.setRepeatCount(0);
-            item.getActionView().setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if(!isRefreshing) {
-                        sendPreferencesToWatch();
-                        isRefreshing = true;
-                        rotation.setRepeatCount(Animation.INFINITE);
-                        sendingIndicator.startAnimation(rotation);
-                    }
+        if (rotation != null) rotation.setRepeatCount(0);
+        item.getActionView().setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!isRefreshing) {
+                    sendPreferencesToWatch();
+                    isRefreshing = true;
+                    rotation.setRepeatCount(Animation.INFINITE);
+                    sendingIndicator.startAnimation(rotation);
                 }
-            });
+            }
+        });
 
         return true;
     }
@@ -253,7 +254,7 @@ public class SettingsActivity extends AppCompatActivity {
     class MessageReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(intent.getIntExtra("status",-1337) != -1){
+            if (intent.getIntExtra("status", -1337) != -1) {
                 isRefreshing = false;
                 rotation.setRepeatCount(0);
             }

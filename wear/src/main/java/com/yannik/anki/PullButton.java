@@ -89,7 +89,6 @@ public class PullButton extends RelativeLayout {
         a.recycle();
 
 
-
         ViewTreeObserver vto = getViewTreeObserver();
         vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
@@ -116,19 +115,17 @@ public class PullButton extends RelativeLayout {
 
                 //P
                 String text = (String) easeTextView.getText();
-                if(text.equals(getResources().getString(R.string.common_hard))) {
+                if (text.equals(getResources().getString(R.string.common_hard))) {
                     textView.setGravity(Gravity.END);
                     textView.setTextColor(Color.parseColor("#ffa726"));
-                } else if(text.equals(getResources().getString(R.string.common_easy))) {
+                } else if (text.equals(getResources().getString(R.string.common_easy))) {
                     textView.setGravity(Gravity.END);
                     textView.setTextColor(Color.parseColor("#42a5f5"));
 
-                }
-                else if (text.equals(getResources().getString(R.string.common_again))){
+                } else if (text.equals(getResources().getString(R.string.common_again))) {
                     textView.setGravity(Gravity.START);
                     textView.setTextColor(Color.parseColor("#ef5350"));
-                }
-                else {
+                } else {
                     textView.setGravity(Gravity.START);
                     textView.setTextColor(Color.parseColor("#66bb6a"));
                 }
@@ -146,7 +143,6 @@ public class PullButton extends RelativeLayout {
         if (imageResId != -1) {
             icon.setImageResource(imageResId);
         }
-
 
 
         minMovementDistance = displaySize.y / 2;

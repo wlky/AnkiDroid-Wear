@@ -3,6 +3,7 @@ package com.yannik.anki;
 import android.content.Intent;
 //import android.support.v4.content.LocalBroadcastManager;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import android.util.Log;
 
 import com.google.android.gms.wearable.DataEvent;
@@ -40,7 +41,7 @@ public class ListenerService extends WearableListenerService {
         for (DataEvent event : dataEvents) {
             if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().equals("/image/card")) {
                 DataMapItem dataMapItem = DataMapItem.fromDataItem(event.getDataItem());
-                for(String name : dataMapItem.getDataMap().keySet()) {
+                for (String name : dataMapItem.getDataMap().keySet()) {
                     WearMainActivity.availableAssets.put(name, dataMapItem.getDataMap().getAsset(name));
                     Log.v(TAG, "Image received on watch is: " + name);
 
@@ -51,15 +52,15 @@ public class ListenerService extends WearableListenerService {
                 // Do something with the bitmap
 
 
-            }else  if (event.getType() == DataEvent.TYPE_DELETED && event.getDataItem().getUri().getPath().equals("/image/card")){
+            } else if (event.getType() == DataEvent.TYPE_DELETED && event.getDataItem().getUri().getPath().equals("/image/card")) {
                 DataMapItem dataMapItem = DataMapItem.fromDataItem(event.getDataItem());
-                for(String name : dataMapItem.getDataMap().keySet()) {
+                for (String name : dataMapItem.getDataMap().keySet()) {
                     WearMainActivity.availableAssets.remove(name);
                     Log.v(TAG, "Image deleted on watch is: " + name);
                 }
             }
         }
-        if(newData) {
+        if (newData) {
             Intent messageIntent = new Intent();
             messageIntent.setAction(Intent.ACTION_SEND);
             messageIntent.putExtra("path", ReviewFragment.W2W_RELOAD_HTML_FOR_MEDIA);

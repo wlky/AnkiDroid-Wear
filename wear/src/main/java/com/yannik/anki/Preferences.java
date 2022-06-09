@@ -3,8 +3,8 @@ package com.yannik.anki;
 import android.content.SharedPreferences;
 
 /**
-* Created by Yannik on 29.04.2015.
-*/
+ * Created by Yannik on 29.04.2015.
+ */
 class Preferences {
     public static String CARD_FONT_SIZE;
     public static String CARD_MAX_FONT_SIZE;
@@ -33,7 +33,7 @@ class Preferences {
     private boolean ambientMode = true;
 
 
-    public Preferences(WearMainActivity wearMainActivity){
+    public Preferences(WearMainActivity wearMainActivity) {
         this.wearMainActivity = wearMainActivity;
         CARD_FONT_SIZE = wearMainActivity.getResources().getString(R.string.font_size_key);
         CARD_MAX_FONT_SIZE = wearMainActivity.getResources().getString(R.string.max_font_size_key);
@@ -113,7 +113,8 @@ class Preferences {
         this.screenTimeout = screenTimeout - 30;
         save();
     }
-    private void save(){
+
+    private void save() {
         SharedPreferences settings = wearMainActivity.getSharedPreferences(WearMainActivity.PREFS_NAME, 0);
         SharedPreferences.Editor editor = settings.edit();
         editor.putFloat(CARD_FONT_SIZE, getCardFontSize());
@@ -140,7 +141,7 @@ class Preferences {
         save();
     }
 
-    public void load(){
+    public void load() {
         SharedPreferences settings = wearMainActivity.getSharedPreferences(WearMainActivity.PREFS_NAME, 0);
         cardFontSize = settings.getFloat(CARD_FONT_SIZE, cardFontSize);
         cardMaxFontSize = settings.getFloat(CARD_MAX_FONT_SIZE, cardMaxFontSize);
