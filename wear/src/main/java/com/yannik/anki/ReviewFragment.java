@@ -218,7 +218,8 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                     easeButtons[EASY].setText(nextReviewTimes.getString(3));
                     break;
             }
-        } catch (JSONException ignored) { }
+        } catch (JSONException ignored) {
+        }
     }
 
     private void showAnswer() {
@@ -556,19 +557,15 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                     resetScreenTimeout(false);
                     int ease = 0;
 
-                    if(v.getId() == R.id.failedButton) {
+                    if (v.getId() == R.id.failedButton) {
                         ease = getRealEase(1);
-                    }
-                    else if(v.getId() == R.id.hardButton) {
+                    } else if (v.getId() == R.id.hardButton) {
                         ease = getRealEase(2);
-                    }
-                    else if(v.getId() == R.id.midButton) {
+                    } else if (v.getId() == R.id.midButton) {
                         ease = getRealEase(3);
-                    }
-                    else if(v.getId() == R.id.easyButton) {
+                    } else if (v.getId() == R.id.easyButton) {
                         ease = getRealEase(4);
-                    }
-                    else {
+                    } else {
                         throw new Error("Illegal id");
                     }
 
@@ -664,15 +661,24 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         return s.substring(0, i + 1);
     }
 
-
+    /**
+     * Cleans up HTML text as to make it more presentable on the watch.
+     *
+     * @param cardText The HTML text.
+     * @return The cleaned up HTML.
+     */
     private String htmlTextCleanup(String cardText) {
 
         // Text cleanup
-        cardText = cardText.replaceFirst("\\[...]", ""); //P
-        if (cardText.contains("[[type:Back]]")) {    //P?
+
+        cardText = cardText.replaceFirst("\\[...]", ""); // Might not be generally applicable.
+
+        if (cardText.contains("[[type:Back]]")) {
             oneSidedCard = true;
         }
-        cardText = cardText.replaceAll("\\[\\[type:.*?]]", ""); //P?    Removes the [[type:abc]] text.
+
+        // Remove any occurrences of [[type:abc]] text.
+        cardText = cardText.replaceAll("\\[\\[type:.*?]]", "");
 
         // Text beautifier (Removes trailing and leading whitespaces and <br>. Limits the number of consecutive <br>.)
         if (cardText.isEmpty()) return cardText;
@@ -697,7 +703,7 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         }
         if (rows.isEmpty()) return cardText;
 
-        //P
+        // TODO: This is not generally applicable and should be removed.
         if (rows.get(0).equals("<span style=\"font-family:YUMIN;font-size:100px;\">")) {
             return rows.get(1);
         } else if (rows.size() > 2 && rows.get(1).equals("<span style=\"font-family: Mincho; font-size: 22px; \">")) {
@@ -706,24 +712,30 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
 
         // More text cleanup
         for (int i = 0; i < rows.size(); i++) {
+            // TODO: Handle more cases and different spacing.
             switch (rows.get(i)) {
-                case "<hr />": //Temporary handling of <hr>, as fromhtml does not support it.
+                // Temporary handling of <hr>, as fromhtml does not support it.
+                case "<hr />":
                 case "<hr>":
-                case "<div>": //Temporary handling of <div>, as fromhtml treats <div> as two <br>, so it might as well be converted here as to ensure correct handling of newlines in the code below.
+                // Temporary handling of <div>, as fromhtml treats <div> as two <br>,
+                // so it might as well be converted here as to ensure correct handling of newlines in the code below.
+                case "<div>":
                 case "</div>":
                     rows.set(i, "<br>");
                     i++;
                     rows.add(i, "<br>");
                     break;
-                case "</br>": //Fixes the interpretation of </br>.
+                case "</br>": // Fixes the interpretation of </br>.
                     rows.set(i, "<br>");
             }
         }
 
-        if (!leading) return cardText; //When the text only consists of html tags
+        // When the text only consists of html tags
+        if (!leading) return cardText;
 
         int consecutiveNewLines = 0;
-        int lastTextIndex = 0; //Value is irrelevant
+        int lastTextIndex = 0;
+
         for (int i = 0; i < rows.size(); i++) {
             String element = rows.get(i);
             if (element.startsWith("<br")) {
@@ -749,7 +761,8 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         }
         rows.set(lastTextIndex, rTrim(rows.get(lastTextIndex)));
 
-        for (int i = rows.size() - 1; i >= 0; i--) { //Removes trailing <br>
+        // Removes any trailing <br>
+        for (int i = rows.size() - 1; i >= 0; i--) {
             String element = rows.get(i);
             if (!element.startsWith("<")) {
                 break;
