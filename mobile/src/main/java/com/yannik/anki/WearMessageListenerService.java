@@ -1,8 +1,10 @@
 package com.yannik.anki;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -16,6 +18,7 @@ import android.os.Handler;
 import android.preference.PreferenceManager;
 
 import androidx.core.content.ContextCompat;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.util.Log;
@@ -56,6 +59,7 @@ import static com.yannik.sharedvalues.CommonIdentifiers.P2W_COLLECTION_LIST_DECK
 /**
  * @author Created by Yannik on 12.03.2015.
  */
+
 public class WearMessageListenerService extends WearableListenerService {
 
     private static final String TAG = "WearMessageListener";
@@ -75,7 +79,7 @@ public class WearMessageListenerService extends WearableListenerService {
     private static GoogleApiClient googleApiClient;
     private long lastToastTime;
     private final Handler uiHandler = new Handler();
-
+    public static Context context;
     @Override
     public void onCreate() {
         super.onCreate();
@@ -84,6 +88,17 @@ public class WearMessageListenerService extends WearableListenerService {
                 .addApi(Wearable.API)
                 .build();
         googleApiClient.connect();
+        context = getBaseContext();
+
+        SharedPreferences sharedPref = getSharedPreferences(SettingsActivity.class.getName(), Context.MODE_PRIVATE);
+        String accessUri = sharedPref.getString(getString(R.string.saved_folder_route_key), null);
+        if(accessUri != null) {
+            DocumentFile documentsTree = DocumentFile.fromTreeUri(getApplication(), Uri.parse(accessUri));
+            if(documentsTree != null && documentsTree.canRead()){
+                CardMedia.baseUri = Uri.parse(accessUri);
+            }
+        }
+
     }
 
     @Override
@@ -114,6 +129,7 @@ public class WearMessageListenerService extends WearableListenerService {
 
     }
 
+    @SuppressLint("Range,DirectSystemCurrentTimeMillisUsage")
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
         Log.v(TAG, "Message path received on phone is: " + messageEvent.getPath());
@@ -218,7 +234,7 @@ public class WearMessageListenerService extends WearableListenerService {
     }
 
     private synchronized void setSoundQueue(JSONArray soundFileNames) {
-        Log.d("TAG", "Setting sound to queue: " + (soundsToPlay == null ? "null" : soundsToPlay.size()));
+        Log.d("TAG", "Setting sound to queue: " + (soundsToPlay == null ? "null" : soundsToPlay.size()) + " Sounds: " + soundFileNames);
         if (soundsToPlay == null) {
             soundsToPlay = new ArrayList<>();
         } else {
@@ -233,9 +249,9 @@ public class WearMessageListenerService extends WearableListenerService {
         if (soundFileNames != null) {
             for (int i = 0; i < soundFileNames.length(); i++) {
                 try {
-                    File soundFile = new File(CardMedia.getMediaPath(soundFileNames.getString(i)));
-                    if (soundFile.exists()) {
-                        Uri soundUri = Uri.fromFile(soundFile);
+                    Uri soundUri = CardMedia.getMediaPath(soundFileNames.getString(i));
+                    if (soundUri != null) {
+
                         soundsToPlay.add(soundUri);
                         Log.d("TAG", "adding sound to queue: " + soundUri + " ns: " + soundsToPlay.size());
                     }
@@ -313,6 +329,7 @@ public class WearMessageListenerService extends WearableListenerService {
         });
     }
 
+    @SuppressLint("Range,DirectSystemCurrentTimeMillisUsage")
     private void queryForCurrentCard(long deckID) {
         Log.d(TAG, "QueryForCurrentCard");
 
@@ -425,7 +442,7 @@ public class WearMessageListenerService extends WearableListenerService {
         }
         return false;
     }
-
+    @SuppressLint("Range,DirectSystemCurrentTimeMillisUsage")
     private void queryForDeckNames() {
 
         // This call requires com.ichi2.anki.permission.READ_WRITE_DATABASE to be granted by user as it is
@@ -535,7 +552,7 @@ public class WearMessageListenerService extends WearableListenerService {
                 for (int i = 0; i < card.fileNames.length(); i++) {
                     try {
                         String name = card.fileNames.getString(i);
-                        String mediaPath = CardMedia.getMediaPath(name);
+                        Uri mediaPath = CardMedia.getMediaPath(name);
                         if (isImage(name)) {
                             Bitmap bitmap = CardMedia.pullScaledBitmap(mediaPath, 200, 200, true);
                             Asset asset = CardMedia.createAssetFromBitmap(bitmap);
@@ -571,8 +588,8 @@ public class WearMessageListenerService extends WearableListenerService {
         JSONArray fileNames;
         ArrayList<Uri> soundUris = null;
 
-        public synchronized void addSoundUri(String path) {
-            Uri uri = Uri.fromFile(new File(path));
+        public synchronized void addSoundUri(Uri path) {
+            Uri uri = path;//Uri.fromFile(new File(path));
 
             if (soundUris == null) {
                 soundUris = new ArrayList<>();

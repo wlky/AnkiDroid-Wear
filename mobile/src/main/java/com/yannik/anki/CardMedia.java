@@ -2,13 +2,22 @@ package com.yannik.anki;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.ParcelFileDescriptor;
+import android.util.Log;
+
+import androidx.documentfile.provider.DocumentFile;
 
 import com.google.android.gms.wearable.Asset;
+import com.google.android.gms.wearable.WearableListenerService;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -61,14 +70,14 @@ public class CardMedia {
     }
 
     // since this is for a static Util Class pass int he resources as well
-    public static Bitmap pullScaledBitmap(String path, int maxWidth, int maxHeight, boolean keepAspectRatio) {
+    public static Bitmap pullScaledBitmap(Uri path, int maxWidth, int maxHeight, boolean keepAspectRatio) {
 
         BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
         // set the option to just decode the bounds because we just want
         // the dimensions, not the whole image
         bitmapOptions.inJustDecodeBounds = true;
         // now decode our resource using these options
-        BitmapFactory.decodeFile(path, bitmapOptions);
+//        BitmapFactory.decodeFile(path, bitmapOptions);
         // since we have pulled the dimensions we can set this back to false
         // because the next time we decode we want the whole image
         bitmapOptions.inJustDecodeBounds = false;
@@ -98,7 +107,20 @@ public class CardMedia {
         bitmapOptions.inSampleSize = calculateInSampleSize(bitmapOptions, width, height);
         // now decode the resource again and return it, because it decodes
         // as the scaled image!
-        return BitmapFactory.decodeFile(path, bitmapOptions);
+        ParcelFileDescriptor parcelFileDescriptor = null;
+        try {
+            parcelFileDescriptor = WearMessageListenerService.context.getContentResolver().openFileDescriptor(path, "r");
+            FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
+            Bitmap image = BitmapFactory.decodeFileDescriptor(fileDescriptor, new Rect(), bitmapOptions);
+            parcelFileDescriptor.close();
+            return image;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public static int calculateInSampleSize(BitmapFactory.Options bitmapOptions, int reqWidth, int reqHeight) {
@@ -118,10 +140,17 @@ public class CardMedia {
         return inSampleSize;
     }
 
-    public static String getMediaPath(String name) {
-        if (mediaFolder == null || !new File(mediaFolder).exists()) {
-            mediaFolder = Environment.getExternalStorageDirectory().getAbsolutePath() + "/AnkiDroid/collection.media/";
-        }
-        return new File(mediaFolder, name).getAbsolutePath();
+    public static Uri baseUri;
+
+    public static Uri getMediaPath(String filename) {
+//        if (mediaFolder == null || !new File(mediaFolder).exists()) {
+//            mediaFolder = Environment.getExternalStorageDirectory().getAbsolutePath() + "/AnkiDroid/collection.media/";
+//        }
+        Log.e("Anki", "baseUri: " + baseUri);
+        if(baseUri == null) return null;
+        DocumentFile documentsTree = DocumentFile.fromTreeUri(WearMessageListenerService.context, baseUri);
+        DocumentFile file = documentsTree.findFile(filename);
+        Log.e("Anki", "getMediaPath for: " + filename + " result: " + file.getUri());
+        return file.getUri();
     }
 }

@@ -9,19 +9,22 @@
         android:icon="@mipmap/anki"
         android:label="@string/app_name"
         android:theme="@android:style/Theme.DeviceDefault" >
+        <meta-data android:name="com.google.android.wearable.standalone" android:value="false"/>
         <uses-library
             android:name="com.google.android.wearable"
             android:required="false"/>
         <uses-library android:name="com.google.android.wearable" android:required="false" />
         <activity
             android:name="com.yannik.anki.WearMainActivity"
-            android:label="@string/app_name" >
+            android:label="@string/app_name"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name="com.yannik.anki.ListenerService">
+        <service android:name="com.yannik.anki.ListenerService"
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.BIND_LISTENER" />
             </intent-filter>

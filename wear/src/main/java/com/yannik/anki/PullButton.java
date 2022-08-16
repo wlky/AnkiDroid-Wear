@@ -55,7 +55,7 @@ public class PullButton extends RelativeLayout {
     public PullButton(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr);
         LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        inflater.inflate(R.layout.pull_button, this);
+        View v = inflater.inflate(R.layout.pull_button, this);
 
         WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         Display display = wm.getDefaultDisplay();
@@ -143,8 +143,20 @@ public class PullButton extends RelativeLayout {
         setAlpha(homeAlpha);
 
         this.animate().setInterpolator(new LinearInterpolator());
-        this.setOnTouchListener(new SwipeTouchListener());
+//        this.setOnTouchListener(new SwipeTouchListener());
+        this.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(!isExtended) {
+                    isExtended = true;
+                    v.animate().setStartDelay(0).y(extendedPosition).alpha(extendedAlpha).setListener(null);
+                }else{
+                    animateOut(0.00001f);
+                }
+            }
+        });
     }
+    private boolean isExtended = false;
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
@@ -179,6 +191,7 @@ public class PullButton extends RelativeLayout {
     }
 
     public void slideIn(long delay) {
+        isExtended = false;
         if (upsideDown) {
             setY(-getHeight());
         } else {
@@ -190,7 +203,7 @@ public class PullButton extends RelativeLayout {
     }
 
     public void animateOut(float velocity) {
-
+        isExtended = false;
         animate()
                 .setStartDelay(0)
                 .y(exitY)

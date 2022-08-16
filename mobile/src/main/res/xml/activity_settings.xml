@@ -82,7 +82,7 @@
             android:title="@string/pref_card_flip_animation__title"
             />
 
-        <EditTextPreference
+        <Preference
             android:key="@string/media_folder_location"
             android:title="@string/pref_media_folder_location__title"
             />

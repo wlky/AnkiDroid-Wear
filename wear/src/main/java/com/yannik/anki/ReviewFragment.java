@@ -19,6 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.core.text.HtmlCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.core.widget.TextViewCompat;
 
@@ -26,6 +27,7 @@ import android.support.wearable.view.GridViewPager;
 import android.support.wearable.view.WatchViewStub;
 import android.text.Html;
 import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
@@ -843,14 +845,18 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
             String fname = m.group(2);
         }
 
-        q = makeSoundIconsClickable(Html.fromHtml(qHtml.replaceAll
-                        (SOUND_TAG_REPLACEMENT_REGEX,
-                                SOUND_TAG_REPLACEMENT_STRING).replaceAll("</?a.*?>", "")
+        q = makeSoundIconsClickable(HtmlCompat.fromHtml(qHtml.replaceAll(SOUND_TAG_REPLACEMENT_REGEX,SOUND_TAG_REPLACEMENT_STRING).replaceAll("</?a.*?>", ""), HtmlCompat.FROM_HTML_MODE_LEGACY
                 , withImages ? imageGetter : null, null), false);
-        a = makeSoundIconsClickable(Html.fromHtml(aHtml.replaceAll
-                        (SOUND_TAG_REPLACEMENT_REGEX,
-                                SOUND_TAG_REPLACEMENT_STRING).replaceAll("</?a.*?>", "")
-                , withImages ? imageGetter : null, null), true);
+        SpannableStringBuilder htmlText = new SpannableStringBuilder(aHtml.replaceAll
+                (SOUND_TAG_REPLACEMENT_REGEX,
+                        SOUND_TAG_REPLACEMENT_STRING));
+
+        String aString = aHtml.replaceAll
+                (SOUND_TAG_REPLACEMENT_REGEX,
+                        SOUND_TAG_REPLACEMENT_STRING).replaceAll("</?a.*?>", "");
+        Spanned aSpan = HtmlCompat.fromHtml(aString, HtmlCompat.FROM_HTML_MODE_LEGACY
+                , withImages ? imageGetter : null, null);
+        a = makeSoundIconsClickable(aSpan, true);
     }
 
     private Spanned makeSoundIconsClickable(Spanned text, boolean isAnswer) {

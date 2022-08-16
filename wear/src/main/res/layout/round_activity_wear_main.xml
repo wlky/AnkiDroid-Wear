@@ -6,7 +6,7 @@
 <!---->
 <!-- Resources and Ids for this page must start with "wear_main__" -->
 
-<FrameLayout
+<FrameLayout xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mainFrame"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -47,23 +47,23 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="top"
+                    android:breakStrategy="simple"
                     android:gravity="center"
                     android:includeFontPadding="false"
-                    android:breakStrategy="simple"
-                    android:textColor="@color/dayTextColor"/>
+                    android:textColor="@color/dayTextColor" />
+
                 <TextView
                     android:id="@+id/aText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="top"
+                    android:breakStrategy="simple"
                     android:gravity="center"
                     android:includeFontPadding="false"
-                    android:breakStrategy="simple"
                     android:textColor="@color/dayTextColor"
-                    android:visibility="gone"/>
+                    android:visibility="gone" />
 
             </LinearLayout>
-
 
 
         </ScrollView>
@@ -92,7 +92,8 @@
         app:ease_text="Easy"
         app:icon="@drawable/pb_easy_sfr"
         app:text="easy"
-        app:upsideDown="false">
+        app:upsideDown="false"
+        tools:visibility="visible">
 
     </com.yannik.anki.PullButton>
 
@@ -105,7 +106,8 @@
         app:ease_text="Good"
         app:icon="@drawable/pb_mid_sr"
         app:text="mid"
-        app:upsideDown="false"/>
+        app:upsideDown="false"
+        tools:visibility="visible" />
 
     <com.yannik.anki.PullButton
         android:id="@+id/hardButton"
@@ -116,7 +118,8 @@
         app:ease_text="Hard"
         app:icon="@drawable/pb_hard_sr"
         app:text="hard"
-        app:upsideDown="true">
+        app:upsideDown="true"
+        tools:visibility="visible">
 
     </com.yannik.anki.PullButton>
 
@@ -130,7 +133,7 @@
         app:icon="@drawable/pb_failed_sfr"
         app:text="failed"
         app:upsideDown="true"
-        />
+        tools:visibility="visible" />
 
 
 </FrameLayout>

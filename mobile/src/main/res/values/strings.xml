@@ -6,7 +6,7 @@
 
 <resources>
     <string name="app_name">AnkiWear</string>
-
+    <string name="saved_folder_route_key" translatable="false">SavedMediaFolderRoute</string>
     <string name="action_settings">Send settings to wear</string>
     <string name="media_folder_location" translatable="false">media_folder_location</string>
 
@@ -37,4 +37,5 @@
     <string name="pref_extra_padding__title">Extra text padding</string>
     <string name="sound_option_dont_play_sounds">Do not play sounds</string>
     <string name="sound_option_play_on_phone">Play sounds on phone</string>
+
 </resources>
