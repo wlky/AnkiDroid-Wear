@@ -11,15 +11,17 @@ import android.os.Environment;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.app.ActionBarActivity;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
@@ -28,7 +30,7 @@ import android.widget.Toast;
 import java.io.File;
 
 
-public class SettingsActivity extends ActionBarActivity {
+public class SettingsActivity extends AppCompatActivity {
     /**
      * Permission to read/write ankidroid cards, this is a permission with a permissionLevel= dangerous.
      *
@@ -41,7 +43,6 @@ public class SettingsActivity extends ActionBarActivity {
      * Request code returned in param to callback when user has granted or refused read anki cards perm.
      */
     private static final int MY_PERMISSIONS_REQUEST = 24;
-    ;
     static Animation rotation;
     static ImageView sendingIndicator;
     MessageReceiver messageReceiver;
@@ -56,7 +57,8 @@ public class SettingsActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        android.support.v7.app.ActionBar actionBar = getSupportActionBar();
+        ActionBar actionBar = getSupportActionBar();
+        assert actionBar != null;
         actionBar.setDisplayHomeAsUpEnabled(true);
 
         // Display the fragment as the main content
@@ -68,7 +70,7 @@ public class SettingsActivity extends ActionBarActivity {
         messageReceiver = new MessageReceiver();
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, messageFilter);
 
-        // check for permissions to read Ankidroid database
+        // check for permissions to read AnkiDroid database
         if (ContextCompat.checkSelfPermission(this, COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE) != PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
 
@@ -76,7 +78,7 @@ public class SettingsActivity extends ActionBarActivity {
 
             // We don't wonder whether or not we should ask user as application CAN NOT work without
             // this permission and would consequently be completely useless.
-            // So we ask all the time till use finally agrees.
+            // So we ask all the time till user finally agrees.
 
             ActivityCompat.requestPermissions(this,
                     new String[]{COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE, Manifest.permission.READ_EXTERNAL_STORAGE},
@@ -88,7 +90,7 @@ public class SettingsActivity extends ActionBarActivity {
     }
 
     @Override
-    protected void onDestroy(){
+    protected void onDestroy() {
         super.onDestroy();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver);
     }
@@ -100,31 +102,27 @@ public class SettingsActivity extends ActionBarActivity {
         //inflate a menu which shows the non-animated refresh icon
         getMenuInflater().inflate(R.menu.menu_settings, menu);
 
-        if(rotation == null){
+        if (rotation == null) {
             rotation = AnimationUtils.loadAnimation(this, R.anim.refresh_animation);
             rotation.setRepeatCount(Animation.INFINITE);
         }
 
         MenuItem item = menu.findItem(R.id.sendIcon);
         item.setActionView(R.layout.action_bar_indeterminate_progress);
-        sendingIndicator = (ImageView) item.getActionView().findViewById(R.id.loadingImageView);
+        sendingIndicator = item.getActionView().findViewById(R.id.loadingImageView);
         if (isRefreshing) {
             rotation.setRepeatCount(Animation.INFINITE);
             sendingIndicator.startAnimation(rotation);
         }
-            if(rotation != null)rotation.setRepeatCount(0);
-            item.getActionView().setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if(!isRefreshing) {
-                        sendPreferencesToWatch();
-                        isRefreshing = true;
-                        rotation.setRepeatCount(Animation.INFINITE);
-                        sendingIndicator.startAnimation(rotation);
-                    }
-                }
-            });
-
+        if (rotation != null) rotation.setRepeatCount(0);
+        item.getActionView().setOnClickListener(v -> {
+            if (!isRefreshing) {
+                sendPreferencesToWatch();
+                isRefreshing = true;
+                rotation.setRepeatCount(Animation.INFINITE);
+                sendingIndicator.startAnimation(rotation);
+            }
+        });
 
         return true;
     }
@@ -142,7 +140,7 @@ public class SettingsActivity extends ActionBarActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String permissions[],
+                                           @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         if (requestCode != MY_PERMISSIONS_REQUEST) {
             return;
@@ -153,8 +151,7 @@ public class SettingsActivity extends ActionBarActivity {
             switch (permission) {
                 case COM_ICHI2_ANKI_PERMISSION_READ_WRITE_DATABASE: {
                     // If request is cancelled, the result arrays are empty.
-                    if (grantResults.length > 0
-                            && result == PackageManager.PERMISSION_GRANTED) {
+                    if (result == PackageManager.PERMISSION_GRANTED) {
 
                         // permission was granted, yay!
                         Log.v(TAG, "User granted dangerous permission : read AnkiDroid database");
@@ -168,8 +165,7 @@ public class SettingsActivity extends ActionBarActivity {
                 }
                 case Manifest.permission.READ_EXTERNAL_STORAGE: {
                     // If request is cancelled, the result arrays are empty.
-                    if (grantResults.length > 0
-                            && result == PackageManager.PERMISSION_GRANTED) {
+                    if (result == PackageManager.PERMISSION_GRANTED) {
 
                         // permission was granted
                         Log.v(TAG, "User granted permission : read external storage");
@@ -180,7 +176,6 @@ public class SettingsActivity extends ActionBarActivity {
                 }
                 default:
                     Log.w(TAG, "UN-MANAGED request permission result code = " + requestCode);
-
             }
         }
     }
@@ -199,6 +194,8 @@ public class SettingsActivity extends ActionBarActivity {
             addPreferencesFromResource(R.xml.activity_settings);
 
             NumberPickerPreference fontSizeNumberPicker = (NumberPickerPreference) this.findPreference(getResources().getString(R.string.font_size_key));
+            NumberPickerPreference maxFontSizeNumberPicker = (NumberPickerPreference) this.findPreference(getResources().getString(R.string.max_font_size_key));
+            NumberPickerPreference extraPaddingNumberPicker = (NumberPickerPreference) this.findPreference(getResources().getString(R.string.extra_padding_key));
             NumberPickerPreference screenTimeoutNumberPicker = (NumberPickerPreference) this.findPreference(getResources().getString(R.string.screen_timeout));
             EditTextPreference mediaLocationDir = (EditTextPreference) this.findPreference(getResources().getString(R.string.media_folder_location));
             if (mediaLocationDir.getText() == null || mediaLocationDir.getText().isEmpty()) {
@@ -208,6 +205,8 @@ public class SettingsActivity extends ActionBarActivity {
 
             SendToWatchWhenPreferencesChangeListener listener = new SendToWatchWhenPreferencesChangeListener();
             fontSizeNumberPicker.setOnPreferenceChangeListener(listener);
+            maxFontSizeNumberPicker.setOnPreferenceChangeListener(listener);
+            extraPaddingNumberPicker.setOnPreferenceChangeListener(listener);
             screenTimeoutNumberPicker.setOnPreferenceChangeListener(listener);
             this.findPreference(getResources().getString(R.string.card_flip_animation_key)).setOnPreferenceChangeListener(listener);
             this.findPreference(getResources().getString(R.string.double_tap_key)).setOnPreferenceChangeListener(listener);
@@ -244,7 +243,7 @@ public class SettingsActivity extends ActionBarActivity {
     class MessageReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(intent.getIntExtra("status",-1337) != -1){
+            if (intent.getIntExtra("status", -1337) != -1) {
                 isRefreshing = false;
                 rotation.setRepeatCount(0);
             }

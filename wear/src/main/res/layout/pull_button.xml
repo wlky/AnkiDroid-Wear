@@ -19,13 +19,14 @@
         android:layout_centerHorizontal="true" />
 
     <TextView
-        android:layout_width="90dp"
+        android:layout_width="133px"
         android:layout_height="20dp"
-        android:gravity="center"
+        android:textSize="18sp"
+        android:gravity="top|center_horizontal"
+        android:includeFontPadding="false"
         android:textAppearance="?android:attr/textAppearanceSmall"
         tools:text="Small Text"
-        android:background="@drawable/small_round_rect"
-        android:textColor="@color/black"
+        android:textStyle="bold"
         android:id="@+id/textView"
         android:layout_below="@+id/icon"
         android:layout_centerHorizontal="true" />
@@ -40,6 +41,7 @@
         android:textColor="@color/black"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="7dp"/>
+        android:layout_marginTop="7dp"
+        android:visibility="gone"/>
 
 </RelativeLayout>

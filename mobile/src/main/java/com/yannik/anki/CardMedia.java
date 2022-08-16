@@ -20,7 +20,7 @@ public class CardMedia {
      * Group 1 = Contents of [sound:] tag <br>
      * Group 2 = "fname"
      */
-    private static final Pattern fSoundRegexps = Pattern.compile("(?i)(\\[sound:([^]]+)\\])");
+    private static final Pattern fSoundRegexps = Pattern.compile("(?i)(\\[sound:([^]]+)])");
 
     // src element quoted case
     /**
@@ -29,7 +29,7 @@ public class CardMedia {
      * Group 3 = "fname" <br>
      * Group 4 = Backreference to "str" (i.e., same type of quote character)
      */
-    private static final Pattern fImgRegExpQ = Pattern.compile("(?i)(<img[^>]* src=([\\\"'])([^>]+?)(\\2)[^>]*>)");
+    private static final Pattern fImgRegExpQ = Pattern.compile("(?i)(<img[^>]* src=([\"'])([^>]+?)(\\2)[^>]*>)");
     public static String mediaFolder = null;
 
     /**
@@ -39,8 +39,7 @@ public class CardMedia {
      * @return The string with the filenames of any local images percent-escaped as UTF-8.
      */
     public static String escapeImages(String string, boolean unescape) {
-        Pattern p = fImgRegExpQ;
-        Matcher m = p.matcher(string);
+        Matcher m = fImgRegExpQ.matcher(string);
 
         int fnameIdx = 3;
         while (m.find()) {
@@ -75,19 +74,19 @@ public class CardMedia {
         bitmapOptions.inJustDecodeBounds = false;
 
         int width = maxWidth, height = maxHeight;
-        if(keepAspectRatio){
+        if (keepAspectRatio) {
             width = bitmapOptions.outWidth;
             height = bitmapOptions.outHeight;
             if (width > height) {
                 // landscape
                 float ratio = (float) width / maxWidth;
                 width = maxWidth;
-                height = (int)(height / ratio);
+                height = (int) (height / ratio);
             } else if (height > width) {
                 // portrait
                 float ratio = (float) height / maxHeight;
                 height = maxHeight;
-                width = (int)(width / ratio);
+                width = (int) (width / ratio);
             } else {
                 // square
                 height = maxHeight;
@@ -107,8 +106,7 @@ public class CardMedia {
         final int width = bitmapOptions.outWidth;
         int inSampleSize = 1;
 
-        if (height > reqHeight || width > reqWidth)
-        {
+        if (height > reqHeight || width > reqWidth) {
             final int halfHeight = height / 2;
             final int halfWidth = width / 2;
 
@@ -120,13 +118,10 @@ public class CardMedia {
         return inSampleSize;
     }
 
-    public static String getMediaPath(String name){
-        if(mediaFolder == null || !new File(mediaFolder).exists()){
+    public static String getMediaPath(String name) {
+        if (mediaFolder == null || !new File(mediaFolder).exists()) {
             mediaFolder = Environment.getExternalStorageDirectory().getAbsolutePath() + "/AnkiDroid/collection.media/";
         }
         return new File(mediaFolder, name).getAbsolutePath();
     }
-
-
-
 }

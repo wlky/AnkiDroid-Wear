@@ -10,7 +10,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.content.LocalBroadcastManager;
+
+
 import android.support.wearable.activity.WearableActivity;
 import android.support.wearable.view.FragmentGridPagerAdapter;
 import android.support.wearable.view.GridViewPager;
@@ -20,6 +21,8 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
@@ -48,7 +51,7 @@ import java.util.List;
 public class WearMainActivity extends WearableActivity {
     public static final String PREFS_NAME = "ANKIDROID_WEAR_PREFERENCES";
     private static final String TAG = "WearMain";
-    public static HashMap<String, Asset> availableAssets = new HashMap<String, Asset>();
+    public static HashMap<String, Asset> availableAssets = new HashMap<>();
     private static GoogleApiClient googleApiClient;
     private static Handler mHandler = new Handler();
     Preferences preferences;
@@ -88,43 +91,30 @@ public class WearMainActivity extends WearableActivity {
         // Send the RPC
         PendingResult<NodeApi.GetConnectedNodesResult> nodes = Wearable.NodeApi.getConnectedNodes(
                 googleApiClient);
-        nodes.setResultCallback(new ResultCallback<NodeApi.GetConnectedNodesResult>() {
-            @Override
-            public void onResult(NodeApi.GetConnectedNodesResult result) {
-                for (int i = 0; i < result.getNodes().size(); i++) {
-                    Node node = result.getNodes().get(i);
-                    String nName = node.getDisplayName();
-                    String nId = node.getId();
-                    Log.d(TAG, "Firing Message with path: " + path);
+        nodes.setResultCallback(result -> {
+            for (int i = 0; i < result.getNodes().size(); i++) {
+                Node node = result.getNodes().get(i);
+                Log.d(TAG, "Firing Message with path: " + path);
 
-                    PendingResult<MessageApi.SendMessageResult> messageResult = Wearable
-                            .MessageApi.sendMessage(
-                                    googleApiClient,
-                                    node.getId(),
-                                    path,
-                                    (data == null ? "" : data).getBytes());
-                    messageResult.setResultCallback(new ResultCallback<MessageApi
-                            .SendMessageResult>() {
-                        @Override
-                        public void onResult(MessageApi.SendMessageResult sendMessageResult) {
-                            Status status = sendMessageResult.getStatus();
+                PendingResult<MessageApi.SendMessageResult> messageResult = Wearable
+                        .MessageApi.sendMessage(
+                                googleApiClient,
+                                node.getId(),
+                                path,
+                                (data == null ? "" : data).getBytes());
+                messageResult.setResultCallback(sendMessageResult -> {
+                    Status status = sendMessageResult.getStatus();
 
-                            Log.d(TAG, "Status: " + status.toString());
-                            if (!status.isSuccess()) {
-                                if (retryCount > 5) {
-                                    Log.w(TAG, "Too many retries, giving up.");
-                                    return;
-                                }
-                                mHandler.postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        fireMessage(data, path, retryCount + 1);
-                                    }
-                                }, 1000 * retryCount);
-                            }
+                    Log.d(TAG, "Status: " + status.toString());
+                    if (!status.isSuccess()) {
+                        if (retryCount > 5) {
+                            Log.w(TAG, "Too many retries, giving up.");
+                            return;
                         }
-                    });
-                }
+                        mHandler.postDelayed(() -> fireMessage(data, path,
+                                retryCount + 1),1000L * retryCount);
+                    }
+                });
             }
         });
     }
@@ -180,8 +170,8 @@ public class WearMainActivity extends WearableActivity {
 
         preferences = new Preferences(this);
         preferences.load();
-        viewPager = (MyGridViewPager) findViewById(R.id.pager);
-        final MyGridViewPager viewPager = (MyGridViewPager) findViewById(R.id.pager);
+        viewPager = findViewById(R.id.pager);
+        final MyGridViewPager viewPager = findViewById(R.id.pager);
 
         final PagerAdapter adapter = new PagerAdapter(getFragmentManager());
 
@@ -211,54 +201,54 @@ public class WearMainActivity extends WearableActivity {
             setAmbientEnabled();
         }
 
-        decksFragment.setChooseDeckListener(new CollectionFragment.OnFragmentInteractionListener() {
-            @Override
-            public void onFragmentInteraction(long id) {
-                fireMessage(CommonIdentifiers.W2P_CHOOSE_COLLECTION, "" + id);
-                fireMessage(CommonIdentifiers.W2P_REQUEST_CARD, "" + id);
-                viewPager.setCurrentItem(0, 0);
-                reviewFragment.indicateLoading();
-                preferences.setSelectedDeck(id);
-            }
+        decksFragment.setChooseDeckListener(id -> {
+            fireMessage(CommonIdentifiers.W2P_CHOOSE_COLLECTION, "" + id);
+            fireMessage(CommonIdentifiers.W2P_REQUEST_CARD, "" + id);
+            viewPager.setCurrentItem(0, 0);
+            reviewFragment.indicateLoading();
+            preferences.setSelectedDeck(id);
         });
 
-        timeOverlay = (TextView) findViewById(R.id.time_overlay);
+        timeOverlay = findViewById(R.id.time_overlay);
 
-        jsonReceivers.add(new JsonReceiver() {
-            @Override
-            public void onJsonReceive(String path, JSONObject json) {
-                if (path.equals(CommonIdentifiers.P2W_CHANGE_SETTINGS)) {
-                    for (Iterator<String> it = json.keys(); it.hasNext(); ) {
-                        try {
-                            String name = it.next();
-                            if (name.equals(Preferences.CARD_FONT_SIZE)) {
-                                preferences.setCardFontSize((float) json.getInt(name));
-                            } else if (name.equals(Preferences.DOUBLE_TAP)) {
-                                preferences.setDoubleTapReview(json.getBoolean(name));
-                            } else if (name.equals(Preferences.FLIP_ANIMATION)) {
-                                preferences.setFlipCards(json.getBoolean(name));
-                            } else if (name.equals(Preferences.SCREEN_TIMEOUT)) {
-                                preferences.setScreenTimeout(json.getInt(name));
-                            } else if (name.equals(Preferences.PLAY_SOUNDS)) {
-                                preferences.setPlaySound(json.getInt(name));
-                            } else if (name.equals(Preferences.ASK_BEFORE_FIRST_SOUND)) {
-                                preferences.setAskBeforeFirstSound(json.getBoolean(name));
-                            } else if (name.equals(Preferences.DAY_MODE)) {
-                                preferences.setDayMode(json.getBoolean(name));
-                            } else if (name.equals(Preferences.AMBIENT_MODE)) {
-                                preferences.setAmbientMode(json.getBoolean(name));
-                                if (preferences.isAmbientMode()) {
-                                    setAmbientEnabled();
-                                }
+        jsonReceivers.add((path, json) -> {
+            if (path.equals(CommonIdentifiers.P2W_CHANGE_SETTINGS)) {
+                for (Iterator<String> it = json.keys(); it.hasNext(); ) {
+                    try {
+                        String name = it.next();
+                        if (name.equals(Preferences.CARD_FONT_SIZE)) {
+                            preferences.setCardFontSize((float) json.getInt(name));
+                        } else if (name.equals(Preferences.CARD_MAX_FONT_SIZE)) {
+                            preferences.setCardMaxFontSize((float) json.getInt(name));
+                        } else if (name.equals(Preferences.CARD_EXTRA_PADDING)) {
+                            preferences.setCardExtraPadding((float) json.getInt(name));
+                        } else if (name.equals(Preferences.DOUBLE_TAP)) {
+                            preferences.setDoubleTapReview(json.getBoolean(name));
+                        } else if (name.equals(Preferences.FLIP_ANIMATION)) {
+                            preferences.setFlipCards(json.getBoolean(name));
+                        } else if (name.equals(Preferences.SCREEN_TIMEOUT)) {
+                            preferences.setScreenTimeout(json.getInt(name));
+                        } else if (name.equals(Preferences.PLAY_SOUNDS)) {
+                            preferences.setPlaySound(json.getInt(name));
+                        } else if (name.equals(Preferences.ASK_BEFORE_FIRST_SOUND)) {
+                            preferences.setAskBeforeFirstSound(json.getBoolean(name));
+                        } else if (name.equals(Preferences.DAY_MODE)) {
+                            preferences.setDayMode(json.getBoolean(name));
+                        } else if (name.equals(Preferences.ALTERNATIVE_CARD_MODE)) {
+                            preferences.setAltCardMode(json.getBoolean(name));
+                        } else if (name.equals(Preferences.AMBIENT_MODE)) {
+                            preferences.setAmbientMode(json.getBoolean(name));
+                            if (preferences.isAmbientMode()) {
+                                setAmbientEnabled();
                             }
-
-                        } catch (JSONException e) {
-                            e.printStackTrace();
                         }
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
                     }
-                    reviewFragment.applySettings();
-                    decksFragment.setSettings(preferences);
                 }
+                reviewFragment.applySettings();
+                decksFragment.setSettings(preferences);
             }
         });
 
@@ -283,26 +273,23 @@ public class WearMainActivity extends WearableActivity {
 
                 PendingResult<DataItemBuffer> results = Wearable.DataApi.getDataItems(
                         googleApiClient);
-                results.setResultCallback(new ResultCallback<DataItemBuffer>() {
-                    @Override
-                    public void onResult(DataItemBuffer dataItems) {
-                        if (dataItems.getCount() != 0) {
-                            for (int i = 0; i < dataItems.getCount(); i++) {
-                                DataItem dataItem = dataItems.get(i);
-                                try {
-                                    DataMapItem dataMapItem = DataMapItem.fromDataItem(dataItem);
-                                    for (String name : dataMapItem.getDataMap().keySet()) {
-                                        WearMainActivity.availableAssets.put(name,
-                                                dataMapItem.getDataMap().getAsset(name));
-                                        Log.v("myTag", "Immage received on watch is: " + name);
-                                    }
-                                } catch (IllegalStateException ise) {
+                results.setResultCallback(dataItems -> {
+                    if (dataItems.getCount() != 0) {
+                        for (int i = 0; i < dataItems.getCount(); i++) {
+                            DataItem dataItem = dataItems.get(i);
+                            try {
+                                DataMapItem dataMapItem = DataMapItem.fromDataItem(dataItem);
+                                for (String name : dataMapItem.getDataMap().keySet()) {
+                                    WearMainActivity.availableAssets.put(name,
+                                            dataMapItem.getDataMap().getAsset(name));
+                                    Log.v("myTag", "Immage received on watch is: " + name);
                                 }
+                            } catch (IllegalStateException ignored) {
                             }
                         }
-
-                        dataItems.release();
                     }
+
+                    dataItems.release();
                 });
 
                 if (firstStart) {
@@ -398,7 +385,7 @@ public class WearMainActivity extends WearableActivity {
     }
 
     private class PagerAdapter extends FragmentGridPagerAdapter {
-        List<Fragment> fragmentList = null;
+        List<Fragment> fragmentList;
 
         public PagerAdapter(FragmentManager fragmentManager) {
             super(fragmentManager);

@@ -4,7 +4,9 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
+
+import androidx.annotation.NonNull;
+
 import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -44,7 +46,9 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
 
     private static final String TAG = "CollectionFragment";
 
-    /** The list of decks that will be displayed, will be provided by. */
+    /**
+     * The list of decks that will be displayed, will be provided by.
+     */
     ArrayList<Deck> mDecks = new ArrayList<>();
     View collectionListContainer;
     private OnFragmentInteractionListener mListener;
@@ -73,12 +77,12 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         return new CollectionFragment();
     }
 
-    public void setSettings(Preferences settings){
+    public void setSettings(Preferences settings) {
         this.settings = settings;
         applySettings();
     }
 
-    public void applySettings(){
+    public void applySettings() {
         if (settings == null) return;
 
         setDayMode(settings.isDayMode());
@@ -86,10 +90,10 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         mAdapter.notifyDataSetChanged();
     }
 
-    public void setDayMode(boolean dayMode){
-        if(dayMode) {
+    public void setDayMode(boolean dayMode) {
+        if (dayMode) {
             collectionListContainer.setBackgroundResource(R.drawable.round_rect_day);
-        }else{
+        } else {
             collectionListContainer.setBackgroundResource(R.drawable.round_rect_night);
         }
     }
@@ -106,8 +110,9 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_collection, container, false);
         collectionListContainer = view.findViewById(R.id.collectionListContainer);
+
         // Set the adapter
-        mListView = (AbsListView) view.findViewById(android.R.id.list);
+        mListView = view.findViewById(android.R.id.list);
         mListView.setAdapter(mAdapter);
 
         // Set OnItemClickListener so we can be notified on item clicks
@@ -134,7 +139,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         mListener = null;
     }
 
-    public void setChooseDeckListener(OnFragmentInteractionListener listener){
+    public void setChooseDeckListener(OnFragmentInteractionListener listener) {
         this.mListener = listener;
     }
 
@@ -174,7 +179,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
                 }
 
             }
-            if(mListView == null) {
+            if (mListView == null) {
                 return;
             }
 
@@ -214,7 +219,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
      * Customised adapter for displaying list of deck names.
      * Supports day and night mode.
      */
-    private class DayNightArrayAdapter extends BaseAdapter{
+    private class DayNightArrayAdapter extends BaseAdapter {
 
         private final Context mContext;
         private final List<Deck> mDNAADecks;
@@ -259,9 +264,9 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
             DeckViewHolder viewHolder = (DeckViewHolder) view.getTag();
             if (viewHolder == null) {
                 viewHolder = new DeckViewHolder();
-                viewHolder.catLayout = (RelativeLayout) view.findViewById(R.id.colllist__mainLayout);
-                viewHolder.catName = (TextView) view.findViewById(R.id.colllist__textcategory);
-                viewHolder.catNumber = (TextView) view.findViewById(R.id.colllist__textNumber);
+                viewHolder.catLayout = view.findViewById(R.id.colllist__mainLayout);
+                viewHolder.catName = view.findViewById(R.id.colllist__textcategory);
+                viewHolder.catNumber = view.findViewById(R.id.colllist__textNumber);
                 view.setTag(viewHolder);
             }
 
@@ -325,7 +330,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
             res.append(" ");
             if (mReviewCountSum == 0) {
                 res.append("<font color='grey'>0</font>");
-                } else {
+            } else {
                 res.append("<font color='green'>");
                 res.append(mReviewCountSum);
                 res.append("</font>");
@@ -339,22 +344,33 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
      * Deck is an immutable object.
      * Built using provided JSON.
      */
-    private class Deck {
-        /** The deck name. e.g. : "computing::java". */
+    private static class Deck {
+        /**
+         * The deck name. e.g. : "computing::java".
+         */
         private String mName;
-        /** The unique identifier of this deck. e.g. : "1472977314172". */
+        /**
+         * The unique identifier of this deck. e.g. : "1472977314172".
+         */
         private long mID;
-        /** The number of cards in this deck with status "new". */
+        /**
+         * The number of cards in this deck with status "new".
+         */
         private int mNewCount;
-        /** The number of cards in this deck with status "learning". */
+        /**
+         * The number of cards in this deck with status "learning".
+         */
         private int mLearningCount;
-        /** The number of cards in this deck with status "to review". */
+        /**
+         * The number of cards in this deck with status "to review".
+         */
         private int mReviewCount;
 
         /**
          * Full params constructor.
-         * @param parName The deck name. e.g. : "computing::java".
-         * @param parDeckID The unique identifier of this deck. e.g. : "1472977314172".
+         *
+         * @param parName       The deck name. e.g. : "computing::java".
+         * @param parDeckID     The unique identifier of this deck. e.g. : "1472977314172".
          * @param parDeckCounts The number of cards of each type. e.g. : "[4,3,5]"
          */
         Deck(String parName, long parDeckID, String parDeckCounts) {
@@ -393,6 +409,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
 
         /**
          * Parse deck counts string.
+         *
          * @param parDeckCounts The number of cards of each type [learn, review, new]. e.g. : "[4,3,5]"
          */
         private void setDeckCounts(String parDeckCounts) {
@@ -400,9 +417,9 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
             Pattern pattern = Pattern.compile("\\[([0-9]+),([0-9]+),([0-9]+)\\]");
             Matcher matcher = pattern.matcher(parDeckCounts);
             if (matcher.matches()) {
-                mLearningCount = Integer.valueOf(matcher.group(1));
-                mReviewCount = Integer.valueOf(matcher.group(2));
-                mNewCount = Integer.valueOf(matcher.group(3));
+                mLearningCount = Integer.parseInt(matcher.group(1));
+                mReviewCount = Integer.parseInt(matcher.group(2));
+                mNewCount = Integer.parseInt(matcher.group(3));
             }
         }
 
@@ -421,16 +438,15 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
             return mID;
         }
 
+        @NonNull
         @Override
         public String toString() {
-            final StringBuffer sb = new StringBuffer("Deck{");
-            sb.append("mName='").append(mName).append('\'');
-            sb.append(", mID=").append(mID);
-            sb.append(", mNewCount=").append(mNewCount);
-            sb.append(", mLearningCount=").append(mLearningCount);
-            sb.append(", mReviewCount=").append(mReviewCount);
-            sb.append('}');
-            return sb.toString();
+            return "Deck{" + "mName='" + mName + '\'' +
+                    ", mID=" + mID +
+                    ", mNewCount=" + mNewCount +
+                    ", mLearningCount=" + mLearningCount +
+                    ", mReviewCount=" + mReviewCount +
+                    '}';
         }
     }
 }

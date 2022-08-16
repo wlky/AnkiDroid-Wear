@@ -25,11 +25,37 @@
             android:title="@string/pref_day_mode__title"
             />
 
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="@string/alt_card_mode"
+            android:title="@string/pref_alt_card_mode__title"
+            />
+
         <com.yannik.anki.NumberPickerPreference
+            android:id="@+id/font_size"
             android:defaultValue="40"
             android:key="@string/font_size_key"
             android:title="@string/pref_fontsize__title"
+            app:minValue="1"
             app:summaryPostFix="@string/pref_card_fontsize__postfix" />
+
+        <com.yannik.anki.NumberPickerPreference
+            android:id="@+id/max_font_size"
+            android:defaultValue="100"
+            android:key="@string/max_font_size_key"
+            android:title="@string/pref_max_fontsize__title"
+            app:minValue="1"
+            app:maxValue="200"
+            app:summaryPostFix="@string/pref_card_fontsize__postfix" />
+
+        <com.yannik.anki.NumberPickerPreference
+            android:id="@+id/extra_padding"
+            android:defaultValue="0"
+            android:key="@string/extra_padding_key"
+            android:title="@string/pref_extra_padding__title"
+            app:maxValue="50"
+            app:minValue="0"
+            app:summaryPostFix="@string/pref_card_extra_padding__postfix" />
 
         <com.yannik.anki.NumberPickerPreference
             android:defaultValue="60"

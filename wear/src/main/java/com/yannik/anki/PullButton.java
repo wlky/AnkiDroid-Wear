@@ -2,12 +2,14 @@ package com.yannik.anki;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Color;
 import android.graphics.Point;
-import android.os.Build;
 import android.util.AttributeSet;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
@@ -28,9 +30,11 @@ public class PullButton extends RelativeLayout {
     private final TextView textView;
     private final TextView easeTextView;
     OnClickListener ocl;
-    private float homePosition, extendedPosition, homeAlpha = 0.7f, extendedAlpha = 1;
-    private int minMovementDistance = 50;
-    private Point displaySize = new Point();
+    private float homePosition;
+    private float extendedPosition;
+    private final float homeAlpha = 0.7f, extendedAlpha = 1;
+    private final int minMovementDistance;
+    private final Point displaySize = new Point();
     private int exitY = 0;
     private int imageResId = -1;
     private boolean upsideDown;
@@ -47,6 +51,7 @@ public class PullButton extends RelativeLayout {
         this(context, attrs, defStyleAttr, 0);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     public PullButton(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr);
         LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -57,15 +62,12 @@ public class PullButton extends RelativeLayout {
 
         display.getSize(displaySize);
 
-
         final TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.PullButton);
         final int N = a.getIndexCount();
 
-        icon = (ImageButton) findViewById(R.id.icon);
-        textView = (TextView) findViewById(R.id.textView);
-        easeTextView = (TextView) findViewById(R.id.ease_text);
-
-
+        icon = findViewById(R.id.icon);
+        textView = findViewById(R.id.textView);
+        easeTextView = findViewById(R.id.ease_text);
 
         for (int i = 0; i < N; ++i) {
             int attr = a.getIndex(i);
@@ -79,7 +81,6 @@ public class PullButton extends RelativeLayout {
                     break;
                 case R.styleable.PullButton_upsideDown:
                     upsideDown = a.getBoolean(attr, false);
-
                     break;
                 case R.styleable.PullButton_ease_text:
                     easeTextView.setText(a.getString(attr));
@@ -87,8 +88,6 @@ public class PullButton extends RelativeLayout {
             }
         }
         a.recycle();
-
-
 
         ViewTreeObserver vto = getViewTreeObserver();
         vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -103,7 +102,7 @@ public class PullButton extends RelativeLayout {
 
 
                 if (upsideDown) {
-                    homePosition = 0 - textView.getHeight();
+                    homePosition = -textView.getHeight();
                     extendedPosition = 0;
                     exitY = displaySize.y + 10;
                 } else {
@@ -114,31 +113,37 @@ public class PullButton extends RelativeLayout {
 
                 setY(homePosition);
 
-                ViewTreeObserver obs = getViewTreeObserver();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                    obs.removeOnGlobalLayoutListener(this);
+                //P TODO
+                String text = (String) easeTextView.getText();
+                if (text.equals(getResources().getString(R.string.common_hard))) {
+                    textView.setGravity(Gravity.END);
+                    textView.setTextColor(Color.parseColor("#ffa726"));
+                } else if (text.equals(getResources().getString(R.string.common_easy))) {
+                    textView.setGravity(Gravity.END);
+                    textView.setTextColor(Color.parseColor("#42a5f5"));
+                } else if (text.equals(getResources().getString(R.string.common_again))) {
+                    textView.setGravity(Gravity.START);
+                    textView.setTextColor(Color.parseColor("#ef5350"));
                 } else {
-                    obs.removeGlobalOnLayoutListener(this);
+                    textView.setGravity(Gravity.START);
+                    textView.setTextColor(Color.parseColor("#66bb6a"));
                 }
+
+                ViewTreeObserver obs = getViewTreeObserver();
+                obs.removeOnGlobalLayoutListener(this);
             }
         });
-
 
         if (imageResId != -1) {
             icon.setImageResource(imageResId);
         }
 
-
-
         minMovementDistance = displaySize.y / 2;
-
 
         setAlpha(homeAlpha);
 
-
         this.animate().setInterpolator(new LinearInterpolator());
         this.setOnTouchListener(new SwipeTouchListener());
-
     }
 
     @Override
@@ -147,22 +152,22 @@ public class PullButton extends RelativeLayout {
     }
 
     public void right() {
-        setX(displaySize.x / 2);
+        setX(displaySize.x / 2f);
     }
 
     public void left() {
-        setX(displaySize.x / 2 - getWidth());
+        setX(displaySize.x / 2f - getWidth());
     }
 
     public void centerX() {
-        setX(displaySize.x / 2 - getWidth() / 2);
+        setX(displaySize.x / 2f - getWidth() / 2f);
     }
 
     public void setOnSwipeListener(OnClickListener ocl) {
         this.ocl = ocl;
     }
 
-    public void setImageRessource(int res) {
+    public void setImageResource(int res) {
         imageResId = res;
         if (icon != null) {
             icon.setImageResource(res);
@@ -205,6 +210,7 @@ public class PullButton extends RelativeLayout {
 
         private VelocityTracker mVelocityTracker;
 
+        @SuppressLint("ClickableViewAccessibility")
         @Override
         public boolean onTouch(final View v, MotionEvent event) {
 /*            if(exitY == Integer.MAX_VALUE){
@@ -257,9 +263,7 @@ public class PullButton extends RelativeLayout {
                     break;
             }
 
-
             return true;
         }
     }
-
 }

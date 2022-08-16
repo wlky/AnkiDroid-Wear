@@ -21,8 +21,7 @@
             android:overScrollMode="always"
             android:paddingBottom="35dp"
             android:paddingTop="35dp"
-            android:scrollbarStyle="outsideOverlay"
-            />
+            android:scrollbarStyle="outsideOverlay"/>
 
         <TextView
             android:id="@android:id/empty"

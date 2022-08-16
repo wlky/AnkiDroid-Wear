@@ -1,11 +1,10 @@
 package com.yannik.anki;
 
 import android.animation.Animator;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -15,17 +14,25 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.content.LocalBroadcastManager;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.core.widget.TextViewCompat;
+
 import android.support.wearable.view.GridViewPager;
 import android.support.wearable.view.WatchViewStub;
 import android.text.Html;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.text.style.ImageSpan;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -34,6 +41,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
@@ -46,6 +54,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Matcher;
@@ -61,7 +70,7 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     public static final String W2W_RELOAD_HTML_FOR_MEDIA = "reload_text";
     private static final String W2W_REMOVE_SCREEN_LOCK = "remove_screen_lock";
     private static final String SOUND_PLACEHOLDER_STRING = "awlieurablsdkvbwlaiueaghlsdkvblqi2345235.jpg";
-    private static final String SOUND_TAG_REPLACEMENT_REGEX = "\\[(sound:[^\\]]+)\\]";
+    private static final String SOUND_TAG_REPLACEMENT_REGEX = "\\[(sound:[^]]+)]";
     //    private static final String SOUND_TAG_REPLACEMENT_STRING = "&#128266;";
     private static final String SOUND_TAG_REPLACEMENT_STRING = "<img src='" + SOUND_PLACEHOLDER_STRING +
             "'/>";
@@ -69,52 +78,58 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
      * Group 1 = Contents of [sound:] tag <br>
      * Group 2 = "fname"
      */
-    private static final Pattern fSoundRegexps = Pattern.compile("(?i)(\\[sound:([^]]+)\\])");
+    private static final Pattern fSoundRegexps = Pattern.compile("(?i)(\\[sound:([^]]+)])");
     private static final int EASY = 0, MID = 1, HARD = 2, FAILED = 3;
     private static final int GESTURE_BUTTON_ANIMATION_TIME_MS = 1000;
+    private static final int MAX_CONSECUTIVE_NEWLINES = 2; //Should possibly be customizable
+    private static final long FLIP_CARD_ANIMATION_DURATION = 180;
     private static Preferences settings;
     private static GridViewPager gridViewPager;
     byte playSounds = -1;
     MyImageGetter imageGetter = new MyImageGetter();
     private TextView mTextView;
+    private TextView asTextView;
+    private TextView aTextView;
+    private boolean autosizing;
+    private int defPadding;
+    private int extraPadding;
+    private boolean roundScreen;
+    private int p;
+    private int minTextSize;
+    private boolean altCardMode;
     private long noteID;
     private int cardOrd;
+    private int screenHeight;
     private RelativeLayout qaOverlay;
-    //    private PullButton easeButtons[FAILED], easeButtons[HARD], easeButtons[MID], easeButtons[EASY];
     private PullButton[] easeButtons;
     private boolean showingEaseButtons = false, showingAnswer = false;
-    private Timer easeButtonShowTimer = new Timer();
     private ScrollView qaScrollView;
     private ProgressBar spinner;
     private boolean scrollViewMoved;
     private String qHtml;
     private String aHtml;
+    private boolean oneSidedCard;
     private View rotationTarget;
-    private long duration = 180;
-    private Context mContext;
     private RelativeLayout qaContainer;
-    private ArrayList<String> jsonQueueNames = new ArrayList<String>();
-    private ArrayList<JSONObject> jsonQueueObjects = new ArrayList<JSONObject>();
+    private final ArrayList<String> jsonQueueNames = new ArrayList<>();
+    private final ArrayList<JSONObject> jsonQueueObjects = new ArrayList<>();
     private Drawable soundDrawable = null;
     private boolean soundIconClicked = false;
-    private View.OnClickListener textClickListener = new View.OnClickListener() {
+    private final View.OnClickListener textClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             Log.d(getClass().getName(), "textview was clicked, soundIconClicked is: " + soundIconClicked);
-            if (!scrollViewMoved && (!showingEaseButtons || (showingEaseButtons && !settings.isDoubleTapReview())) && !soundIconClicked) {
+            if (!scrollViewMoved && (!showingEaseButtons || !settings.isDoubleTapReview()) && !soundIconClicked) {
                 flipCard(showingAnswer);
             }
         }
     };
-    private SoundClickListener onSoundIconClickListener = new SoundClickListener() {
-        @Override
-        public void onSoundClick(View v, String soundName) {
-            soundIconClicked = true;
-            Log.d("Anki", "sound icon clicked " + soundName);
-            if (soundName != null && !soundName.isEmpty()) {
-                WearMainActivity.fireMessage(CommonIdentifiers.W2P_PLAY_SOUNDS,
-                        new JSONArray().put(soundName).toString());
-            }
+    private final SoundClickListener onSoundIconClickListener = (v, soundName) -> {
+        soundIconClicked = true;
+        Log.d("Anki", "sound icon clicked " + soundName);
+        if (soundName != null && !soundName.isEmpty()) {
+            WearMainActivity.fireMessage(CommonIdentifiers.W2P_PLAY_SOUNDS,
+                    new JSONArray().put(soundName).toString());
         }
     };
     private Timer screenTimeoutTimer;
@@ -149,7 +164,10 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Resources r = getResources();
-        gestureButtonVelocity = r.getDisplayMetrics().heightPixels / GESTURE_BUTTON_ANIMATION_TIME_MS;
+        screenHeight = r.getDisplayMetrics().heightPixels;
+        gestureButtonVelocity = screenHeight / (float) GESTURE_BUTTON_ANIMATION_TIME_MS;
+        p = (int) (((r.getDisplayMetrics().widthPixels) * (2 - Math.sqrt(2))) / 4);
+        roundScreen = this.getResources().getConfiguration().isScreenRound();
     }
 
     private void hideButtons() {
@@ -200,12 +218,11 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                     easeButtons[EASY].setText(nextReviewTimes.getString(3));
                     break;
             }
-        } catch (JSONException e) {
+        } catch (JSONException ignored) {
         }
     }
 
     private void showAnswer() {
-        qaScrollView.scrollTo(0, 0);
         showingAnswer = true;
         updateFromHtmlText();
         if (!showingEaseButtons) {
@@ -215,7 +232,6 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     }
 
     private void showQuestion() {
-        qaScrollView.scrollTo(0, 0);
         showingAnswer = false;
         updateFromHtmlText();
         if (!showingEaseButtons) {
@@ -245,17 +261,13 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         new AlertDialog.Builder(getActivity())
                 .setTitle("Sounds")
                 .setMessage("Should sound files automatically start playing?")
-                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        playSounds = 1;
-                        sendReviewStateToPhone();
-                    }
+                .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                    playSounds = 1;
+                    sendReviewStateToPhone();
                 })
-                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        playSounds = 0;
-                        sendReviewStateToPhone();
-                    }
+                .setNegativeButton(android.R.string.no, (dialog, which) -> {
+                    playSounds = 0;
+                    sendReviewStateToPhone();
                 })
                 .setIcon(android.R.drawable.ic_media_play)
                 .show();
@@ -278,19 +290,90 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
 
     private void updateFromHtmlText() {
         if (showingAnswer) {
-            mTextView.setText(a);
+            if (altCardMode) {
+                setText(a, aTextView);
+            } else {
+                setText(a, mTextView);
+            }
         } else {
-            mTextView.setText(q);
+            setText(q, mTextView);
         }
-        makeLinksFocusable(mTextView);
+    }
+
+    private void setText(Spanned text, @NonNull final TextView textView) {
+        if (altCardMode && showingAnswer) {
+            aTextView.setVisibility(View.VISIBLE);
+        } else {
+            aTextView.setVisibility(View.GONE);
+        }
+        if (text != null) textView.setText(text);
+        else textView.setText(R.string.review_frag__no_more_cards);
+
+        if (autosizing) {
+            if (text != null) asTextView.setText(text);
+            else asTextView.setText(R.string.review_frag__no_more_cards);
+
+            if (roundScreen) textView.setPadding(defPadding, defPadding, defPadding, defPadding);
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, minTextSize);
+            textView.post(() -> {
+                int lineCount = textView.getLineCount();
+                if (lineCount < 3) {
+                    if (roundScreen) {
+                        asTextView.setPadding(defPadding - (p / 2), defPadding, defPadding - (p / 2), defPadding);
+                        textView.setPadding(defPadding - (p / 2), defPadding, defPadding - (p / 2), defPadding);
+                    }
+                    asTextView.setMaxLines(lineCount);
+                } else {
+                    if (roundScreen) {
+                        asTextView.setPadding(defPadding, defPadding, defPadding, defPadding);
+                    }
+                    asTextView.setMaxLines(Integer.MAX_VALUE);
+                }
+                asTextView.post(() -> {
+                    textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, asTextView.getTextSize());
+                    if (!(oneSidedCard && showingAnswer)) cardScroll(textView);
+                });
+            });
+        } else {
+            cardScroll(textView);
+        }
+
+        if (oneSidedCard && showingAnswer) {
+            mTextView.setText(textView.getText());
+            mTextView.setTextSize(textView.getTextSize());
+            mTextView.setPadding(mTextView.getPaddingLeft(), mTextView.getCompoundPaddingTop(), mTextView.getPaddingRight(), mTextView.getPaddingBottom());
+            aTextView.setVisibility(View.GONE);
+        }
+
+        makeLinksFocusable(textView);
+    }
+
+    private void cardScroll(final TextView textView) {
+        if (altCardMode && showingAnswer) {
+            textView.post(() -> {
+                //It's a matter of personal preference whether or not it should be a smooth scroll.
+                qaScrollView.smoothScrollTo(0, (int) aTextView.getY());
+            });
+        } else {
+            qaScrollView.scrollTo(0, 0);
+        }
     }
 
     private void flipCard(final boolean isShowingAnswer) {
         rotationTarget.setRotationY(0);
-        if (settings.isFlipCardsAnimationActive()) {
-            final int rightOrLeftFlip = isShowingAnswer ? 1 : -1;
 
-            rotationTarget.animate().setDuration(duration).rotationY(rightOrLeftFlip * 90).setListener(new android.animation.AnimatorListenerAdapter() {
+        if (altCardMode && isShowingAnswer) {
+            qaScrollView.post(() -> {
+                int aY = (int) aTextView.getY();
+                if (!(oneSidedCard && showingAnswer) && qaScrollView.getScrollY() + screenHeight / 2 < aY + (p + extraPadding) / 4) {
+                    qaScrollView.scrollTo(0, aY);
+                } else {
+                    qaScrollView.scrollTo(0, 0);
+                }
+            });
+        } else if (settings.isFlipCardsAnimationActive()) {
+            final int rightOrLeftFlip = isShowingAnswer ? 1 : -1;
+            rotationTarget.animate().setDuration(FLIP_CARD_ANIMATION_DURATION).rotationY(rightOrLeftFlip * 90).setListener(new android.animation.AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     updateText(isShowingAnswer);
@@ -312,9 +395,9 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     private int getRealEase(int ease) {
         if (ease == 1 || numButtons == 4) return ease;
 
-        if (numButtons == 2 && ease != 1) return 2;
+        if (numButtons == 2) return 2;
 
-        if (numButtons == 3 && ease != 1) return ease - 1;
+        if (numButtons == 3) return ease - 1;
 
         throw new Error("Illegal ease mode");
     }
@@ -331,16 +414,43 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     public void applySettings() {
         if (settings == null || mTextView == null || !isAdded()) return;
         resetScreenTimeout(true);
-        mTextView.setTextSize(settings.getCardFontSize());
         setDayMode(settings.isDayMode());
+        minTextSize = (int) settings.getCardFontSize();
+        int maxTextSize = (int) settings.getCardMaxFontSize();
+        if (minTextSize < maxTextSize) {
+            autosizing = true;
+            TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(asTextView, minTextSize, maxTextSize, 1, TypedValue.COMPLEX_UNIT_DIP);
+        } else {
+            autosizing = false;
+            mTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, settings.getCardFontSize());
+            aTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, settings.getCardFontSize());
+        }
+
+        altCardMode = settings.isAltCardMode();
+        extraPadding = (int) settings.getCardExtraPadding();
+        if (roundScreen) {
+            defPadding = extraPadding + p;
+        } else {
+            defPadding = extraPadding;
+        }
+        mTextView.setPadding(defPadding, defPadding, defPadding, defPadding);
+        aTextView.setPadding(defPadding, defPadding, defPadding, defPadding);
+        asTextView.setPadding(defPadding, defPadding, defPadding, defPadding);
+        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) aTextView.getLayoutParams();
+        params.setMargins(0, -(p + extraPadding), 0, 0);
+        aTextView.setLayoutParams(params);
     }
 
-    private void setDayMode(boolean dayMode){
+    private void setDayMode(boolean dayMode) {
         if (dayMode) {
-            mTextView.setTextColor(getResources().getColor(R.color.dayTextColor));
+            int dayTextColor = ContextCompat.getColor(this.getContext(), R.color.dayTextColor);
+            mTextView.setTextColor(dayTextColor);
+            aTextView.setTextColor(dayTextColor);
             qaContainer.setBackgroundResource(R.drawable.round_rect_day);
         } else {
-            mTextView.setTextColor(getResources().getColor(R.color.nightTextColor));
+            int nightTextColor = ContextCompat.getColor(this.getContext(), R.color.nightTextColor);
+            mTextView.setTextColor(nightTextColor);
+            aTextView.setTextColor(nightTextColor);
             qaContainer.setBackgroundResource(R.drawable.round_rect_night);
         }
     }
@@ -348,20 +458,21 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
-        mContext = inflater.getContext();
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_review, container, false);
 
-        final WatchViewStub stub = (WatchViewStub) view.findViewById(R.id.watch_view_stub);
+        final WatchViewStub stub = view.findViewById(R.id.watch_view_stub);
         stub.setOnLayoutInflatedListener(new WatchViewStub.OnLayoutInflatedListener() {
+            @SuppressLint("ClickableViewAccessibility")
             @Override
             public void onLayoutInflated(WatchViewStub stub) {
-                mTextView = (TextView) stub.findViewById(R.id.text);
-                qaOverlay = (RelativeLayout) stub.findViewById(R.id.questionAnswerOverlay);
-                qaScrollView = (ScrollView) stub.findViewById(R.id.questionAnswerScrollView);
-                qaContainer = (RelativeLayout) stub.findViewById(R.id.qaContainer);
-                spinner = (ProgressBar) stub.findViewById(R.id.loadingSpinner);
+                mTextView = stub.findViewById(R.id.text);
+                asTextView = stub.findViewById(R.id.autosizingText);
+                aTextView = stub.findViewById(R.id.aText);
+                qaOverlay = stub.findViewById(R.id.questionAnswerOverlay);
+                qaScrollView = stub.findViewById(R.id.questionAnswerScrollView);
+                qaContainer = stub.findViewById(R.id.qaContainer);
+                spinner = stub.findViewById(R.id.loadingSpinner);
                 rotationTarget = qaContainer;
                 final GestureDetector gestureDetector = new GestureDetector(getActivity()
                         .getBaseContext(),
@@ -377,10 +488,15 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                             }
                         });
 
+                mTextView.setMinimumHeight(screenHeight);
+                aTextView.setMinimumHeight(screenHeight);
+                qaScrollView.requestFocus(); //Necessary for rotary input
+
+
                 qaOverlay.setOnTouchListener(new View.OnTouchListener() {
 
                     private final float SCROLL_THRESHOLD = ViewConfiguration.get(getActivity()
-                            .getBaseContext())
+                                    .getBaseContext())
                             .getScaledTouchSlop();
                     private float mDownX;
                     private float mDownY;
@@ -424,7 +540,6 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                         qaScrollView.dispatchTouchEvent(event);
                         Log.d(getClass().getName(),
                                 "textview was touched, soundIconClicked is: " + soundIconClicked);
-                        if (soundIconClicked) return false;
 
                         return false;
 
@@ -433,34 +548,28 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
 
 
                 easeButtons = new PullButton[4];
-                easeButtons[EASY] = (PullButton) stub.findViewById(R.id.easyButton);
-                easeButtons[MID] = (PullButton) stub.findViewById(R.id.midButton);
-                easeButtons[HARD] = (PullButton) stub.findViewById(R.id.hardButton);
-                easeButtons[FAILED] = (PullButton) stub.findViewById(R.id.failedButton);
+                easeButtons[EASY] = stub.findViewById(R.id.easyButton);
+                easeButtons[MID] = stub.findViewById(R.id.midButton);
+                easeButtons[HARD] = stub.findViewById(R.id.hardButton);
+                easeButtons[FAILED] = stub.findViewById(R.id.failedButton);
 
-                View.OnClickListener easeButtonListener = new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        resetScreenTimeout(false);
-                        int ease = 0;
-                        switch (v.getId()) {
-                            case R.id.failedButton:
-                                ease = getRealEase(1);
-                                break;
-                            case R.id.hardButton:
-                                ease = getRealEase(2);
-                                break;
-                            case R.id.midButton:
-                                ease = getRealEase(3);
-                                break;
-                            case R.id.easyButton:
-                                ease = getRealEase(4);
-                                break;
-                        }
+                View.OnClickListener easeButtonListener = v -> {
+                    resetScreenTimeout(false);
+                    int ease = 0;
 
-
-                        answerCard(ease);
+                    if (v.getId() == R.id.failedButton) {
+                        ease = getRealEase(1);
+                    } else if (v.getId() == R.id.hardButton) {
+                        ease = getRealEase(2);
+                    } else if (v.getId() == R.id.midButton) {
+                        ease = getRealEase(3);
+                    } else if (v.getId() == R.id.easyButton) {
+                        ease = getRealEase(4);
+                    } else {
+                        throw new Error("Illegal id");
                     }
+
+                    answerCard(ease);
                 };
 
 
@@ -536,6 +645,137 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         Log.d(getClass().getName(), "ReviewFragment.onDetach");
     }
 
+    private String lTrim(String s) {
+        int i = 0;
+        while (i < s.length() && Character.isWhitespace(s.charAt(i))) {
+            i++;
+        }
+        return s.substring(i);
+    }
+
+    private String rTrim(String s) {
+        int i = s.length() - 1;
+        while (i >= 0 && Character.isWhitespace(s.charAt(i))) {
+            i--;
+        }
+        return s.substring(0, i + 1);
+    }
+
+    /**
+     * Cleans up HTML text as to make it more presentable on the watch.
+     *
+     * @param cardText The HTML text.
+     * @return The cleaned up HTML.
+     */
+    private String htmlTextCleanup(String cardText) {
+
+        // Text cleanup
+
+        cardText = cardText.replaceFirst("\\[...]", ""); // Might not be generally applicable.
+
+        if (cardText.contains("[[type:Back]]")) {
+            oneSidedCard = true;
+        }
+
+        // Remove any occurrences of [[type:abc]] text.
+        cardText = cardText.replaceAll("\\[\\[type:.*?]]", "");
+
+        // Text beautifier (Removes trailing and leading whitespaces and <br>. Limits the number of consecutive <br>.)
+        if (cardText.isEmpty()) return cardText;
+        int startI = 0;
+        boolean leading = false; //Removes leading newlines
+        ArrayList<String> rows = new ArrayList<>();
+        for (int i = 0; i < cardText.length(); i++) {
+            if (cardText.charAt(i) == '<') {
+                if (i != 0 && startI < i) {
+                    rows.add(cardText.substring(startI, i));
+                    leading = true;
+                }
+                startI = i;
+            } else if (cardText.charAt(i) == '>') {
+                rows.add(cardText.substring(startI, i + 1));
+                startI = i + 1;
+            }
+        }
+        if (!cardText.substring(startI).isEmpty()) {
+            rows.add(cardText.substring(startI));
+            leading = true;
+        }
+        if (rows.isEmpty()) return cardText;
+
+        // TODO: This is not generally applicable and should be removed.
+        if (rows.get(0).equals("<span style=\"font-family:YUMIN;font-size:100px;\">")) {
+            return rows.get(1);
+        } else if (rows.size() > 2 && rows.get(1).equals("<span style=\"font-family: Mincho; font-size: 22px; \">")) {
+            rows.remove(rows.size() - 4);
+        }
+
+        // More text cleanup
+        for (int i = 0; i < rows.size(); i++) {
+            // TODO: Handle more cases and different spacing.
+            switch (rows.get(i)) {
+                // Temporary handling of <hr>, as fromhtml does not support it.
+                case "<hr />":
+                case "<hr>":
+                // Temporary handling of <div>, as fromhtml treats <div> as two <br>,
+                // so it might as well be converted here as to ensure correct handling of newlines in the code below.
+                case "<div>":
+                case "</div>":
+                    rows.set(i, "<br>");
+                    i++;
+                    rows.add(i, "<br>");
+                    break;
+                case "</br>": // Fixes the interpretation of </br>.
+                    rows.set(i, "<br>");
+            }
+        }
+
+        // When the text only consists of html tags
+        if (!leading) return cardText;
+
+        int consecutiveNewLines = 0;
+        int lastTextIndex = 0;
+
+        for (int i = 0; i < rows.size(); i++) {
+            String element = rows.get(i);
+            if (element.startsWith("<br")) {
+                if (!leading) consecutiveNewLines += 1;
+                if (consecutiveNewLines == 1)
+                    rows.set(lastTextIndex, rTrim(rows.get(lastTextIndex)));
+                if (consecutiveNewLines > MAX_CONSECUTIVE_NEWLINES || leading) {
+                    rows.remove(i);
+                    i--;
+                }
+            } else {
+                if (consecutiveNewLines > 0 || leading) element = lTrim(element);
+                if (element.isEmpty()) {
+                    rows.remove(i);
+                    i--;
+                } else if (!element.startsWith("<")) {
+                    consecutiveNewLines = 0;
+                    rows.set(i, element);
+                    leading = false;
+                    lastTextIndex = i;
+                }
+            }
+        }
+        rows.set(lastTextIndex, rTrim(rows.get(lastTextIndex)));
+
+        // Removes any trailing <br>
+        for (int i = rows.size() - 1; i >= 0; i--) {
+            String element = rows.get(i);
+            if (!element.startsWith("<")) {
+                break;
+            } else if (element.startsWith("<br")) {
+                rows.remove(i);
+            }
+        }
+        // End of text beautifier
+
+        return TextUtils.join("", rows);
+    }
+
+
     @Override
     public void onJsonReceive(String path, JSONObject js) {
         if (qaOverlay == null || !isAdded()) {
@@ -544,38 +784,45 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
             return;
         }
 
-        if (path.equals(CommonIdentifiers.P2W_RESPOND_CARD)) {
-            try {
+        switch (path) {
+            case CommonIdentifiers.P2W_RESPOND_CARD:
+                try {
 
-                hideButtons();
-                unblockControls();
-                qHtml = js.getString("q");
-                aHtml = js.getString("a");
+                    hideButtons();
+                    unblockControls();
+                    oneSidedCard = false;
+                    qHtml = htmlTextCleanup(js.getString("q"));
+                    aHtml = htmlTextCleanup(js.getString("a"));
 
-                setQA(false);
+                    setQA(false);
 
-                noteID = js.getLong("note_id");
-                cardOrd = js.getInt("card_ord");
-                nextReviewTimes = js.getJSONArray("b");
-                numButtons = nextReviewTimes.length();
+                    noteID = js.getLong("note_id");
+                    cardOrd = js.getInt("card_ord");
+                    nextReviewTimes = js.getJSONArray("b");
+                    numButtons = nextReviewTimes.length();
+                    hideLoadingSpinner();
+                    showQuestion();
+
+                    setQA(true);
+                } catch (JSONException e) {
+                    Log.e(TAG, "JSONException " + e);
+                    e.printStackTrace();
+                }
+                break;
+            case CommonIdentifiers.P2W_NO_MORE_CARDS:
+                blockControls();
                 hideLoadingSpinner();
-                showQuestion();
-
+                showingAnswer = false;
+                setText(null, mTextView);
+                break;
+            case W2W_REMOVE_SCREEN_LOCK:
+                getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                Log.d("ReviewFragment", "removing screen lock");
+                break;
+            case W2W_RELOAD_HTML_FOR_MEDIA:
                 setQA(true);
-            } catch (JSONException e) {
-                Log.e(TAG, "JSONException " + e);
-                e.printStackTrace();
-            }
-        } else if (path.equals(CommonIdentifiers.P2W_NO_MORE_CARDS)) {
-            blockControls();
-            hideLoadingSpinner();
-            mTextView.setText(R.string.review_frag__no_more_cards);
-        } else if (path.equals(W2W_REMOVE_SCREEN_LOCK)) {
-            getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-            Log.d("ReviewFragment", "removing screen lock");
-        } else if (path.equals(W2W_RELOAD_HTML_FOR_MEDIA)) {
-            setQA(true);
-            Log.d("ReviewFragment", "reloading Html for media");
+                Log.d("ReviewFragment", "reloading Html for media");
+                break;
         }
     }
 
@@ -597,14 +844,13 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         }
 
         q = makeSoundIconsClickable(Html.fromHtml(qHtml.replaceAll
-                (SOUND_TAG_REPLACEMENT_REGEX,
-                        SOUND_TAG_REPLACEMENT_STRING).replaceAll("</?a.*?>", "")
+                        (SOUND_TAG_REPLACEMENT_REGEX,
+                                SOUND_TAG_REPLACEMENT_STRING).replaceAll("</?a.*?>", "")
                 , withImages ? imageGetter : null, null), false);
         a = makeSoundIconsClickable(Html.fromHtml(aHtml.replaceAll
-                (SOUND_TAG_REPLACEMENT_REGEX,
-                        SOUND_TAG_REPLACEMENT_STRING).replaceAll("</?a.*?>", "")
+                        (SOUND_TAG_REPLACEMENT_REGEX,
+                                SOUND_TAG_REPLACEMENT_STRING).replaceAll("</?a.*?>", "")
                 , withImages ? imageGetter : null, null), true);
-
     }
 
     private Spanned makeSoundIconsClickable(Spanned text, boolean isAnswer) {
@@ -616,7 +862,7 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         ImageSpan[] image_spans = qss.getSpans(0, qss.length(), ImageSpan.class);
 
         for (ImageSpan span : image_spans) {
-            if (span.getSource().equals(SOUND_PLACEHOLDER_STRING)) {
+            if (Objects.requireNonNull(span.getSource()).equals(SOUND_PLACEHOLDER_STRING)) {
 
                 final String image_src = span.getSource();
                 final int start = qss.getSpanStart(span);
@@ -687,7 +933,7 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
 
         if (System.currentTimeMillis() - lastResetTimeMillis > 2000 || forceReset) {
 
-            long timeout = settings.getScreenTimeout() * 1000;
+            long timeout = settings.getScreenTimeout() * 1000L;
 
             getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             Log.d("ReviewFragment", "setting screen lock " + timeout);
@@ -695,26 +941,24 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                 screenTimeoutTimer.cancel();
                 screenTimeoutTimer = null;
             }
-            if (screenTimeoutTimer == null) {
-                screenTimeoutTimer = new Timer();
-                screenTimeoutTimer.schedule(new TimerTask() {
-                    public void run() {
-                        screenTimeoutTimer.cancel();
-                        screenTimeoutTimer = null;
-                        Intent messageIntent = new Intent();
-                        messageIntent.setAction(Intent.ACTION_SEND);
-                        messageIntent.putExtra("path", W2W_REMOVE_SCREEN_LOCK);
-                        LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(messageIntent);
-                    }
-                }, timeout);
-            }
+            screenTimeoutTimer = new Timer();
+            screenTimeoutTimer.schedule(new TimerTask() {
+                public void run() {
+                    screenTimeoutTimer.cancel();
+                    screenTimeoutTimer = null;
+                    Intent messageIntent = new Intent();
+                    messageIntent.setAction(Intent.ACTION_SEND);
+                    messageIntent.putExtra("path", W2W_REMOVE_SCREEN_LOCK);
+                    LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(messageIntent);
+                }
+            }, timeout);
         }
         lastResetTimeMillis = System.currentTimeMillis();
     }
 
     @Override
     public void onEnterAmbient() {
-        if (showingEaseButtons){
+        if (showingEaseButtons) {
             hideButtons();
             buttonsHiddenOnAmbient = true;
         } else {
@@ -725,17 +969,16 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
 
     @Override
     public void onExitAmbient() {
-        if(buttonsHiddenOnAmbient){
+        if (buttonsHiddenOnAmbient) {
             showButtons();
         }
         applySettings();
     }
 
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-
         int answerInt = -1;
-        switch (keyCode) {
 
+        switch (keyCode) {
             case KeyEvent.KEYCODE_NAVIGATE_NEXT:
                 answerInt = 1;
                 break;
@@ -765,7 +1008,8 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         public Drawable getDrawable(String source) {
             if (source.equals(SOUND_PLACEHOLDER_STRING)) {
                 if (soundDrawable == null) {
-                    soundDrawable = getResources().getDrawable(R.drawable.ic_volume_down_black_48dp);
+                    soundDrawable = ResourcesCompat.getDrawable(getResources(), R.drawable.ic_volume_down_black_48dp, null);
+                    assert soundDrawable != null;
                     soundDrawable.setBounds(0, 0, soundDrawable.getIntrinsicWidth(), soundDrawable.getIntrinsicHeight());
                 }
                 return soundDrawable;
@@ -778,7 +1022,8 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
                 return bit;
             } else {
                 Drawable d = new ColorDrawable(Color.TRANSPARENT);
-                d.setBounds(0, 0, ReviewFragment.this.getView().getWidth() / 2, ReviewFragment.this.getView().getHeight() / 2);
+                d.setBounds(0, 0, Objects.requireNonNull(ReviewFragment.this.getView()).getWidth() / 2,
+                        ReviewFragment.this.getView().getHeight() / 2);
                 return d;
             }
         }
@@ -795,13 +1040,11 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         protected void onPostExecute(Void result) {
             updateFromHtmlText();
         }
-
-
     }
 
-    private class ClickableString extends ClickableSpan {
-        private SoundClickListener mListener;
-        private String soundName;
+    private static class ClickableString extends ClickableSpan {
+        private final SoundClickListener mListener;
+        private final String soundName;
 
         public ClickableString(SoundClickListener listener, String soundName) {
             mListener = listener;
@@ -809,10 +1052,8 @@ public class ReviewFragment extends Fragment implements WearMainActivity.JsonRec
         }
 
         @Override
-        public void onClick(View v) {
+        public void onClick(@NonNull View v) {
             mListener.onSoundClick(v, soundName);
         }
-
-
     }
 }

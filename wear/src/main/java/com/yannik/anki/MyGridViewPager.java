@@ -12,7 +12,7 @@ import android.view.ViewConfiguration;
  */
 public class MyGridViewPager extends GridViewPager {
     private float mDownY;
-    private float SCROLL_THRESHOLD=0;
+    private float SCROLL_THRESHOLD = 0;
     private boolean dontBlockYMovement = false;
 
     public MyGridViewPager(Context context) {
@@ -29,7 +29,7 @@ public class MyGridViewPager extends GridViewPager {
         super(context, attrs, defStyle);
     }
 
-    private void init(){
+    private void init() {
         SCROLL_THRESHOLD = ViewConfiguration.get(getContext())
                 .getScaledTouchSlop();
     }
