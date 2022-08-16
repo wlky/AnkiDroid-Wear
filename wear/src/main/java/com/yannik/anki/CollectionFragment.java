@@ -293,46 +293,45 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         /**
          * Will compute the counts by summing all sub-decks and format it in HTML
          *
-         * @param parOneDeck deck for which to be compute the sum for him and sub decks
+         * @param targetDeck deck for which to be compute the sum for him and sub decks
          * @return sums formatted HTML, ready to be displayed
          */
-        private String sumCountsForDeck(Deck parOneDeck) {
-
-            int mNewCountSum = 0;
-            int mLearningCountSum = 0;
-            int mReviewCountSum = 0;
-            for (Deck oneDeck : mDNAADecks) {
-                if (oneDeck.getName().contains(parOneDeck.getName())) {
-                    mNewCountSum += oneDeck.getNewCount();
-                    mLearningCountSum += oneDeck.getLearningCount();
-                    mReviewCountSum += oneDeck.getReviewCount();
+        private String sumCountsForDeck(Deck targetDeck) {
+            int numNewCards = 0;
+            int numLearningCards = 0;
+            int numReviewingCards = 0;
+            for (Deck deck : mDNAADecks) {
+                if (deck.getName().equals(targetDeck.getName()) || deck.getName().contains(targetDeck.getName() + "::")) {
+                    numNewCards += deck.getNewCount();
+                    numLearningCards += deck.getLearningCount();
+                    numReviewingCards += deck.getReviewCount();
                 }
             }
 
             // format and colorize to produce HTML
             StringBuilder res = new StringBuilder();
 
-            if (mNewCountSum == 0) {
+            if (numNewCards == 0) {
                 res.append("<font color='grey'>0</font>");
             } else {
                 res.append("<font color='blue'>");
-                res.append(mNewCountSum);
+                res.append(numNewCards);
                 res.append("</font>");
             }
             res.append(" ");
-            if (mLearningCountSum == 0) {
+            if (numLearningCards == 0) {
                 res.append("<font color='grey'>0</font>");
             } else {
                 res.append("<font color='red'>");
-                res.append(mLearningCountSum);
+                res.append(numLearningCards);
                 res.append("</font>");
             }
             res.append(" ");
-            if (mReviewCountSum == 0) {
+            if (numReviewingCards == 0) {
                 res.append("<font color='grey'>0</font>");
             } else {
                 res.append("<font color='green'>");
-                res.append(mReviewCountSum);
+                res.append(numReviewingCards);
                 res.append("</font>");
             }
 
