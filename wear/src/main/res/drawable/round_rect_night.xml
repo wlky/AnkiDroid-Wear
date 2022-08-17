@@ -4,7 +4,6 @@
         android:color="@color/nightBgColor"/>
     <corners
         android:radius="10dp" />
-    <stroke android:color="#ff373737" android:width="1dp"/>
     <!--<padding-->
         <!--android:left="10dp"-->
         <!--android:top="10dp"-->

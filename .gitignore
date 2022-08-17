@@ -55,3 +55,4 @@ tools/crowdin_key.txt
 .idea/vcs.xml
 
 captures/
+/release

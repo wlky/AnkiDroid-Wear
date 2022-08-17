@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceCategory
-        android:title="Review">
+        android:title="@string/pref_review_category__title">
 
         <ListPreference
             android:defaultValue="1"
@@ -11,54 +11,80 @@
             android:entryValues="@array/SoundOptionsAlias"
             android:key="@string/play_sounds"
             android:summary="%s"
-            android:title="Sounds" />
+            android:title="@string/pref_play_sounds__title" />
 
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="@string/ask_before_first_sound"
-            android:title="Ask once before playing sounds"
+            android:title="@string/pref_ask_before_play_sounds__title"
             />
 
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="@string/day_mode"
-            android:title="Day Mode"
+            android:title="@string/pref_day_mode__title"
+            />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="@string/alt_card_mode"
+            android:title="@string/pref_alt_card_mode__title"
             />
 
         <com.yannik.anki.NumberPickerPreference
+            android:id="@+id/font_size"
             android:defaultValue="40"
             android:key="@string/font_size_key"
-            android:title="Font size"
-            app:summaryPostFix=" points" />
+            android:title="@string/pref_fontsize__title"
+            app:minValue="1"
+            app:summaryPostFix="@string/pref_card_fontsize__postfix" />
+
+        <com.yannik.anki.NumberPickerPreference
+            android:id="@+id/max_font_size"
+            android:defaultValue="100"
+            android:key="@string/max_font_size_key"
+            android:title="@string/pref_max_fontsize__title"
+            app:minValue="1"
+            app:maxValue="200"
+            app:summaryPostFix="@string/pref_card_fontsize__postfix" />
+
+        <com.yannik.anki.NumberPickerPreference
+            android:id="@+id/extra_padding"
+            android:defaultValue="0"
+            android:key="@string/extra_padding_key"
+            android:title="@string/pref_extra_padding__title"
+            app:maxValue="50"
+            app:minValue="0"
+            app:summaryPostFix="@string/pref_card_extra_padding__postfix" />
 
         <com.yannik.anki.NumberPickerPreference
             android:defaultValue="60"
             android:key="@string/screen_timeout"
-            android:title="Screen Timeout Delay"
+            android:title="@string/pref_screen_timeout__title"
             app:maxValue="400"
             app:minValue="30"
-            app:summaryPostFix=" seconds" />
+            app:summaryPostFix="@string/pref_screen_timeout__postfix" />
 
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="@string/double_tap_key"
-            android:title="Double tap answer to show question"
+            android:title="@string/pref_double_tap_key__title"
             />
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="@string/ambient_mode_key"
-            android:summary="Keep showing app when display goes in ambient mode"
-            android:title="Ambient Mode"
+            android:summary="@string/pref_ambient_mode__summary"
+            android:title="@string/pref_ambient_mode__title"
             />
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="@string/card_flip_animation_key"
-            android:title="Card flip animation"
+            android:title="@string/pref_card_flip_animation__title"
             />
 
-        <EditTextPreference
+        <Preference
             android:key="@string/media_folder_location"
-            android:title="AnkiDroid Media Folder Location"
+            android:title="@string/pref_media_folder_location__title"
             />
 
 

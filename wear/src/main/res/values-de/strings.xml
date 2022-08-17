@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common__good">Gut</string>
+    <string name="common_again">Nochmal</string>
+    <string name="common_easy">Einfach</string>
+    <string name="common_hard">Schwer</string>
+    <string name="review_frag__no_more_cards">Keine Karten übrig</string>
+</resources>

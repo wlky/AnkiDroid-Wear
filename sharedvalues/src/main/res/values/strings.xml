@@ -1,11 +1,16 @@
 <resources>
-    <string name="font_size_key">card_fontsize</string>
-    <string name="double_tap_key">double_tap_for_question</string>
-    <string name="sound_preference_key">sound_preference</string>
-    <string name="card_flip_animation_key">card_flip_animation</string>
-    <string name="screen_timeout">screen_timeout</string>
-    <string name="play_sounds">play_sounds</string>
-    <string name="ask_before_first_sound">ask_before_first_sound</string>
-    <string name="day_mode">day_mode</string>
-    <string name="ambient_mode_key">ambient_mode</string>
+
+    <!-- These are keys and should not be translated -->
+    <string name="font_size_key" translatable="false">card_fontsize</string>
+    <string name="max_font_size_key" translatable="false">card_max_fontsize</string>
+    <string name="extra_padding_key" translatable="false">card_extra_padding</string>
+    <string name="double_tap_key" translatable="false">double_tap_for_question</string>
+    <string name="sound_preference_key" translatable="false">sound_preference</string>
+    <string name="card_flip_animation_key" translatable="false">card_flip_animation</string>
+    <string name="screen_timeout" translatable="false">screen_timeout</string>
+    <string name="play_sounds" translatable="false">play_sounds</string>
+    <string name="ask_before_first_sound" translatable="false">ask_before_first_sound</string>
+    <string name="day_mode" translatable="false">day_mode</string>
+    <string name="alt_card_mode" translatable="false">alt_card_mode</string>
+    <string name="ambient_mode_key" translatable="false">ambient_mode</string>
 </resources>

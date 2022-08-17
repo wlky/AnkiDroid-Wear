@@ -6,8 +6,9 @@
         <!--<item>2</item>-->
     </string-array>
     <string-array name="SoundOptions">
-        <item>Do not play sounds</item>
-        <item>Play sounds on phone</item>
+        <item>@string/sound_option_dont_play_sounds</item>
+        <item>@string/sound_option_play_on_phone</item>
         <!--<item>Play sounds on watch (if possible)</item>-->
     </string-array>
+
 </resources>

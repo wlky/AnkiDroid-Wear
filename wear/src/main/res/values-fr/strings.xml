@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- strings.xml -->
+<!--  -->
+<!-- French strings in the android wear part of the app -->
+
+<resources>
+
+    <string name="review_frag__no_more_cards">Plus de carte</string>
+
+    <string name="common__good">Bon</string>
+    <string name="common_hard">Dur</string>
+    <string name="common_again">Encore</string>
+    <string name="common_easy">Facile</string>
+
+</resources>

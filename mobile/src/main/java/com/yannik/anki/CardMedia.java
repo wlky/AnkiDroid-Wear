@@ -2,13 +2,22 @@ package com.yannik.anki;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.ParcelFileDescriptor;
+import android.util.Log;
+
+import androidx.documentfile.provider.DocumentFile;
 
 import com.google.android.gms.wearable.Asset;
+import com.google.android.gms.wearable.WearableListenerService;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,7 +29,7 @@ public class CardMedia {
      * Group 1 = Contents of [sound:] tag <br>
      * Group 2 = "fname"
      */
-    private static final Pattern fSoundRegexps = Pattern.compile("(?i)(\\[sound:([^]]+)\\])");
+    private static final Pattern fSoundRegexps = Pattern.compile("(?i)(\\[sound:([^]]+)])");
 
     // src element quoted case
     /**
@@ -29,7 +38,7 @@ public class CardMedia {
      * Group 3 = "fname" <br>
      * Group 4 = Backreference to "str" (i.e., same type of quote character)
      */
-    private static final Pattern fImgRegExpQ = Pattern.compile("(?i)(<img[^>]* src=([\\\"'])([^>]+?)(\\2)[^>]*>)");
+    private static final Pattern fImgRegExpQ = Pattern.compile("(?i)(<img[^>]* src=([\"'])([^>]+?)(\\2)[^>]*>)");
     public static String mediaFolder = null;
 
     /**
@@ -39,8 +48,7 @@ public class CardMedia {
      * @return The string with the filenames of any local images percent-escaped as UTF-8.
      */
     public static String escapeImages(String string, boolean unescape) {
-        Pattern p = fImgRegExpQ;
-        Matcher m = p.matcher(string);
+        Matcher m = fImgRegExpQ.matcher(string);
 
         int fnameIdx = 3;
         while (m.find()) {
@@ -62,32 +70,32 @@ public class CardMedia {
     }
 
     // since this is for a static Util Class pass int he resources as well
-    public static Bitmap pullScaledBitmap(String path, int maxWidth, int maxHeight, boolean keepAspectRatio) {
+    public static Bitmap pullScaledBitmap(Uri path, int maxWidth, int maxHeight, boolean keepAspectRatio) {
 
         BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
         // set the option to just decode the bounds because we just want
         // the dimensions, not the whole image
         bitmapOptions.inJustDecodeBounds = true;
         // now decode our resource using these options
-        BitmapFactory.decodeFile(path, bitmapOptions);
+//        BitmapFactory.decodeFile(path, bitmapOptions);
         // since we have pulled the dimensions we can set this back to false
         // because the next time we decode we want the whole image
         bitmapOptions.inJustDecodeBounds = false;
 
         int width = maxWidth, height = maxHeight;
-        if(keepAspectRatio){
+        if (keepAspectRatio) {
             width = bitmapOptions.outWidth;
             height = bitmapOptions.outHeight;
             if (width > height) {
                 // landscape
                 float ratio = (float) width / maxWidth;
                 width = maxWidth;
-                height = (int)(height / ratio);
+                height = (int) (height / ratio);
             } else if (height > width) {
                 // portrait
                 float ratio = (float) height / maxHeight;
                 height = maxHeight;
-                width = (int)(width / ratio);
+                width = (int) (width / ratio);
             } else {
                 // square
                 height = maxHeight;
@@ -99,7 +107,20 @@ public class CardMedia {
         bitmapOptions.inSampleSize = calculateInSampleSize(bitmapOptions, width, height);
         // now decode the resource again and return it, because it decodes
         // as the scaled image!
-        return BitmapFactory.decodeFile(path, bitmapOptions);
+        ParcelFileDescriptor parcelFileDescriptor = null;
+        try {
+            parcelFileDescriptor = WearMessageListenerService.context.getContentResolver().openFileDescriptor(path, "r");
+            FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
+            Bitmap image = BitmapFactory.decodeFileDescriptor(fileDescriptor, new Rect(), bitmapOptions);
+            parcelFileDescriptor.close();
+            return image;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public static int calculateInSampleSize(BitmapFactory.Options bitmapOptions, int reqWidth, int reqHeight) {
@@ -107,8 +128,7 @@ public class CardMedia {
         final int width = bitmapOptions.outWidth;
         int inSampleSize = 1;
 
-        if (height > reqHeight || width > reqWidth)
-        {
+        if (height > reqHeight || width > reqWidth) {
             final int halfHeight = height / 2;
             final int halfWidth = width / 2;
 
@@ -120,13 +140,17 @@ public class CardMedia {
         return inSampleSize;
     }
 
-    public static String getMediaPath(String name){
-        if(mediaFolder == null || !new File(mediaFolder).exists()){
-            mediaFolder = Environment.getExternalStorageDirectory().getAbsolutePath() + "/AnkiDroid/collection.media/";
-        }
-        return new File(mediaFolder, name).getAbsolutePath();
+    public static Uri baseUri;
+
+    public static Uri getMediaPath(String filename) {
+//        if (mediaFolder == null || !new File(mediaFolder).exists()) {
+//            mediaFolder = Environment.getExternalStorageDirectory().getAbsolutePath() + "/AnkiDroid/collection.media/";
+//        }
+        Log.e("Anki", "baseUri: " + baseUri);
+        if(baseUri == null) return null;
+        DocumentFile documentsTree = DocumentFile.fromTreeUri(WearMessageListenerService.context, baseUri);
+        DocumentFile file = documentsTree.findFile(filename);
+        Log.e("Anki", "getMediaPath for: " + filename + " result: " + file.getUri());
+        return file.getUri();
     }
-
-
-
 }

@@ -4,12 +4,18 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
+
+import android.text.Html;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.yannik.sharedvalues.CommonIdentifiers;
@@ -20,6 +26,11 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.yannik.sharedvalues.CommonIdentifiers.P2W_COLLECTION_LIST_DECK_COUNT;
+import static com.yannik.sharedvalues.CommonIdentifiers.P2W_COLLECTION_LIST_DECK_ID;
 
 /**
  * A fragment representing a list of Items.
@@ -33,13 +44,16 @@ import java.util.List;
 public class CollectionFragment extends Fragment implements AbsListView.OnItemClickListener,
         WearMainActivity.JsonReceiver, WearMainActivity.AmbientStatusReceiver {
 
-    private static final String ARG_PARAM1 = "collections";
-    ArrayList<String> deckNames = new ArrayList<String>();
-    ArrayList<Long> deckIDs = new ArrayList<Long>();
+    private static final String TAG = "CollectionFragment";
+
+    /**
+     * The list of decks that will be displayed, will be provided by.
+     */
+    ArrayList<Deck> mDecks = new ArrayList<>();
     View collectionListContainer;
-    private String[] collectionList;
     private OnFragmentInteractionListener mListener;
     private Preferences settings;
+
     /**
      * The fragment's ListView/GridView.
      */
@@ -49,7 +63,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
      * The Adapter which will be used to populate the ListView/GridView with
      * Views.
      */
-    private ArrayAdapter mAdapter;
+    private BaseAdapter mAdapter;
 
 
     /**
@@ -59,20 +73,16 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
     public CollectionFragment() {
     }
 
-    public static CollectionFragment newInstance(String[] collectionList) {
-        CollectionFragment fragment = new CollectionFragment();
-        Bundle args = new Bundle();
-        args.putStringArray(ARG_PARAM1, collectionList);
-        fragment.setArguments(args);
-        return fragment;
+    public static CollectionFragment newInstance() {
+        return new CollectionFragment();
     }
 
-    public void setSettings(Preferences settings){
+    public void setSettings(Preferences settings) {
         this.settings = settings;
         applySettings();
     }
 
-    public void applySettings(){
+    public void applySettings() {
         if (settings == null) return;
 
         setDayMode(settings.isDayMode());
@@ -80,10 +90,10 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         mAdapter.notifyDataSetChanged();
     }
 
-    public void setDayMode(boolean dayMode){
-        if(dayMode) {
+    public void setDayMode(boolean dayMode) {
+        if (dayMode) {
             collectionListContainer.setBackgroundResource(R.drawable.round_rect_day);
-        }else{
+        } else {
             collectionListContainer.setBackgroundResource(R.drawable.round_rect_night);
         }
     }
@@ -92,12 +102,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (getArguments() != null) {
-            this.collectionList = getArguments().getStringArray(ARG_PARAM1);
-        }
-
-        mAdapter = new DayNightArrayAdapter(getActivity(),
-                R.layout.collection_list_item, this.deckNames);
+        mAdapter = new DayNightArrayAdapter(getActivity(), mDecks);
     }
 
     @Override
@@ -105,8 +110,9 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_collection, container, false);
         collectionListContainer = view.findViewById(R.id.collectionListContainer);
+
         // Set the adapter
-        mListView = (AbsListView) view.findViewById(android.R.id.list);
+        mListView = view.findViewById(android.R.id.list);
         mListView.setAdapter(mAdapter);
 
         // Set OnItemClickListener so we can be notified on item clicks
@@ -133,7 +139,7 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         mListener = null;
     }
 
-    public void setChooseDeckListener(OnFragmentInteractionListener listener){
+    public void setChooseDeckListener(OnFragmentInteractionListener listener) {
         this.mListener = listener;
     }
 
@@ -143,46 +149,44 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         if (null != mListener) {
             // Notify the active callbacks interface (the activity, if the
             // fragment is attached to one) that an item has been selected.
-            mListener.onFragmentInteraction(deckIDs.get(position));
-        }
-    }
-
-    /**
-     * The default content for this Fragment has a TextView that is shown when
-     * the list is empty. If you would like to change the text, call this method
-     * to supply the text it should use.
-     */
-    public void setEmptyText(CharSequence emptyText) {
-        View emptyView = mListView.getEmptyView();
-
-        if (emptyView instanceof TextView) {
-            ((TextView) emptyView).setText(emptyText);
+            mListener.onFragmentInteraction(mDecks.get(position).getID());
         }
     }
 
     @Override
     public void onJsonReceive(String path, JSONObject js) {
+
         if (path.equals(CommonIdentifiers.P2W_COLLECTION_LIST)) {
+
             JSONArray collectionNames = js.names();
             if (collectionNames == null) return;
-            deckNames.clear();
-            deckIDs.clear();
+
+            mDecks.clear();
+
             for (int i = 0; i < collectionNames.length(); i++) {
                 String colName;
+                long deckID;
+                String deckCounts;
                 try {
                     colName = collectionNames.getString(i);
-                    deckNames.add(colName);
-                    deckIDs.add(js.getLong(colName));
+                    JSONObject deckObject = js.getJSONObject(colName);
+                    deckID = deckObject.getLong(P2W_COLLECTION_LIST_DECK_ID);
+                    deckCounts = deckObject.getString(P2W_COLLECTION_LIST_DECK_COUNT);
+                    Deck newDeck = new Deck(colName, deckID, deckCounts);
+                    mDecks.add(newDeck);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
 
             }
-            if(mListView == null) {
+            if (mListView == null) {
                 return;
             }
 
             mAdapter.notifyDataSetChanged();
+
+        } else {
+            Log.w(TAG, "Received message with un-managed path");
         }
     }
 
@@ -211,25 +215,238 @@ public class CollectionFragment extends Fragment implements AbsListView.OnItemCl
         void onFragmentInteraction(long id);
     }
 
-    class DayNightArrayAdapter extends ArrayAdapter<String>{
-        public DayNightArrayAdapter(Context context, int resource, List<String> objects) {
-            super(context, resource, objects);
+    /**
+     * Customised adapter for displaying list of deck names.
+     * Supports day and night mode.
+     */
+    private class DayNightArrayAdapter extends BaseAdapter {
+
+        private final Context mContext;
+        private final List<Deck> mDNAADecks;
+
+        private class DeckViewHolder {
+            RelativeLayout catLayout;
+            TextView catName;
+            TextView catNumber;
+        }
+
+        DayNightArrayAdapter(Context parContext, List<Deck> parDecks) {
+            mContext = parContext;
+            mDNAADecks = parDecks;
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            TextView v = (TextView)super.getView(position, convertView, parent);
-            if(settings == null || settings.isDayMode()){
-                v.setTextColor(getResources().getColor(R.color.dayTextColor));
-                v.setBackgroundResource(R.drawable.round_rect_day);
-            }else{
-                v.setTextColor(getResources().getColor(R.color.nightTextColor));
-                v.setBackgroundResource(R.drawable.round_rect_night);
+        public int getCount() {
+            if (mDNAADecks != null) {
+                return mDNAADecks.size();
+            } else {
+                return 0;
             }
-
-            return v;
         }
 
+        @Override
+        public Object getItem(int position) {
+            return mDNAADecks.get(position);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, View view, @NonNull ViewGroup parent) {
+            if (view == null) {
+                view = LayoutInflater.from(mContext).inflate(R.layout.collection_list_item, parent, false);
+            }
+
+            DeckViewHolder viewHolder = (DeckViewHolder) view.getTag();
+            if (viewHolder == null) {
+                viewHolder = new DeckViewHolder();
+                viewHolder.catLayout = view.findViewById(R.id.colllist__mainLayout);
+                viewHolder.catName = view.findViewById(R.id.colllist__textcategory);
+                viewHolder.catNumber = view.findViewById(R.id.colllist__textNumber);
+                view.setTag(viewHolder);
+            }
+
+            // setting here values to the fields of my items from my fan object
+            Deck oneDeck = mDNAADecks.get(position);
+            viewHolder.catName.setText(oneDeck.getName());
+            // Using fromHtml to allow easy one character coloration
+            viewHolder.catNumber.setText(Html.fromHtml(sumCountsForDeck(oneDeck)));
+
+            // coloring background
+            if (settings == null || settings.isDayMode()) {
+                viewHolder.catName.setTextColor(getResources().getColor(R.color.dayTextColor));
+                viewHolder.catNumber.setTextColor(getResources().getColor(R.color.dayTextColor));
+                viewHolder.catLayout.setBackgroundResource(R.drawable.round_rect_day);
+            } else {
+                viewHolder.catName.setTextColor(getResources().getColor(R.color.nightTextColor));
+                viewHolder.catNumber.setTextColor(getResources().getColor(R.color.nightTextColor));
+                viewHolder.catLayout.setBackgroundResource(R.drawable.round_rect_night);
+            }
+
+            return view;
+        }
+
+        /**
+         * Will compute the counts by summing all sub-decks and format it in HTML
+         *
+         * @param parOneDeck deck for which to be compute the sum for him and sub decks
+         * @return sums formatted HTML, ready to be displayed
+         */
+        private String sumCountsForDeck(Deck parOneDeck) {
+
+            int mNewCountSum = 0;
+            int mLearningCountSum = 0;
+            int mReviewCountSum = 0;
+            for (Deck oneDeck : mDNAADecks) {
+                if (oneDeck.getName().contains(parOneDeck.getName())) {
+                    mNewCountSum += oneDeck.getNewCount();
+                    mLearningCountSum += oneDeck.getLearningCount();
+                    mReviewCountSum += oneDeck.getReviewCount();
+                }
+            }
+
+            // format and colorize to produce HTML
+            StringBuilder res = new StringBuilder();
+
+            if (mNewCountSum == 0) {
+                res.append("<font color='grey'>0</font>");
+            } else {
+                res.append("<font color='blue'>");
+                res.append(mNewCountSum);
+                res.append("</font>");
+            }
+            res.append(" ");
+            if (mLearningCountSum == 0) {
+                res.append("<font color='grey'>0</font>");
+            } else {
+                res.append("<font color='red'>");
+                res.append(mLearningCountSum);
+                res.append("</font>");
+            }
+            res.append(" ");
+            if (mReviewCountSum == 0) {
+                res.append("<font color='grey'>0</font>");
+            } else {
+                res.append("<font color='green'>");
+                res.append(mReviewCountSum);
+                res.append("</font>");
+            }
+
+            return res.toString();
+        }
     }
 
+    /**
+     * Deck is an immutable object.
+     * Built using provided JSON.
+     */
+    private static class Deck {
+        /**
+         * The deck name. e.g. : "computing::java".
+         */
+        private String mName;
+        /**
+         * The unique identifier of this deck. e.g. : "1472977314172".
+         */
+        private long mID;
+        /**
+         * The number of cards in this deck with status "new".
+         */
+        private int mNewCount;
+        /**
+         * The number of cards in this deck with status "learning".
+         */
+        private int mLearningCount;
+        /**
+         * The number of cards in this deck with status "to review".
+         */
+        private int mReviewCount;
+
+        /**
+         * Full params constructor.
+         *
+         * @param parName       The deck name. e.g. : "computing::java".
+         * @param parDeckID     The unique identifier of this deck. e.g. : "1472977314172".
+         * @param parDeckCounts The number of cards of each type. e.g. : "[4,3,5]"
+         */
+        Deck(String parName, long parDeckID, String parDeckCounts) {
+            setName(parName);
+            setID(parDeckID);
+            setDeckCounts(parDeckCounts);
+        }
+
+        /**
+         * @return The deck name. e.g. : "computing::java".
+         */
+        public String getName() {
+            return mName;
+        }
+
+        /**
+         * @return The number of cards in this deck with status "new".
+         */
+        int getNewCount() {
+            return mNewCount;
+        }
+
+        /**
+         * @return The number of cards in this deck with status "learning".
+         */
+        int getLearningCount() {
+            return mLearningCount;
+        }
+
+        /**
+         * @return The number of cards in this deck with status "to review".
+         */
+        int getReviewCount() {
+            return mReviewCount;
+        }
+
+        /**
+         * Parse deck counts string.
+         *
+         * @param parDeckCounts The number of cards of each type [learn, review, new]. e.g. : "[4,3,5]"
+         */
+        private void setDeckCounts(String parDeckCounts) {
+            // These are the deck counts of the Deck. [learn, review, new]
+            Pattern pattern = Pattern.compile("\\[([0-9]+),([0-9]+),([0-9]+)\\]");
+            Matcher matcher = pattern.matcher(parDeckCounts);
+            if (matcher.matches()) {
+                mLearningCount = Integer.parseInt(matcher.group(1));
+                mReviewCount = Integer.parseInt(matcher.group(2));
+                mNewCount = Integer.parseInt(matcher.group(3));
+            }
+        }
+
+        private void setID(long parID) {
+            mID = parID;
+        }
+
+        private void setName(String parName) {
+            mName = parName;
+        }
+
+        /**
+         * @return The unique identifier of this deck. e.g. : "1472977314172".
+         */
+        long getID() {
+            return mID;
+        }
+
+        @NonNull
+        @Override
+        public String toString() {
+            return "Deck{" + "mName='" + mName + '\'' +
+                    ", mID=" + mID +
+                    ", mNewCount=" + mNewCount +
+                    ", mLearningCount=" + mLearningCount +
+                    ", mReviewCount=" + mReviewCount +
+                    '}';
+        }
+    }
 }

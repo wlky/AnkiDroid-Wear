@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_marginStart="1dp"
@@ -18,13 +19,14 @@
         android:layout_centerHorizontal="true" />
 
     <TextView
-        android:layout_width="90dp"
+        android:layout_width="133px"
         android:layout_height="20dp"
-        android:gravity="center"
+        android:textSize="18sp"
+        android:gravity="top|center_horizontal"
+        android:includeFontPadding="false"
         android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="Small Text"
-        android:background="@drawable/small_round_rect"
-        android:textColor="@color/black"
+        tools:text="Small Text"
+        android:textStyle="bold"
         android:id="@+id/textView"
         android:layout_below="@+id/icon"
         android:layout_centerHorizontal="true" />
@@ -35,10 +37,11 @@
         android:layout_height="23dp"
         android:gravity="center"
         android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="easy"
+        tools:text="easy"
         android:textColor="@color/black"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="7dp"/>
+        android:layout_marginTop="7dp"
+        android:visibility="visible"/>
 
 </RelativeLayout>
